@@ -9,9 +9,9 @@ sur Thread, avec un ESP32-C6.
 
 **Documents liés :**
 - [BRIEF-RECHERCHE.md](BRIEF-RECHERCHE.md) : faits, niveaux de preuve et 57 sources.
-- Le protocole compagnon de la ScreenBar :
-  [benq-screenbar-halo-matter/docs/PROTOCOLE-JSON.md](https://github.com/Djoko-cli/benq-screenbar-halo-matter/blob/main/docs/PROTOCOLE-JSON.md).
-  La version de référence sera figée au prérequis du §8.6.
+- Le protocole compagnon de la ScreenBar, dans sa version de référence, figée
+  au commit `c58a506` (§8.6) :
+  [benq-screenbar-halo-matter/docs/PROTOCOLE-JSON.md](https://github.com/Djoko-cli/benq-screenbar-halo-matter/blob/c58a506/docs/PROTOCOLE-JSON.md).
 
 ---
 
@@ -33,7 +33,9 @@ toucher au secteur**.
 
 1. **Protocole documenté** dans `docs/PROTOCOL.md` :
    - couche physique : tension de `+`, niveau de repos, niveau bas de chaque
-     émetteur, drain ouvert ou push-pull, pull-up et son côté ;
+     émetteur (jugé fonctionnellement à l'étape 5b, chiffré seulement si un
+     oscilloscope est disponible ; l'instrument est noté), drain ouvert ou
+     push-pull, pull-up et son côté ;
    - codage ;
    - trame de chaque action ;
    - qui détient l'état, et qui pilote les voyants.
@@ -148,11 +150,12 @@ Elles valent pour toutes les étapes. `docs/SECURITE.md` les reprend en fiche
      (E5 et E6), qui n'ont pas forcément de résistance de décharge.
    - Une intervention limitée au boîtier de mesure extérieur (§7.1) se fait
      fiche débranchée, sans attente.
-2. **Avant la première mise sous tension d'un montage, on teste le différentiel :**
+2. **On teste le différentiel juste avant de poser chaque nouveau montage**,
+   la hotte étant encore dans son état précédent, déjà contrôlé :
    1. hotte branchée, lumière allumée, on appuie sur le bouton T du différentiel ;
    2. **la lumière doit s'éteindre.** Sinon, la hotte n'est pas derrière ce
       différentiel : **ARRÊT** ;
-   3. on réarme.
+   3. on réarme, puis on débranche la fiche pour poser le montage.
 3. **Dans le boîtier électronique, on ne touche qu'à `CN3` et au câble du
    panneau.** Hotte débranchée depuis 5 minutes, on peut écarter à la main les
    fils isolés du condensateur moteur et le connecteur blanc en ligne, sans les
@@ -375,7 +378,8 @@ Sous tension, on ne fait que lire l'afficheur et toucher les touches du panneau.
 3. Brancher la hotte, lire dans les 5 s, débrancher.
 
 **Attendu :** 3 V au plus, soit 0,3 mA au plus. **Au-delà de 5 V (0,5 mA), ou si
-le différentiel déclenche : ARRÊT.**
+le différentiel déclenche : ARRÊT.** Entre 3 et 5 V, on le note, et on en
+rediscute avant de relier un Mac ou l'analyseur.
 
 #### 3b. Tensions
 
@@ -425,8 +429,8 @@ Cette étape n'a lieu que si `+` ≈ 5 V. **Il n'y a aucun secteur** : la sonde 
    1. retirer la fiche du panneau de l'embase de l'adaptateur ;
    2. fermer `J2` ;
    3. brancher l'USB de la sonde ;
-   4. mesurer `TP+` par rapport à `TP−` : **de +4,7 à +5,0 V, positif**. Sinon,
-      **ARRÊT** ;
+   4. mesurer `TP+` par rapport à `TP−` : **positif, entre +4,5 et +5,3 V** (un
+      port USB peut monter à 5,25 V). Sinon, **ARRÊT** ;
    5. débrancher l'USB.
 3. Remettre la fiche du panneau sur l'embase, puis brancher l'USB. En option : un
    pull-up de 10 kΩ vers `+`, si l'étape 2b a trouvé le pull-up côté carte.
@@ -443,8 +447,9 @@ Cette étape n'a lieu que si `+` ≈ 5 V. **Il n'y a aucun secteur** : la sonde 
 1. débrancher l'USB ;
 2. ouvrir `J2` ;
 3. remettre la fiche de l'adaptateur sur `CN3` ;
-4. refaire l'étape 2b ;
-5. fermer le couvercle et remettre le filtre.
+4. fermer le couvercle et remettre le filtre, en vérifiant qu'ils ne pincent
+   rien ;
+5. refaire l'étape 2b, qui se fait couvercle fermé et filtre remis.
 
 ### Étape 5 : capture en place
 
@@ -485,11 +490,17 @@ débordement (§8.2).
 - **Critères :**
   - **voie 1 :** les durées de la sonde et de l'analyseur concordent à ±2 µs
     près, plus le quantum de 1 µs. Les trames décodées sont identiques ;
-  - **voie 2 :** elle sert à relever le **niveau bas de `D` pendant les trames
-    de chaque émetteur** et son temps de montée. Sa tolérance est ce temps de
-    montée, puisque les deux seuils diffèrent.
-- **Si un niveau bas dépasse 0,6 V,** on relève le seuil de l'étage d'écoute
-  (§7.2), puis on refait l'étape 5.
+  - **voie 2 :** elle montre `D` lui-même pendant les trames de chaque
+    émetteur, et son temps de montée. Ses durées suivent celles de la voie 1
+    à ce temps de montée près, puisque les deux seuils diffèrent.
+- **Niveau bas de `D` : jugé fonctionnellement.** Le FX2 est numérique : il ne
+  mesure pas de tension. Le niveau bas convient si la capture est propre (ni
+  front parasite ni `debord`) et si la sonde et l'analyseur concordent sur la
+  voie 1. Une mesure chiffrée est **optionnelle**, à l'oscilloscope si Majid en
+  a un : sous 0,6 V. `RECONNAISSANCE.md` note l'instrument qui a donné les
+  niveaux.
+- **Si la capture n'est pas propre, ou si un niveau bas mesuré dépasse 0,6 V,**
+  on relève le seuil de l'étage d'écoute (§7.2), puis on refait l'étape 5.
 
 ### Étape 6 : décodage et choix de l'architecture
 
@@ -546,7 +557,10 @@ batterie.
      Le firmware impose le délai minimal entre deux changements d'état du
      moteur, et refuse sinon.
   4. **Pendant les premiers essais, voie 2 de l'analyseur sur `TP_Dp`.** Le
-     niveau bas obtenu par l'injection doit rester sous 0,8 V.
+     niveau bas obtenu par l'injection est jugé fonctionnellement : la carte
+     réagit (bip, lumière, voyant) et la sonde relit la trame émise. Une
+     mesure chiffrée est optionnelle, à l'oscilloscope : sous 0,8 V.
+     L'instrument qui a donné les niveaux est noté.
   - **Critère :** celui du §1, point 2. Aucun comportement anormal de la carte,
     et le vrai panneau toujours fonctionnel après l'essai.
 - **Si le choix est B :** on suit l'avenant.
@@ -582,7 +596,10 @@ hors de la hotte**.
 - **Adaptateur.** Petite plaque avec la connectique XH (ou PH, selon l'étape 0) et
   `J1`. Il reste près de `CN3`, gainé.
 - **Câble de sortie.** 4 fils (`−`, `+`, `D_panneau`, `D_carte`), conforme à la
-  règle 5, le long du cheminement choisi à l'étape 0.
+  règle 5, le long du cheminement choisi à l'étape 0. Il se termine par une
+  **fiche JST XH 4 broches** (ordre `−`, `+`, `D_panneau`, `D_carte`, avec
+  détrompeur), branchée sur l'embase assortie du boîtier de mesure : le
+  boîtier se **détache** du câble, hotte débranchée.
 - **Boîtier de mesure.** Les points de test, `J2` (le `+` vers le `5V` de la
   sonde, fermé seulement à l'étape 4), les étages, et la sonde sur barrettes
   femelles. Il est **fixé à côté de la hotte, à vue, hors de l'aplomb de la
@@ -612,8 +629,10 @@ hors de la hotte**.
   avant de les publier.
 - **Seuil : environ 1,2 V, fixe.** Il ne suit pas la tension du bus et baisse à
   chaud, d'environ 4 mV/°C. Il ne convient donc que si le **niveau bas de `D`**
-  reste sous 0,6 V environ. On le vérifie à l'étape 5b. Sinon, on relève le seuil
-  par la résistance entre base et émetteur, `R_be` :
+  reste sous 0,6 V environ. On le vérifie à l'étape 5b : fonctionnellement
+  (capture propre, concordance avec l'analyseur), et en chiffre seulement si un
+  oscilloscope est disponible. Sinon, on relève le seuil par la résistance entre
+  base et émetteur, `R_be` :
   - 47k pour `+` = 5 V (seuil d'environ 2 V) ;
   - 15k pour `+` = 12 V (seuil d'environ 5 V).
   
@@ -787,7 +806,7 @@ différence** avec celui de la ScreenBar.
 
 | Message | Contenu |
 |---|---|
-| `hello` `base` | **tous** les champs de la ScreenBar. `rev` = 2. `build` = `sonde` (nouvelle valeur). `reseau_build` = `aucun` (pas de réseau Matter). `session.transport` = `usb` ou `udp` |
+| `hello` `base` | **tous** les champs de la ScreenBar. `rev` = 4, celle de la ScreenBar au commit `c58a506`. `build` = `sonde` (nouvelle valeur). `reseau_build` = `aucun` (pas de réseau Matter). `session.transport` = `usb` ou `udp` |
 | `hello` `identite` | **tous** les champs de la ScreenBar : `mac`, `id.fabricant` = `Djoko-CLI`, `id.produit` = `Sonde hotte Haier`, `id.serie` = `HOTTE-` + MAC, `id.nom` = `Sonde hotte`, `id.hw` = 1, `id.hw_txt` = `C6 SuperMini, etages v1`. **Nouveau champ `appareil` = `hotte`** : une app multi-appareils choisira sa vue d'après lui. Absent, il vaut `screenbar`. `caps` : `sonde`, `injection` (toujours présente dans ce build), `trames`, `log`, `udp`, `cle`, `mdns` |
 | `config` | réglages de capture (GPIO, résolution, filtre, silence, mode, étage inversé) et valeurs d'injection de l'avenant |
 | `etat` | bloc `bus` : repos, activité, dernière réception, réceptions par seconde. Bloc `capture` : mode, `debord`, `rep_en_cours`. Bloc `injection` : `montee`, `armee`, `arme_reste_s`, dernier `id` et son résultat. Bloc `sys` : **l'objet `sys` de la ScreenBar à l'identique** |
@@ -847,11 +866,11 @@ Tout le reste répond `interdite`, en particulier `wifi`, `json cle ...`,
 
 ### 8.6 Code repris de la ScreenBar
 
-**Prérequis.** Le transport réseau de la ScreenBar n'est pas encore committé dans
-`benq` : c'est le cas au 25/09 de `h1_proto`, `h1_crypto`, `net_udp`,
-`tools/halo_udp.py` et `test_h1.cpp`, ainsi que des modifications de `json_out`,
-`json_mode`, `cli`, `json_check` et `PROTOCOLE-JSON.md`. Il doit être
-**committé et poussé** avant toute copie. Ce commit de référence est noté :
+**Prérequis, levé le 27/09/2026.** Le transport réseau de la ScreenBar (`h1_proto`,
+`h1_crypto`, `net_udp`, `tools/halo_udp.py`, `test_h1.cpp`, et les modifications
+de `json_out`, `json_mode`, `cli`, `json_check` et `PROTOCOLE-JSON.md`) est
+**committé et poussé** dans `benq`. Le commit de référence est **`c58a506`**.
+Toute copie se fait depuis ce commit (`git show c58a506:<chemin>`). Il est noté :
 - dans l'en-tête de chaque fichier copié ;
 - dans `docs/PROTOCOLE-JSON.md` de ce dépôt ;
 - dans le lien placé en tête de cette spec.
@@ -905,6 +924,14 @@ Le sous-projet 3 remettra ces fichiers en commun.
 Le second C6, avec le firmware `generateur`, imite un bus de 5 V à drain ouvert.
 
 **Montage :**
+- **Aucune liaison avec la hotte.** Le banc se monte :
+  - soit sur le boîtier de mesure **détaché** : hotte débranchée pendant toute
+    la séance, câble de sortie déconnecté du boîtier (fiche XH 4 broches,
+    §7.1), et contrôle hors tension avant tout USB, à l'ohmmètre : de `TP−`
+    vers le contact de terre de la fiche de la hotte, puis vers la vis de
+    terre de la carcasse, OL ;
+  - soit sur une plaque d'essai du banc, avec son propre étage d'écoute (mêmes
+    valeurs qu'au §7.2).
 - **Fil de masse** entre le `GND` du générateur et le `−` de l'étage d'écoute de la
   sonde.
 - **Ligne :** pull-up vers le `5V` du générateur. Deux variantes :
@@ -932,6 +959,9 @@ Le second C6, avec le firmware `generateur`, imite un bus de 5 V à drain ouvert
 2. **Durées à ±2 µs du nominal**, une fois corrigé le décalage de l'étage.
    - Dès l'arrivée de l'analyseur, on mesure ce décalage et l'asymétrie de
      l'étage : une voie sur la ligne à travers 47k/68k, une voie sur GPIO6.
+   - Le FX2 est numérique : il donne des instants, pas des tensions. Un relevé
+     chiffré des niveaux de la ligne est optionnel, à l'oscilloscope, et
+     l'instrument est noté.
    - Asymétrie inférieure à 5 µs, ou documentée et compensée.
 3. **Rafale :** aucune perte, ou une perte signalée par `debord`, et le débit
    maximal documenté.
@@ -972,7 +1002,7 @@ hotte haier/
 | analyseur logique FX2, 24 MHz, 8 voies (à utiliser avec PulseView) | ~10 € | tout de suite : il conditionne l'étape 5b, donc l'étape 6 |
 | connectique JST XH précâblée en 3 et 4 broches (fiches, embases, fils sertis), plus un assortiment PH 2,0 mm au cas où | ~10 € | tout de suite, ou après l'étape 0 |
 | fil UL1007 ou UL1015 d'au moins 300 V ; gaine VW-1 ou thermorétractable de 3 à 6 mm | ~10 € | tout de suite |
-| plaques à pastilles ; NPN BC547 ou 2N3904 (5 environ) ; résistances 100 k, 68 k, 47 k, 33 k, 15 k, 10 k, 4,7 k, 470 Ω, 220 Ω ; résistance 10 kΩ / 2 W ; barrettes et cavaliers 2,54 mm (`J1`, `J2`) ; barrettes femelles pour la sonde ; colliers | ~10 à 15 € selon le stock | tout de suite |
+| plaques à pastilles ; NPN BC547 ou 2N3904 (5 environ) ; résistances 100 k, 68 k, 47 k, 33 k, 15 k, 10 k, 4,7 k, 470 Ω, 220 Ω ; résistance 10 kΩ / 2 W ; condensateur céramique 1 nF (banc, variante 2 du §10) ; barrettes et cavaliers 2,54 mm (`J1`, `J2`) ; barrettes femelles pour la sonde ; colliers | ~10 à 15 € selon le stock | tout de suite |
 | grippe-fils (pinces à crochet) pour les cordons du multimètre ; 2 fils à pinces crocodile ; aiguille fine | ~10 € | avant l'étape 1 |
 | batterie USB : **vérifier le modèle** avant l'étape 5. Sonde en Wi-Fi alimentée 30 min sans coupure, modèle noté dans `RECONNAISSANCE.md` | déjà là ? | avant l'étape 5 |
 | *optionnel :* isolateur USB ADuM3160. Exclu à l'étape 5b, parce que limité au Full Speed | ~10 € | si le Mac sur batterie ne convient pas |
@@ -985,9 +1015,9 @@ pour le banc.
 | Risque | Parade |
 |---|---|
 | panneau qui pilote ses voyants **et** résiné | pas de solution propre. On rediscute avec Majid (§4) |
-| transport réseau de la ScreenBar pas encore committé | prérequis du §8.6, à lever avant toute copie de code |
+| transport réseau de la ScreenBar pas encore committé | levé : commit de référence `c58a506` (§8.6) |
 | analyseur pas encore arrivé | l'étape 6 attend l'étape 5b. Les étapes −1 à 5 avancent sans lui |
-| niveau bas de `D` au-dessus du seuil de l'étage | mesuré à l'étape 5b, puis seuil relevé (§7.2) |
+| niveau bas de `D` au-dessus du seuil de l'étage | jugé à l'étape 5b (capture propre, concordance avec l'analyseur ; oscilloscope en option), puis seuil relevé (§7.2) |
 | `CN3` collé | décoller à l'outil en plastique, sans tirer sur les fils |
 | `+` ≈ 12 V | on saute l'étape 4 ; l'étage d'écoute tient tel quel |
 | Wi-Fi trop faible au boîtier de mesure | on le déplace. Sinon, enregistrement local en flash, relu par l'USB hotte débranchée (écrit seulement si nécessaire) |
