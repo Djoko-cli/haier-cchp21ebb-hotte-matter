@@ -160,3 +160,162 @@ def uart(trame, bauds: int, inverse: bool = False) -> Decodage:
         pos = ts + 9.5 * bit
     bits = "".join(format(o, "08b") for o in octets)
     return Decodage("uart", params, bytes(octets), bits, erreurs, symboles)
+
+
+BAUDS = (300, 500, 600, 1200, 2400, 4800, 9600, 19200)
+
+
+def _plus_petit_groupe(durees) -> int | None:
+    """Centre du plus petit groupe d'au moins 2 durees (a defaut, du plus petit groupe)."""
+    g = regroupements(durees)
+    if not g:
+        return None
+    frequents = [c for c, n in g if n >= 2]
+    return (frequents or [g[0][0]])[0]
+
+
+def _vaut(d: int, t: float, m: int) -> bool:
+    """d vaut m fois T, a 25 % de T pres."""
+    return abs(d - m * t) <= t / 4
+
+
+def _emballer(messages: list[str]) -> bytes:
+    """Bits MSB d'abord, chaque message complete par des 0 jusqu'a l'octet."""
+    out = bytearray()
+    for m in messages:
+        m = m + "0" * (-len(m) % 8)
+        out += bytes(int(m[k:k + 8], 2) for k in range(0, len(m), 8))
+    return bytes(out)
+
+
+def distance_impulsion(trame, t_us: int | None = None) -> Decodage:
+    """Distance d'impulsion type WTC6534, repos haut. T estime (plus petit groupe
+    des durees hautes) si t_us est None ; tolerance 25 % de T.
+
+    Depart = palier bas de 2T ; puis chaque bit = 1T haut suivi de 1T bas (0)
+    ou de 3T bas (1) ; un palier haut qui ne vaut pas 1T clot le message (fin,
+    reponse de la carte...) ; un bas de 2T a la place d'un bit ouvre un nouveau
+    message. erreurs = paliers bas non classables (hors message : autre chose
+    que 2T ; dans un message : ni 1T, ni 2T, ni 3T), apres quoi on attend un
+    nouveau depart. symboles = bits lus ; bits : un groupe par message.
+    """
+    segs = fusionner(list(trame))
+    if t_us is None:
+        t_us = _plus_petit_groupe([d for niv, d in segs if niv])
+    params = {"t_us": t_us}
+    if not t_us:
+        return Decodage("distance_impulsion", params, b"", "", len(segs), 0)
+    messages: list[str] = []
+    bits = None          # None : attente d'un depart
+    attente_haut = False
+    erreurs = 0
+    for niv, d in segs:
+        if bits is None:
+            if not niv:
+                if _vaut(d, t_us, 2):
+                    bits, attente_haut = "", True
+                else:
+                    erreurs += 1
+            continue
+        if attente_haut:
+            if niv and _vaut(d, t_us, 1):
+                attente_haut = False
+            else:
+                messages.append(bits)
+                bits = None
+            continue
+        if _vaut(d, t_us, 1):
+            bits += "0"
+            attente_haut = True
+        elif _vaut(d, t_us, 3):
+            bits += "1"
+            attente_haut = True
+        elif _vaut(d, t_us, 2):
+            messages.append(bits)
+            bits, attente_haut = "", True
+        else:
+            erreurs += 1
+            messages.append(bits)
+            bits = None
+    if bits is not None:
+        messages.append(bits)
+    messages = [m for m in messages if m]
+    return Decodage("distance_impulsion", params, _emballer(messages), " ".join(messages),
+                    erreurs, sum(len(m) for m in messages))
+
+
+def manchester(trame, t_us: int | None = None) -> Decodage:
+    """Manchester IEEE 802.3 (0 = haut puis bas, 1 = bas puis haut), t_us = demi-bit.
+
+    T estime (plus petit groupe de toutes les durees) si t_us est None ;
+    chaque palier vaut 1 ou 2 demi-bits (25 % de T pres) ; la phase (premier
+    demi-bit fondu ou non dans le repos) est celle qui donne le moins de paires
+    sans transition au milieu. erreurs = paliers ni T ni 2T + paires sans
+    transition ; symboles = paires (bits tentes).
+    """
+    segs = fusionner(list(trame))
+    if t_us is None:
+        t_us = _plus_petit_groupe([d for _, d in segs])
+    params = {"t_us": t_us}
+    if not segs or not t_us:
+        return Decodage("manchester", params, b"", "", len(segs), 0)
+    demis: list[bool] = []
+    erreurs = 0
+    for niv, d in segs:
+        if _vaut(d, t_us, 1):
+            n = 1
+        elif _vaut(d, t_us, 2):
+            n = 2
+        else:
+            erreurs += 1
+            n = min(2, max(1, round(d / t_us)))
+        demis += [niv] * n
+    avant, apres = not segs[0][0], not segs[-1][0]
+    meilleur = None
+    for tete in ([], [avant]):
+        suite = tete + demis
+        if len(suite) % 2:
+            suite.append(apres)
+        paires = [(suite[k], suite[k + 1]) for k in range(0, len(suite), 2)]
+        invalides = sum(1 for a, b in paires if a == b)
+        if meilleur is None or invalides < meilleur[0]:
+            meilleur = (invalides, paires)
+    invalides, paires = meilleur
+    bits = "".join("0" if a else "1" for a, b in paires if a != b)
+    return Decodage("manchester", params, _emballer([bits] if bits else []), bits,
+                    erreurs + invalides, len(paires))
+
+
+_DECODEURS = {"uart": uart, "distance_impulsion": distance_impulsion, "manchester": manchester}
+
+
+def appliquer(hyp: Decodage, trames) -> list[Decodage]:
+    """Redecode chaque trame avec le decodeur et les parametres de hyp."""
+    f = _DECODEURS[hyp.nom]
+    return [f(t, **hyp.params) for t in trames]
+
+
+def _cumuler(nom: str, params: dict, decs: list[Decodage]) -> Decodage:
+    return Decodage(nom, params, b"".join(d.octets for d in decs), " ".join(d.bits for d in decs if d.bits),
+                    sum(d.erreurs for d in decs), sum(d.symboles for d in decs))
+
+
+def auto(trames, bauds=BAUDS) -> list[Decodage]:
+    """Essaie tous les decodeurs sur toutes les trames : UART a chaque debit,
+    normal et inverse, distance d'impulsion et Manchester (T estime sur
+    l'ensemble des trames). Une hypothese cumule les trames. Classement : taux
+    d'erreur croissant, puis moins de symboles (a taux egal, un UART a debit
+    double tente plus d'octets) ; une hypothese sans symbole va en queue."""
+    trames = [list(t) for t in trames if t]
+    if not trames:
+        return []
+    hyps = []
+    for b in bauds:
+        for inv in (False, True):
+            hyps.append(_cumuler("uart", {"bauds": b, "inverse": inv}, [uart(t, b, inv) for t in trames]))
+    fus = [fusionner(t) for t in trames]
+    t_di = _plus_petit_groupe([d for t in fus for niv, d in t if niv])
+    hyps.append(_cumuler("distance_impulsion", {"t_us": t_di}, [distance_impulsion(t, t_di) for t in trames]))
+    t_m = _plus_petit_groupe([d for t in fus for _, d in t])
+    hyps.append(_cumuler("manchester", {"t_us": t_m}, [manchester(t, t_m) for t in trames]))
+    return sorted(hyps, key=lambda h: (h.symboles == 0, h.taux, h.symboles))
