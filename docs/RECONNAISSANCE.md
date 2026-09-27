@@ -124,8 +124,8 @@ notée ici.
 | 1b | IC3 : marquage, nombre de broches | photo macro | `ULN2003` | | |
 | 1c | IC4 : marquage, nombre de broches | photo macro | abaisseur, SOP-8 | | |
 | 1d | relais : marquage | photo macro | 3 relais L, M, H | | |
-| 2a | `CN3` : fiche collée ? | visuel | | | si oui : décoller avec un outil en plastique, **sans tirer sur les fils** |
-| 2b | pas de `CN3`, entre les broches extrêmes | règle ou pied à coulisse en plastique | 5,0 mm : JST XH ; 4,0 mm : JST PH | 28/09 : fiche du panneau au pied à coulisse, **8,32 mm** (mesure difficile : la fiche déborde des mâchoires sur la photo) ; embase `CN3` photographiée à côté d'une règle : **environ 10,2 mm** (19,7 px/mm sur la règle, 203 px pour l'embase). Fiches techniques JST, 3 broches : XH = fiche 9,8 mm, embase 9,9 mm ; PH = fiche 7,8 mm, embase 7,9 mm | **XH très probable** (l'embase exclut le PH). Achats : XH 3P gardés, PH 3P en assurance. À confirmer : longueur extérieure de l'embase au pied à coulisse, hotte débranchée (≈ 9,9 mm → XH, ≈ 7,9 mm → PH) |
+| 2a | `CN3` : fiche collée ? | visuel | | non : la fiche du panneau se débranche ; elle porte un dépôt de colle translucide à la sortie des fils (28/09) | on la tient par le boîtier, jamais par les fils ni par la colle |
+| 2b | pas de `CN3`, entre les broches extrêmes | règle ou pied à coulisse en plastique | 5,0 mm : JST XH ; 4,0 mm : JST PH | 28/09 : fiche du panneau au pied à coulisse, **8,32 mm** (mesure difficile : la fiche déborde des mâchoires sur la photo) ; embase `CN3` photographiée à côté d'une règle : **environ 10,2 mm** (19,7 px/mm sur la règle, 203 px pour l'embase). Fiches techniques JST, 3 broches : XH = fiche 9,8 mm, embase 9,9 mm ; PH = fiche 7,8 mm, embase 7,9 mm | **JST XH, pas de 2,5 mm** : deux mesures sur photo avec règle concordent, l'embase `CN3` (environ 10,2 mm) et la fiche du panneau posée près de la règle (corps d'environ 10,4 mm, 2e photo du 28/09). Le PH (7,8 à 7,9 mm) est exclu ; la mesure de 8,32 mm au pied à coulisse était fausse. Achats : XH 3P et 4P ; les PH 3P sont inutiles |
 | 3 | accès : comment retirer le filtre, où est le boîtier, comment s'ouvre son couvercle | — | | | |
 | 4 | trajet des fils du condensateur et du connecteur blanc, par rapport à `CN3` et au passage de sortie | photo | | | |
 | 5a | câble du panneau : longueur libre | mètre | | | |
@@ -145,7 +145,7 @@ notée ici.
 - [ ] Photo cheminement choisi et emplacement du boîtier de mesure : `docs/photos/etape0-cheminement.jpg`
 
 **Sortie :**
-- [ ] le pas de `CN3` et les longueurs sont connus : connectique ☐ XH (très probable, 28/09 ; à confirmer sur l'embase) ☐ PH ; longueurs : à relever ;
+- [ ] le pas de `CN3` et les longueurs sont connus : connectique ☒ XH (28/09) ☐ PH ; longueurs : à relever ;
 - [ ] on sait si le panneau s'ouvre : ☐ oui (C possible) ☐ non, ou résiné ;
 - [ ] le cheminement est choisi, avec une photo.
 
