@@ -1,3 +1,4 @@
+// Copie partielle de benq-screenbar-halo-matter@c58a506 : src/cli.cpp (adapte : runLine et cliPoll repris, commandes de la sonde)
 // ===========================================================================
 //  Console de la sonde sur l'USB (spec 8.3) : texte humain, 'help' liste tout.
 //
@@ -5,6 +6,11 @@
 //  lignes (et leurs handlers au-dessus), sans rien renommer. Les commandes
 //  interdites a distance le sont par jsonp::remoteRefusal (json_out), pas par
 //  la table.
+//
+//  Lignes de l'hote (docs/PROTOCOLE-JSON.md) : un prefixe id=<n> fait la
+//  semantique (runLine). Avec id, 'json ...', 'capture ...' et 'seuils <v>'
+//  repondent sans texte (reponse ok, usage ou refuse) ; les autres commandes
+//  gardent leur texte, entre une reponse debut et une reponse fin.
 // ===========================================================================
 #include "cli.h"
 
@@ -17,6 +23,7 @@
 #include "capture_rmt.h"
 #include "config.h"
 #include "fw_version.h"
+#include "json_mode.h"
 #include "json_out.h"
 #include "sonde.h"
 
@@ -65,6 +72,72 @@ static void afficherReglages(const ReglagesSonde &r) {
                 r.capture.inverse ? "inverseur" : "direct");
 }
 
+// Resultat d'une commande de reglage, sans texte : reponse.code et reponse.msg
+// avec un id, texte humain sans id.
+struct Resultat {
+  bool ok;
+  const char *code;  // ok, usage, refuse
+  const char *msg;   // nul : rien a dire ; 120 caracteres au plus (reponse.msg)
+};
+
+static const char kUsageCapture[] = "usage : capture on|off|tout|changements";
+static const char kUsageSeuils[] = "usage : seuils [filtre_us 0..3] [silence_us] [resol_hz 1000000|500000]";
+
+// capture on|off|tout|changements ; args vide : rien a faire.
+static Resultat faireCapture(const char *args) {
+  if (!strcmp(args, "on")) {
+    if (!captureActive() && !captureBegin(sondeReglages().capture))
+      return {false, "refuse", "capture : echec du demarrage du RMT"};
+  } else if (!strcmp(args, "off")) {
+    captureEnd();
+  } else if (!strcmp(args, "tout") || !strcmp(args, "changements")) {
+    ReglagesSonde r = sondeReglages();
+    r.changements = !strcmp(args, "changements");
+    if (!sondeAppliquer(r)) return {true, "ok", "capture : mode applique mais pas enregistre en NVS"};
+  } else if (*args) {
+    return {false, "usage", kUsageCapture};
+  }
+  return {true, "ok", nullptr};
+}
+
+// seuils <filtre_us> [silence_us] [resol_hz] : tout est verifie avant d'ecrire (spec 8.2).
+static Resultat faireSeuils(char *args) {
+  static char msg[jsonp::kMsgMax + 1];
+  ReglagesSonde r = sondeReglages();
+  uint32_t v[3] = {};
+  uint8_t n = 0;
+  for (char *w = args; *w;) {
+    char *reste = splitWord(w);
+    if (n == 3 || !lireU32(w, &v[n])) return {false, "usage", kUsageSeuils};
+    n++;
+    w = reste;
+  }
+  if (!n) return {false, "usage", kUsageSeuils};
+  capt::Reglages c = r.capture;
+  if (!capt::filtreValide(v[0])) {
+    snprintf(msg, sizeof(msg), "seuils : filtre %lu us hors bornes (0..%u)", (unsigned long)v[0],
+             (unsigned)kFiltreMaxUs);
+    return {false, "usage", msg};
+  }
+  c.filtreUs = (uint8_t)v[0];
+  if (n >= 3) {
+    if (!capt::resolValide(v[2])) {
+      snprintf(msg, sizeof(msg), "seuils : resolution %lu Hz refusee (1000000 ou 500000)", (unsigned long)v[2]);
+      return {false, "usage", msg};
+    }
+    c.resolHz = v[2];
+  }
+  if (n >= 2) c.silenceUs = v[1];
+  if (!capt::silenceValide(c.silenceUs, c.resolHz)) {
+    snprintf(msg, sizeof(msg), "seuils : silence %lu us hors bornes a %lu Hz (%lu..%lu)", (unsigned long)c.silenceUs,
+             (unsigned long)c.resolHz, (unsigned long)kSilenceMinUs, (unsigned long)silenceMaxUs(c.resolHz));
+    return {false, "usage", msg};
+  }
+  r.capture = c;
+  if (!sondeAppliquer(r)) return {false, "refuse", "seuils : echec du RMT ou de la NVS"};
+  return {true, "ok", nullptr};
+}
+
 // ---------------------------------------------------------------------------
 //  Commandes
 // ---------------------------------------------------------------------------
@@ -84,63 +157,17 @@ static void cmdInfo(char *) {
 }
 
 static void cmdCapture(char *args) {
-  ReglagesSonde r = sondeReglages();
-  if (!strcmp(args, "on")) {
-    if (!captureActive() && !captureBegin(r.capture)) {
-      Serial.println("capture : echec du demarrage du RMT");
-      return;
-    }
-  } else if (!strcmp(args, "off")) {
-    captureEnd();
-  } else if (!strcmp(args, "tout") || !strcmp(args, "changements")) {
-    r.changements = !strcmp(args, "changements");
-    if (!sondeAppliquer(r)) Serial.println("capture : mode non enregistre en NVS");
-  } else if (*args) {
-    Serial.println("usage : capture on|off|tout|changements");
-    return;
-  }
-  afficherReglages(sondeReglages());
+  const Resultat r = faireCapture(args);
+  if (r.msg) Serial.println(r.msg);
+  if (r.ok) afficherReglages(sondeReglages());
 }
 
-// seuils [filtre_us] [silence_us] [resol_hz] : tout est verifie avant d'ecrire (spec 8.2).
 static void cmdSeuils(char *args) {
-  ReglagesSonde r = sondeReglages();
-  uint32_t v[3] = {};
-  uint8_t n = 0;
-  for (char *w = args; *w;) {
-    char *reste = splitWord(w);
-    if (n == 3 || !lireU32(w, &v[n])) {
-      Serial.println("usage : seuils [filtre_us 0..3] [silence_us] [resol_hz 1000000|500000]");
-      return;
-    }
-    n++;
-    w = reste;
+  if (*args) {
+    const Resultat r = faireSeuils(args);
+    if (r.msg) Serial.println(r.msg);
+    if (!r.ok) return;
   }
-  if (!n) {
-    afficherReglages(r);
-    return;
-  }
-  capt::Reglages c = r.capture;
-  if (!capt::filtreValide(v[0])) {
-    Serial.printf("seuils : filtre %lu us hors bornes (0..%u)\n", (unsigned long)v[0], (unsigned)kFiltreMaxUs);
-    return;
-  }
-  c.filtreUs = (uint8_t)v[0];
-  if (n >= 3) {
-    if (!capt::resolValide(v[2])) {
-      Serial.printf("seuils : resolution %lu Hz refusee (1000000 ou 500000)\n", (unsigned long)v[2]);
-      return;
-    }
-    c.resolHz = v[2];
-  }
-  if (n >= 2) c.silenceUs = v[1];
-  if (!capt::silenceValide(c.silenceUs, c.resolHz)) {
-    Serial.printf("seuils : silence %lu us hors bornes a %lu Hz (%lu..%lu)\n", (unsigned long)c.silenceUs,
-                  (unsigned long)c.resolHz, (unsigned long)kSilenceMinUs, (unsigned long)silenceMaxUs(c.resolHz));
-    return;
-  }
-  r.capture = c;
-  if (!sondeAppliquer(r)) Serial.println("seuils : echec du RMT ou de la NVS");
   afficherReglages(sondeReglages());
 }
 
@@ -165,6 +192,8 @@ static void cmdStats(char *) {
                 (unsigned long)s.symboles, (unsigned long)s.debord);
 }
 
+static void cmdJson(char *args) { jsonCommand(args, JsonCmd{false, 0, "", millis()}); }
+
 static void cmdReboot(char *) {
   Serial.println("redemarrage");
   Serial.flush();
@@ -182,6 +211,7 @@ static const Commande kCommandes[] = {
   {"bus", cmdBus, "niveau du bus, repos, fronts"},
   {"stats", cmdStats, "compteurs de capture"},
   {"reboot", cmdReboot, "redemarrage"},
+  {"json", cmdJson, "json [1 [bail s]|0|etat|hello|ping|periode|compteurs|reseau|trames|log] : mode machine"},
 };
 
 static void cmdHelp(char *) {
@@ -205,39 +235,146 @@ static bool executer(char *line) {
   return false;
 }
 
-// Une ligne de l'hote (tache 11 : prefixe id=, cadence, reponse).
-static void runLine(char *line) {
-  while (*line == ' ') line++;
-  if (!executer(line)) Serial.printf("commande inconnue : %s ('help')\n", line);
+// ---------------------------------------------------------------------------
+//  Lignes de l'hote (protocole de la ScreenBar, sections 2.6 et 6). runLine et
+//  cliPoll sont repris de benq-screenbar-halo-matter@c58a506 : src/cli.cpp.
+// ---------------------------------------------------------------------------
+
+// Premier mot de s egal a w (sans couper la ligne).
+static bool firstWordIs(const char *s, const char *w) {
+  const size_t n = strlen(w);
+  return !strncmp(s, w, n) && (s[n] == ' ' || !s[n]);
+}
+
+// Ce qui suit le premier mot, espaces sautes.
+static char *afterWord(char *s) {
+  while (*s && *s != ' ') s++;
+  while (*s == ' ') s++;
+  return s;
+}
+
+// Une ligne de l'hote : prefixe id=<n> retire avant l'aiguillage, refus sans
+// execution (trop longue, cadence, interdite a distance), puis :
+//  - sans id : comme toujours (texte) ;
+//  - avec id : famille json (reponse seule) ; capture et seuils <valeurs>
+//    sans texte (reponse ok, usage ou refuse ; spec 8.3 : a distance, aucune
+//    commande ne produit de texte) ; sinon commande a texte entre reponse
+//    debut et reponse fin.
+// A distance (tache 19), jsonRemoteAdmit passera avant tout refus.
+static void runLine(char *line, bool tooLong) {
+  const uint32_t t0 = millis();
+  const bool remote = jsonOrigin() != jsonp::kUsb;
+  uint32_t id = 0;
+  char *cmd = line;
+  const bool hasId = jsonp::parseIdPrefix(line, &id, &cmd);
+  while (*cmd == ' ') cmd++;
+  size_t len = strlen(cmd);
+  while (len && cmd[len - 1] == ' ') cmd[--len] = 0;
+  if (remote && !hasId) {
+    jsonCountRejected();  // a distance, toujours un id : sans lui, aucune reponse possible
+    return;
+  }
+  if (!hasId && !*cmd && !tooLong) return;  // ligne vide (Ctrl-U compris) : rien
+  char shown[jsonp::kCmdTextMax + 1];
+  jsonp::copyCmd(shown, cmd);  // avant que l'aiguillage ne coupe la ligne en mots
+  jsonp::maskCmd(shown);       // jamais l'alea de 'json cle nouvelle' dans la reponse
+  const JsonCmd c{hasId, id, shown, t0};
+  if (tooLong) {
+    jsonRefuse(c, "trop_long", "ligne de plus de 127 octets : rien n'est execute");
+    return;
+  }
+  if ((hasId || jsonMachine() || remote) && !jsonCadenceOk(t0)) {
+    jsonRefuse(c, "cadence", "plus de 20 lignes par seconde : rien n'est execute");
+    return;
+  }
+  if (remote) {
+    if (const char *why = jsonp::remoteRefusal(cmd)) {
+      jsonRefuse(c, "interdite", why);
+      jsonAfterCommand();
+      return;
+    }
+  }
+  if (!hasId) {
+    if (!executer(cmd)) Serial.printf("commande inconnue : %s ('help')\n", cmd);
+    jsonAfterCommand();
+    return;
+  }
+  jsonp::Reply r;
+  r.id = id;
+  r.cmd = shown;
+  if (!*cmd) {
+    r.ok = false;
+    r.code = "inconnue";
+    r.msg = "commande vide";
+    jsonReply(r);
+    return;
+  }
+  if (firstWordIs(cmd, "json")) {
+    jsonCommand(afterWord(cmd), c);
+  } else if (firstWordIs(cmd, "capture") || (firstWordIs(cmd, "seuils") && *afterWord(cmd))) {
+    const Resultat res = firstWordIs(cmd, "capture") ? faireCapture(afterWord(cmd)) : faireSeuils(afterWord(cmd));
+    r.ok = res.ok;
+    r.code = res.code;
+    r.msg = res.msg;
+    r.durMs = millis() - t0;
+    jsonReply(r);
+  } else {
+    r.fin = false;
+    r.code = "en_cours";
+    jsonReply(r);  // la commande va ecrire son texte
+    const bool known = executer(cmd);
+    if (!known) Serial.printf("commande inconnue : %s ('help')\n", cmd);
+    r.fin = true;
+    r.ok = known;
+    r.code = known ? "execute" : "inconnue";
+    r.durMs = millis() - t0;
+    jsonReplyEnd(r);  // 'help' peut remplir le tampon d'emission : jamais perdue
+  }
+  jsonAfterCommand();
 }
 
 // ---------------------------------------------------------------------------
 
-static jsonp::LineAssembler sLine;  // 127 caracteres au plus
+static jsonp::LineAssembler sLine;  // 127 caracteres au plus, prefixe id= compris
 
 void cliBegin() {
   Serial.println("Tape 'help' pour la liste des commandes.");
   Serial.print("> ");
 }
 
-// Echo, effacement, Ctrl-U (vide la ligne), commande, invite.
+// Mode humain : echo, saut de ligne, commande, flush, invite. Mode machine :
+// ni echo, ni saut de ligne, ni invite, ni Serial.flush() (qui attendrait un
+// hote muet, puis viderait tout le tampon d'emission, lignes machine
+// comprises) ; octets hors 0x20..0x7E ignores. Ctrl-U (0x15) vide la ligne
+// en cours dans les deux modes.
 void cliPoll() {
   while (Serial.available()) {
     const uint8_t c = (uint8_t)Serial.read();
-    switch (sLine.feed(c, false)) {
-      case jsonp::LineAssembler::Ev::Echo: Serial.print((char)c); break;
-      case jsonp::LineAssembler::Ev::Erase: Serial.print("\b \b"); break;
+    jsonNoteRx();
+    const bool machine = jsonMachine();
+    switch (sLine.feed(c, machine)) {
+      case jsonp::LineAssembler::Ev::Echo:
+        if (!machine) Serial.print((char)c);
+        break;
+      case jsonp::LineAssembler::Ev::Erase:
+        if (!machine) Serial.print("\b \b");
+        break;
       case jsonp::LineAssembler::Ev::Clear:
-        for (uint8_t i = 0; i < sLine.cleared(); i++) Serial.print("\b \b");
+        if (!machine)
+          for (uint8_t i = 0; i < sLine.cleared(); i++) Serial.print("\b \b");
         break;
-      case jsonp::LineAssembler::Ev::Line:
-        Serial.println();
-        if (sLine.tooLong()) Serial.printf("ligne de plus de %u caracteres : ignoree\n", (unsigned)jsonp::kCmdMax);
-        else runLine(sLine.text());
+      case jsonp::LineAssembler::Ev::Line: {
+        if (!machine) Serial.println();
+        const bool tooLong = sLine.tooLong();
+        runLine(sLine.text(), tooLong);
         sLine.reset();
-        Serial.flush();  // l'USB CDC du C6 perd des octets si on enchaine trop vite
-        Serial.print("> ");
+        // 'json 1' vient de couper l'invite ; 'json 0' l'a deja reaffichee.
+        if (!machine && !jsonMachine()) {
+          Serial.flush();  // l'USB CDC du C6 perd des octets si on enchaine trop vite
+          Serial.print("> ");
+        }
         break;
+      }
       case jsonp::LineAssembler::Ev::None: break;
     }
   }

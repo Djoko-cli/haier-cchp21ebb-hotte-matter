@@ -10,4 +10,7 @@ $CXX src/capture_model.cpp tools/tests/test_capture.cpp -o "$OUT/test_capture"
 "$OUT/test_capture"
 $CXX src/json_out.cpp tools/tests/test_json.cpp -o "$OUT/test_json"
 "$OUT/test_json" "$OUT/test_json_lignes.txt"
+# Lignes realistes de test_json et exemples du protocole : conformes au profil hotte.
+python3 tools/json_check.py --strict --independantes -q "$OUT/test_json_lignes.txt"
+python3 tools/json_check.py --strict -q --exemples docs/PROTOCOLE-JSON.md
 echo "tests hote : OK"
