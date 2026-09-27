@@ -212,4 +212,40 @@ size_t versSymboles(const Demande &d, Sym *out, size_t cap) {
   return k / 2;
 }
 
+void Surveillance::debut(const Demande *d, uint64_t t0Us, uint32_t tolUs) {
+  d_ = d;
+  t0_ = prec_ = t0Us;
+  tol_ = tolUs;
+  finRel_ = totalUs(*d) + tolUs;
+  n_ = 0;
+  ancre_ = coll_ = false;
+  actif_ = true;
+}
+
+void IRAM_ATTR Surveillance::front(uint64_t tUs, bool busHaut) {
+  if (!actif_ || coll_) return;
+  if (!ancre_) {
+    if (!busHaut && tUs >= t0_ && tUs - t0_ <= kDepartMaxUs) {
+      ancre_ = true;
+      t0_ = prec_ = tUs;
+    } else {
+      coll_ = true;  // premier front inattendu : un autre emetteur
+    }
+    return;
+  }
+  if (tUs < t0_ || tUs - t0_ > finRel_) return;  // apres la fenetre : trafic d'un autre
+  if (n_ < kDurMax) relu_[n_++] = (uint32_t)(tUs - prec_);
+  prec_ = tUs;
+  const uint32_t rel = (uint32_t)(tUs - t0_);
+  // Vers un autre niveau que l'emis (frontAnormal), ou vers le niveau emis
+  // loin de tout front programme : le front precedent a ete masque.
+  if (frontAnormal(*d_, rel, busHaut, tol_) || !frontProgramme(*d_, rel, tol_)) coll_ = true;
+}
+
+uint16_t Surveillance::relu(uint32_t *out, uint16_t cap) const {
+  const uint16_t n = n_ < cap ? n_ : cap;
+  for (uint16_t i = 0; i < n; i++) out[i] = relu_[i];
+  return n;
+}
+
 }  // namespace inj

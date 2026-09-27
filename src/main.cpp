@@ -2,10 +2,12 @@
 //  Sonde de reconnaissance de la ligne D (docs/SPEC-RECONNAISSANCE.md)
 //
 //  setup() : GPIO7 bas en premier, port USB, identifiant de demarrage,
-//  reglages NVS, interruption des fronts, capture RMT, console, Wi-Fi, UDP.
+//  reglages NVS, interruption des fronts, capture RMT, console, Wi-Fi, UDP,
+//  injection (desarmee).
 //  loop() : console, capture (parties -> lignes trame du mode machine, ou
 //  texte), mode machine (bail, lignes periodiques), Wi-Fi, UDP (commandes
-//  recues, datagrammes emis), puis la tache IDLE.
+//  recues, datagrammes emis), injection (attente du silence, emission,
+//  evenement), puis la tache IDLE.
 // ===========================================================================
 #include <Arduino.h>
 
@@ -14,6 +16,7 @@
 #include "cli.h"
 #include "config.h"
 #include "fw_version.h"
+#include "injection.h"
 #include "json_mode.h"
 #include "json_out.h"
 #include "net_udp_wifi.h"
@@ -113,6 +116,9 @@ void setup() {
   cliBegin();
   netWifiBegin();  // identifiants en NVS : station, mDNS ; sans eux, radio eteinte
   netUdpBegin();   // cle H1 en NVS (hotte/cle) : socket UDP 5480 des que le Wi-Fi a une adresse
+  // Valeurs de l'avenant et etage declare monte (NVS) ; toujours desarmee au demarrage.
+  if (!injectionBegin(sReglages.injection, sReglages.injMontee))
+    Serial.println("[injection] encodeur RMT indisponible : injection impossible");
 }
 
 void loop() {
@@ -121,5 +127,6 @@ void loop() {
   jsonPoll();
   netWifiPoll();
   netUdpPoll();
+  injectionPoll();
   vTaskDelay(1);  // laisse tourner la tache IDLE
 }

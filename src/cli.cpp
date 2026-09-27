@@ -8,9 +8,10 @@
 //  la table.
 //
 //  Lignes de l'hote (docs/PROTOCOLE-JSON.md) : un prefixe id=<n> fait la
-//  semantique (runLine). Avec id, 'json ...', 'capture ...' et 'seuils <v>'
-//  repondent sans texte (reponse ok, usage ou refuse) ; les autres commandes
-//  gardent leur texte, entre une reponse debut et une reponse fin.
+//  semantique (runLine). Avec id, 'json ...', 'capture ...', 'seuils <v>',
+//  'injection <v>' et 'injecte ...' repondent sans texte (reponse ok,
+//  accepte, usage ou refuse) ; les autres commandes gardent leur texte, entre
+//  une reponse debut et une reponse fin.
 // ===========================================================================
 #include "cli.h"
 
@@ -23,6 +24,7 @@
 #include "capture_rmt.h"
 #include "config.h"
 #include "fw_version.h"
+#include "injection.h"
 #include "injection_regles.h"
 #include "json_mode.h"
 #include "json_out.h"
@@ -141,12 +143,16 @@ static Resultat faireSeuils(char *args) {
   return {true, "ok", nullptr};
 }
 
-static const char kUsageInjection[] = "usage : injection [regle <nom> <valeur>]";
+static const char kUsageInjection[] = "usage : injection [monte 0|1 | on | off | regle <nom> <valeur>]";
+static const char kUsageInjecte[] = "usage : injecte durees <d1> <d2> ... (us, alternees, la premiere basse)";
 
 static void afficherInjection() {
-  const ReglagesSonde &r = sondeReglages();
-  const inj::Params &p = r.injection;
-  Serial.printf("injection : etage %s (GPIO%u)\n", r.injMontee ? "declare monte" : "non monte", (unsigned)kPinInjection);
+  const inj::Params &p = injectionParams();
+  const inj::Etat &e = injectionEtat();
+  const uint32_t now = millis();
+  Serial.printf("injection : etage %s (GPIO%u), ", e.montee() ? "declare monte" : "non monte", (unsigned)kPinInjection);
+  if (e.armee(now, p)) Serial.printf("armee (reste %lu s)\n", (unsigned long)e.resteS(now, p));
+  else Serial.println("desarmee");
   Serial.printf("  bas_max_us %lu, total_max_us %lu, silence_min_us %lu, attente_max_ms %lu, delai_min_ms %lu, "
                 "arme_max_s %lu, tol_us %lu\n",
                 (unsigned long)p.basMaxUs, (unsigned long)p.totalMaxUs, (unsigned long)p.silenceMinUs,
@@ -154,8 +160,12 @@ static void afficherInjection() {
                 (unsigned long)p.tolUs);
 }
 
-// Reglages d'injection changes : NVS, config reemise.
-static bool appliquerInjection(const ReglagesSonde &r) { return sondeAppliquer(r); }
+// Reglages d'injection changes : NVS, config reemise, module d'injection a jour.
+static bool appliquerInjection(const ReglagesSonde &r) {
+  const bool ok = sondeAppliquer(r);
+  injectionBegin(sondeReglages().injection, sondeReglages().injMontee);
+  return ok;
+}
 
 // injection regle <nom> <valeur> : verifie avant d'ecrire en NVS (bornes : inj::bornesParam).
 static Resultat faireRegle(char *args) {
@@ -182,12 +192,68 @@ static Resultat faireRegle(char *args) {
   return {true, "ok", nullptr};
 }
 
-// injection [regle <nom> <valeur>] ; args vide : rien a faire.
+// injection monte 0|1 | on | off | regle <nom> <valeur> ; args vide : rien a faire.
 static Resultat faireInjection(char *args) {
+  static char msg[jsonp::kMsgMax + 1];
   char *reste = splitWord(args);
   if (!strcmp(args, "regle")) return faireRegle(reste);
+  if (!strcmp(args, "monte")) {
+    if (strcmp(reste, "0") && strcmp(reste, "1")) return {false, "usage", "usage : injection monte 0|1"};
+    ReglagesSonde r = sondeReglages();
+    r.injMontee = !strcmp(reste, "1");
+    if (!appliquerInjection(r)) return {false, "refuse", "injection monte : echec de l'ecriture en NVS"};
+    return {true, "ok", nullptr};
+  }
+  if (*reste) return {false, "usage", kUsageInjection};
+  if (!strcmp(args, "on")) {
+    if (injectionArmer(millis()) != inj::Refus::Aucun)
+      return {false, "refuse", "injection : non montee ('injection monte 1' par l'USB, etage monte)"};
+    snprintf(msg, sizeof(msg), "injection armee pour %lu s ('injection off' pour desarmer)",
+             (unsigned long)injectionParams().armeMaxS);
+    return {true, "ok", msg};
+  }
+  if (!strcmp(args, "off")) {
+    injectionDesarmer();
+    return {true, "ok", "injection desarmee"};
+  }
   if (!*args) return {true, "ok", nullptr};
   return {false, "usage", kUsageInjection};
+}
+
+// injecte durees <d1> <d2> ... : analysee (bornes en vigueur), puis demandee.
+// Acceptee : l'evenement injection suit (asynchrone). shown : la commande
+// telle que l'evenement la montre.
+static Resultat faireInjecte(const char *args, uint32_t id, const char *shown) {
+  static char msg[jsonp::kMsgMax + 1];
+  const inj::Params &p = injectionParams();
+  inj::Demande d;
+  const inj::Refus a = inj::analyser(args, p, &d);
+  switch (a) {
+    case inj::Refus::Aucun: break;
+    case inj::Refus::TropDeDurees:
+      snprintf(msg, sizeof(msg), "injecte : trop de durees (%u au plus)", (unsigned)inj::kDurMax);
+      return {false, "usage", msg};
+    case inj::Refus::BasTropLong:
+      snprintf(msg, sizeof(msg), "injecte : duree basse trop longue (bas_max_us %lu)", (unsigned long)p.basMaxUs);
+      return {false, "usage", msg};
+    case inj::Refus::TropLong:
+      snprintf(msg, sizeof(msg), "injecte : trame trop longue (total_max_us %lu)", (unsigned long)p.totalMaxUs);
+      return {false, "usage", msg};
+    default: return {false, "usage", kUsageInjecte};
+  }
+  const inj::Refus r = injectionDemander(d, id, shown, millis());
+  switch (r) {
+    case inj::Refus::Aucun: return {true, "accepte", nullptr};
+    case inj::Refus::NonMontee: return {false, "refuse", "injecte : non montee ('injection monte 1' par l'USB)"};
+    case inj::Refus::NonArmee: return {false, "refuse", "injecte : non armee ('injection on')"};
+    case inj::Refus::Delai:
+      snprintf(msg, sizeof(msg), "injecte : delai minimal (%lu ms entre deux injections)",
+               (unsigned long)p.delaiMinMs);
+      return {false, "refuse", msg};
+    default:
+      snprintf(msg, sizeof(msg), "injecte : %s", inj::refusTexte(r));
+      return {false, "refuse", msg};
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -277,7 +343,8 @@ static void cmdWifi(char *args) {
   Serial.printf("wifi : identifiants enregistres, connexion a %s ('info' pour suivre)\n", args);
 }
 
-// injection [regle <nom> <valeur>] : USB seulement (liste blanche).
+// injection [monte 0|1 | on | off | regle <nom> <valeur>] : 'on' et 'off'
+// aussi a distance (liste blanche).
 static void cmdInjection(char *args) {
   if (*args) {
     const Resultat r = faireInjection(args);
@@ -285,6 +352,14 @@ static void cmdInjection(char *args) {
     if (!r.ok) return;
   }
   afficherInjection();
+}
+
+// injecte durees <d1> <d2> ... : le resultat suit en texte ('injection : ...').
+static void cmdInjecte(char *args) {
+  char shown[jsonp::kCmdTextMax + 1];
+  snprintf(shown, sizeof(shown), "injecte %s", args);
+  const Resultat r = faireInjecte(args, 0, shown);
+  Serial.println(r.ok ? "injecte : acceptee, attente du silence" : r.msg);
 }
 
 static void cmdReboot(char *) {
@@ -306,7 +381,8 @@ static const Commande kCommandes[] = {
   {"reboot", cmdReboot, "redemarrage"},
   {"json", cmdJson, "json [1 [bail s]|0|etat|hello|ping|periode|compteurs|reseau|trames|log] : mode machine"},
   {"wifi", cmdWifi, "wifi <ssid> <mdp>"},
-  {"injection", cmdInjection, "injection [regle <nom> <valeur>] : garde-fous de l'injection"},
+  {"injection", cmdInjection, "injection [monte 0|1 | on | off | regle <nom> <valeur>]"},
+  {"injecte", cmdInjecte, "injecte durees <d1> <d2> ... (us, la premiere basse)"},
 };
 
 static void cmdHelp(char *) {
@@ -351,10 +427,10 @@ static char *afterWord(char *s) {
 // Une ligne de l'hote : prefixe id=<n> retire avant l'aiguillage, refus sans
 // execution (trop longue, cadence, interdite a distance), puis :
 //  - sans id : comme toujours (texte) ;
-//  - avec id : famille json (reponse seule) ; capture et seuils <valeurs>
-//    sans texte (reponse ok, usage ou refuse ; spec 8.3 : a distance, aucune
-//    commande ne produit de texte) ; sinon commande a texte entre reponse
-//    debut et reponse fin.
+//  - avec id : famille json (reponse seule) ; capture, seuils <valeurs>,
+//    injection <valeurs> et injecte sans texte (reponse ok, accepte, usage ou
+//    refuse ; spec 8.3 : a distance, aucune commande ne produit de texte) ;
+//    sinon commande a texte entre reponse debut et reponse fin.
 // A distance, jsonRemoteAdmit passe avant tout refus (id deja vu).
 static void runLine(char *line, bool tooLong) {
   const uint32_t t0 = millis();
@@ -410,11 +486,18 @@ static void runLine(char *line, bool tooLong) {
   }
   if (firstWordIs(cmd, "json")) {
     jsonCommand(afterWord(cmd), c);
-  } else if (firstWordIs(cmd, "capture") || (firstWordIs(cmd, "seuils") && *afterWord(cmd))) {
-    const Resultat res = firstWordIs(cmd, "capture") ? faireCapture(afterWord(cmd)) : faireSeuils(afterWord(cmd));
+  } else if (firstWordIs(cmd, "capture") || firstWordIs(cmd, "injecte") ||
+             ((firstWordIs(cmd, "seuils") || firstWordIs(cmd, "injection")) && *afterWord(cmd))) {
+    Resultat res{};
+    if (firstWordIs(cmd, "capture")) res = faireCapture(afterWord(cmd));
+    else if (firstWordIs(cmd, "seuils")) res = faireSeuils(afterWord(cmd));
+    else if (firstWordIs(cmd, "injection")) res = faireInjection(afterWord(cmd));
+    else res = faireInjecte(afterWord(cmd), id, shown);
     r.ok = res.ok;
     r.code = res.code;
     r.msg = res.msg;
+    // 'injecte' acceptee : l'evenement injection suivra, avec cet id.
+    if (res.ok && firstWordIs(cmd, "injecte")) r.suite = jsonp::Reply::SuiteInjection;
     r.durMs = millis() - t0;
     jsonReply(r);
   } else {

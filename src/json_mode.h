@@ -4,8 +4,8 @@
 //  Mode machine : protocole compagnon v1, profil hotte (docs/PROTOCOLE-JSON.md)
 //
 //  Session ('json 1', bail, 'json 0'), lignes periodiques (etat, compteurs,
-//  battement) par la file des periodiques, evenements trame et log, reponses
-//  aux lignes portant un id.
+//  battement) par la file des periodiques, evenements trame, injection et log,
+//  reponses aux lignes portant un id.
 //
 //  Une session par transport (origine : jsonp::kUsb, puis une par session
 //  reseau etablie, net_udp_wifi.cpp) : ses reglages, son n, sa file, ses
@@ -71,6 +71,12 @@ void jsonConfigChanged();
 // 100 lignes par seconde et par session au plus ; les parties d'une reception
 // sont produites ou sautees ensemble ; la suivante produite porte 'sautes'.
 void jsonTrame(const capt::Partie &p, bool hasRep, uint32_t rep);
+// Fin d'une injection (tache 23, injection.cpp) : ligne injection vers chaque
+// session en mode machine, sans plafond. L'id n'a de sens que dans la session
+// qui a envoye la commande : l'origine courante (jsonOrigin(), que
+// injection.cpp pose sur celle de la commande) le recoit, meme hors mode
+// machine si la commande portait un id ; les autres voient id null.
+void jsonInjection(const jsonp::InjectionEv &e);
 // Mode 'json log 1' : la ligne part en message log (src sonde|capture|
 // injection|reseau, niv notice|trace), 20 par seconde au plus ; true si
 // l'USB l'a prise (emise, plafonnee ou perdue), false pour l'afficher en texte.
