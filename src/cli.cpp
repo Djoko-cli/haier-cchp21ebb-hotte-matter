@@ -25,6 +25,7 @@
 #include "fw_version.h"
 #include "json_mode.h"
 #include "json_out.h"
+#include "net_wifi.h"
 #include "sonde.h"
 
 typedef void (*Handler)(char *args);   // args : ce qui suit le mot-cle (peut etre "")
@@ -154,6 +155,15 @@ static void cmdInfo(char *) {
   else Serial.println("MAC illisible");
   Serial.printf("ecoute GPIO%u, injection GPIO%u (tenue basse)\n", (unsigned)kPinEcoute, (unsigned)kPinInjection);
   afficherReglages(sondeReglages());
+  if (!*netWifiSsid()) {
+    Serial.println("wifi : non configure ('wifi <ssid> <mdp>')");
+  } else {
+    char ip[16];
+    netWifiIp(ip);
+    Serial.printf("wifi : %s, %s, IP %s, RSSI %d dBm, mDNS %s.local, %lu perte(s) depuis le demarrage\n",
+                  netWifiSsid(), netWifiUp() ? "connecte" : "deconnecte (nouvel essai toutes les 10 s)", ip,
+                  (int)netWifiRssi(), kNomMdns, (unsigned long)netWifiPertes());
+  }
 }
 
 static void cmdCapture(char *args) {
@@ -194,6 +204,25 @@ static void cmdStats(char *) {
 
 static void cmdJson(char *args) { jsonCommand(args, JsonCmd{false, 0, "", millis()}); }
 
+// wifi <ssid> <mdp> : le mot de passe est le reste de la ligne (vide : reseau
+// ouvert). Verifie avant d'ecrire en NVS ; USB seulement (liste blanche).
+static void cmdWifi(char *args) {
+  char *mdp = splitWord(args);
+  if (!*args) {
+    Serial.println("usage : wifi <ssid> <mdp>   (mdp absent : reseau ouvert)");
+    return;
+  }
+  if (!netWifiValides(args, mdp)) {
+    Serial.println("wifi : refuse (ssid de 1 a 32 caracteres sans espace ; mdp vide, de 8 a 63 caracteres, ou 64 hexa)");
+    return;
+  }
+  if (!netWifiSet(args, mdp)) {
+    Serial.println("wifi : echec de l'ecriture en NVS, rien ne change");
+    return;
+  }
+  Serial.printf("wifi : identifiants enregistres, connexion a %s ('info' pour suivre)\n", args);
+}
+
 static void cmdReboot(char *) {
   Serial.println("redemarrage");
   Serial.flush();
@@ -212,6 +241,7 @@ static const Commande kCommandes[] = {
   {"stats", cmdStats, "compteurs de capture"},
   {"reboot", cmdReboot, "redemarrage"},
   {"json", cmdJson, "json [1 [bail s]|0|etat|hello|ping|periode|compteurs|reseau|trames|log] : mode machine"},
+  {"wifi", cmdWifi, "wifi <ssid> <mdp>"},
 };
 
 static void cmdHelp(char *) {

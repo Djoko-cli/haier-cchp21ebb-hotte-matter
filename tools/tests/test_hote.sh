@@ -15,4 +15,6 @@ python3 tools/json_check.py --strict --independantes -q "$OUT/test_json_lignes.t
 python3 tools/json_check.py --strict -q --exemples docs/PROTOCOLE-JSON.md
 $CXX src/motifs.cpp tools/tests/test_generateur.cpp -o "$OUT/test_generateur"
 "$OUT/test_generateur"
+$CXX tools/tests/test_wifi.cpp -o "$OUT/test_wifi"
+"$OUT/test_wifi"
 echo "tests hote : OK"
