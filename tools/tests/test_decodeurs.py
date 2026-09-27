@@ -101,5 +101,91 @@ class Uart(unittest.TestCase):
         self.assertEqual((d.octets, d.bits, d.erreurs, d.symboles, d.taux), (b"", "", 0, 0, 0.0))
 
 
+class DistanceImpulsion(unittest.TestCase):
+    def test_trame_wtc_et_reponse(self):
+        d = decodeurs.distance_impulsion(isoler(signaux.trame_motif("wtc", 3), True))
+        self.assertEqual((d.nom, d.params), ("distance_impulsion", {"t_us": 750}))
+        self.assertEqual(d.bits, "0000100000000000 00000011")
+        self.assertEqual(d.octets, signaux.octets_motif("wtc", 3))
+        self.assertEqual((d.erreurs, d.symboles), (0, 24))
+
+    def test_t_impose_et_gigue(self):
+        segs = bruiter(signaux.distance_impulsion("1011001110001111", 500), 60)
+        d = decodeurs.distance_impulsion(isoler(segs, True), t_us=500)
+        self.assertEqual((d.bits, d.octets, d.erreurs), ("1011001110001111", b"\xb3\x8f", 0))
+
+    def test_message_incomplet_complete_par_des_zeros(self):
+        d = decodeurs.distance_impulsion(isoler(signaux.distance_impulsion("101"), True), t_us=750)
+        self.assertEqual((d.bits, d.octets), ("101", b"\xa0"))
+
+    def test_palier_non_classable(self):
+        segs = signaux.distance_impulsion("0000", 750)
+        segs[4] = (B, 5 * 750)  # ni 1T ni 3T : erreur, puis attente d'un nouveau depart
+        d = decodeurs.distance_impulsion(isoler(segs, True), t_us=750)
+        self.assertEqual((d.bits, d.erreurs), ("0", 3))  # le palier, puis les deux bas de 1T hors message
+
+    def test_sans_palier_haut(self):
+        d = decodeurs.distance_impulsion([(B, 1500)])
+        self.assertEqual((d.params, d.symboles, d.erreurs), ({"t_us": None}, 0, 1))
+
+
+class Manchester(unittest.TestCase):
+    def test_bits_ieee(self):
+        d = decodeurs.manchester(isoler(signaux.manchester("1011001110001111", 100), True))
+        self.assertEqual((d.nom, d.params), ("manchester", {"t_us": 100}))
+        self.assertEqual((d.bits, d.octets, d.erreurs, d.symboles), ("1011001110001111", b"\xb3\x8f", 0, 16))
+
+    def test_premier_demi_bit_fondu_dans_le_repos(self):
+        # 0 en tete avec repos haut : le demi-bit haut est invisible, la phase est retrouvee
+        segs = [(H, 10000)] + signaux.manchester("0110", 100) + [(H, 10000)]
+        d = decodeurs.manchester(isoler(segs, True))
+        self.assertEqual((d.bits, d.erreurs), ("0110", 0))
+
+    def test_palier_de_3t(self):
+        segs = [(B, 100), (H, 300), (B, 100)]
+        self.assertGreater(decodeurs.manchester(segs, t_us=100).erreurs, 0)
+
+
+class Auto(unittest.TestCase):
+    def trames(self, motif, indices, silence_us):
+        segs = []
+        for i in indices:
+            segs += signaux.trame_motif(motif, i) + [(signaux.repos_haut_motif(motif), signaux.pause_motif_us(motif))]
+        return decodeurs.decouper(segs, silence_us, signaux.repos_haut_motif(motif))
+
+    def verifier_tete(self, motif, indices, silence_us, nom, params):
+        trames = self.trames(motif, indices, silence_us)
+        hyps = decodeurs.auto(trames)
+        self.assertEqual(len(hyps), 18)
+        tete = hyps[0]
+        self.assertEqual((tete.nom, tete.params, tete.erreurs), (nom, params, 0))
+        attendu = b"".join(signaux.octets_motif(motif, i) for i in indices)
+        self.assertEqual(tete.octets, attendu)
+        self.assertEqual(b"".join(d.octets for d in decodeurs.appliquer(tete, trames)), attendu)
+        taux = [h.taux for h in hyps if h.symboles]
+        self.assertEqual(taux, sorted(taux))
+        return hyps
+
+    def test_krona_uart_500_inverse(self):
+        self.verifier_tete("krona", range(2, 8), 19000, "uart", {"bauds": 500, "inverse": True})
+
+    def test_uart_9600(self):
+        self.verifier_tete("uart9600", range(10), 5000, "uart", {"bauds": 9600, "inverse": False})
+
+    def test_uart_2400_inverse(self):
+        self.verifier_tete("uart2400inv", range(10), 5000, "uart", {"bauds": 2400, "inverse": True})
+
+    def test_wtc(self):
+        self.verifier_tete("wtc", range(10), 5000, "distance_impulsion", {"t_us": 750})
+
+    def test_manchester(self):
+        trames = [isoler(signaux.manchester(format(0xA000 | i * 37, "016b"), 250), True) for i in range(8)]
+        tete = decodeurs.auto(trames)[0]
+        self.assertEqual((tete.nom, tete.params, tete.erreurs), ("manchester", {"t_us": 250}, 0))
+
+    def test_sans_trame(self):
+        self.assertEqual(decodeurs.auto([]), [])
+
+
 if __name__ == "__main__":
     unittest.main()
