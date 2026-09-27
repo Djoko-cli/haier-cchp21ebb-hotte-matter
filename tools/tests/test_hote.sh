@@ -20,4 +20,6 @@ $CXX tools/tests/test_wifi.cpp -o "$OUT/test_wifi"
 # Enveloppe H1 : crypto de CommonCrypto (macOS, dans libSystem : rien a lier) ; mbedTLS sur la carte.
 $CXX src/h1_proto.cpp tools/tests/test_h1.cpp -o "$OUT/test_h1"
 "$OUT/test_h1"
+$CXX src/injection_regles.cpp src/json_out.cpp tools/tests/test_injection.cpp -o "$OUT/test_injection"
+"$OUT/test_injection"
 echo "tests hote : OK"
