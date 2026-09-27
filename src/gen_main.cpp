@@ -13,10 +13,15 @@
 //    motif <nom> [n] [pause_ms]   n trames (defaut 1000, rafale 1 ; 0 : sans
 //                                 fin), pause apres chaque trame (defaut :
 //                                 celle du motif, motif::pauseUs)
+//    impulsions <bas_us> <periode_ms> [n]
+//                                 impulsion basse de bas_us toutes les
+//                                 periode_ms, n fois (defaut 0 : sans fin) ;
+//                                 collision du critere 5 (docs/BANC.md 9)
 //    stop                         arrete et relache la ligne (GPIO7 bas)
 //    etat                         motif, trame, pause, niveau de la ligne
 //    help                         commandes et motifs
-//  A chaque trame emise : 'motif <nom> trame <index>' (index depuis 0).
+//  A chaque trame emise : 'motif <nom> trame <index>' (index depuis 0) ;
+//  a chaque impulsion : 'impulsion <index>'.
 //
 //  Deroulement : prise du repos (un symbole bref au niveau du repos, qui y
 //  laisse la ligne : eot_level), pause, trame 0, pause, trame 1, ... Chaque
@@ -62,6 +67,8 @@ volatile uint32_t sFinUs = 0;    // fin de la derniere transaction (esp_timer, 3
 enum class Etape : uint8_t { Arret, Emission, Pause, Fini };
 struct Course {
   motif::Id id = motif::Id::Uart500;
+  bool impulsions = false;  // commande 'impulsions' au lieu d'un motif
+  uint32_t basUs = 0;       // impulsions : duree basse
   uint32_t n = 0;         // trames demandees (0 : sans fin)
   uint32_t pauseUs = 0;
   uint32_t index = 0;     // prochaine trame
@@ -166,6 +173,24 @@ void demarrer(motif::Id id, uint32_t n, uint32_t pauseUs) {
   Serial.printf(", pause %lu us, repos %s\n", (unsigned long)pauseUs, texteRepos(sC.reposHaut));
 }
 
+// 'impulsions' : pause comptee depuis la fin de chaque impulsion, soit une
+// periode de bas_us + pause (plus quelques dizaines de us).
+void demarrerImpulsions(uint32_t basUs, uint32_t periodeMs, uint32_t n) {
+  if (sC.etape == Etape::Emission || sC.etape == Etape::Pause) interrompre();
+  sC = Course{};
+  sC.impulsions = true;
+  sC.basUs = basUs;
+  sC.n = n;
+  sC.pauseUs = periodeMs * 1000 - basUs;
+  sC.reposHaut = true;
+  if (!poserNiveau(true)) return;  // etape Arret
+  sC.etape = Etape::Emission;
+  if (n) Serial.printf("impulsions : %lu", (unsigned long)n);
+  else Serial.print("impulsions : sans fin");
+  Serial.printf(", %lu us basses toutes les %lu ms, ligne haute entre deux\n", (unsigned long)basUs,
+                (unsigned long)periodeMs);
+}
+
 void avancer() {
   if (sC.etape == Etape::Emission && !sOccupe) sC.etape = Etape::Pause;
   if (sC.etape != Etape::Pause) return;
@@ -177,12 +202,19 @@ void avancer() {
   }
   if (sC.n && sC.index >= sC.n) {
     sC.etape = Etape::Fini;
-    Serial.printf("motif %s fini : %lu trames, ligne au repos %s\n", motif::nom(sC.id), (unsigned long)sC.n,
-                  texteRepos(sC.reposHaut));
+    if (sC.impulsions) Serial.printf("impulsions finies : %lu, ligne haute\n", (unsigned long)sC.n);
+    else
+      Serial.printf("motif %s fini : %lu trames, ligne au repos %s\n", motif::nom(sC.id), (unsigned long)sC.n,
+                    texteRepos(sC.reposHaut));
     return;
   }
   bool ok;
-  if (sC.id == motif::Id::Rafale) {
+  if (sC.impulsions) {
+    const motif::Seg s{false, sC.basUs};
+    const size_t ny = gen::symboles(&s, 1, sY, gen::kSymMax);
+    for (size_t i = 0; i < ny; i++) sSym[i] = mot(sY[i]);
+    ok = ny && envoyer(sSym, ny, true, 0);
+  } else if (sC.id == motif::Id::Rafale) {
     ok = envoyer(sRafale, gen::kRafaleBoucle, true, (int)gen::kRafaleTours);
   } else {
     const size_t ns = motif::trame(sC.id, sC.index, sSeg, motif::kSegMax);
@@ -191,12 +223,14 @@ void avancer() {
     ok = ny && envoyer(sSym, ny, sC.reposHaut, 0);
   }
   if (!ok) {
-    Serial.printf("motif %s : trame %lu impossible, arret\n", motif::nom(sC.id), (unsigned long)sC.index);
+    if (sC.impulsions) Serial.printf("impulsion %lu impossible, arret\n", (unsigned long)sC.index);
+    else Serial.printf("motif %s : trame %lu impossible, arret\n", motif::nom(sC.id), (unsigned long)sC.index);
     arreter();
     return;
   }
   sC.etape = Etape::Emission;
-  Serial.printf("motif %s trame %lu\n", motif::nom(sC.id), (unsigned long)sC.index);
+  if (sC.impulsions) Serial.printf("impulsion %lu\n", (unsigned long)sC.index);
+  else Serial.printf("motif %s trame %lu\n", motif::nom(sC.id), (unsigned long)sC.index);
   sC.index++;
 }
 
@@ -216,6 +250,7 @@ bool lireU32(const char *s, uint32_t *v) {
 void aide() {
   Serial.println("=== Generateur du banc ===");
   Serial.println("  motif <nom> [n] [pause_ms]  n trames (defaut 1000, rafale 1 ; 0 : sans fin), pause apres chaque trame");
+  Serial.println("  impulsions <bas_us> <periode_ms> [n]  impulsion basse repetee (n : defaut 0, sans fin), critere 5");
   Serial.println("  stop                        arrete et relache la ligne (GPIO7 bas)");
   Serial.println("  etat                        motif, trame, pause, niveau de la ligne");
   Serial.println("motifs (repos, pause par defaut) :");
@@ -234,11 +269,19 @@ void etat() {
   switch (sC.etape) {
     case Etape::Arret: Serial.println("etat : arret, ligne relachee (GPIO7 bas)"); return;
     case Etape::Fini:
-      Serial.printf("etat : fini, motif %s, %lu trames, ligne au repos %s\n", motif::nom(sC.id), (unsigned long)sC.n,
-                    texteRepos(sC.reposHaut));
+      if (sC.impulsions) Serial.printf("etat : fini, %lu impulsions, ligne haute\n", (unsigned long)sC.n);
+      else
+        Serial.printf("etat : fini, motif %s, %lu trames, ligne au repos %s\n", motif::nom(sC.id),
+                      (unsigned long)sC.n, texteRepos(sC.reposHaut));
       return;
     case Etape::Emission:
     case Etape::Pause: break;
+  }
+  if (sC.impulsions) {
+    Serial.printf("etat : impulsions de %lu us, %lu emises", (unsigned long)sC.basUs, (unsigned long)sC.index);
+    if (sC.n) Serial.printf(" sur %lu", (unsigned long)sC.n);
+    Serial.printf(", periode %lu us\n", (unsigned long)(sC.basUs + sC.pauseUs));
+    return;
   }
   Serial.printf("etat : motif %s, %lu trames emises", motif::nom(sC.id), (unsigned long)sC.index);
   if (sC.n) Serial.printf(" sur %lu", (unsigned long)sC.n);
@@ -247,6 +290,10 @@ void etat() {
 }
 
 void usageMotif() { Serial.println("usage : motif <nom> [n] [pause_ms 0..60000] ('help' : noms des motifs)"); }
+
+void usageImpulsions() {
+  Serial.println("usage : impulsions <bas_us 10..30000> <periode_ms 1..60000> [n] (1 ms de ligne haute au moins entre deux)");
+}
 
 void executer(char *ligne) {
   char *mots[5];
@@ -281,6 +328,12 @@ void executer(char *ligne) {
       pauseUs = pauseMs * 1000;
     }
     demarrer(id, nb, pauseUs);
+  } else if (!strcmp(mots[0], "impulsions")) {
+    uint32_t bas = 0, periode = 0, nb = 0;
+    if (n < 3 || n > 4 || !lireU32(mots[1], &bas) || !lireU32(mots[2], &periode) ||
+        (n == 4 && !lireU32(mots[3], &nb)) || !gen::impulsionValide(bas, periode))
+      return usageImpulsions();
+    demarrerImpulsions(bas, periode, nb);
   } else {
     Serial.printf("commande inconnue : %s ('help')\n", mots[0]);
   }
