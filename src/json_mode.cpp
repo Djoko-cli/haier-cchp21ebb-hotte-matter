@@ -106,12 +106,6 @@ static bool sHeapBlocStale = true;
 static uint32_t upS() { return (uint32_t)(esp_timer_get_time() / 1000000); }
 static bool remote(uint8_t o) { return o != kUsb; }
 
-static bool anyMachine() {
-  for (const Sink &s : sSinks)
-    if (s.machine) return true;
-  return false;
-}
-
 // ===========================================================================
 //  Emission
 // ===========================================================================
