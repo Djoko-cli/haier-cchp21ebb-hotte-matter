@@ -438,6 +438,7 @@ sonde garde en NVS le dernier mode choisi, peut-être `changements`.
 | 5b | vitesse 2 (`v2`) | — | idem | | |
 | 5c | vitesse 3 (`v3`) | — | idem | | |
 | 6 | arrêt (`arret`) | — | idem | | |
+| 6b | vitesse appuyée **sans** marche (`v-sans-marche`) : marche éteinte, appui sur V2 | — | idem ; pas de bip (étape −1, ligne 1) | | une trame sur `D` : la carte reçoit la touche et l'ignore ; aucune trame : c'est le panneau qui garde l'état « marche » |
 | 7 | chaque bip entendu (`bip-<touche>`) | — | idem | | |
 | 8 | panneau déconnecté (`panneau-off`) : **hotte débranchée**, filtre retiré (si cela ouvre le boîtier : 5 min d'attente), fiche du panneau retirée de l'embase ; couvercle fermé et filtre remis (règle 5), étape 2b si le boîtier a été ouvert ; puis hotte rebranchée | — | on voit si la carte émet seule | | |
 | 8b | après `panneau-off` : **hotte débranchée**, filtre retiré (si cela ouvre le boîtier : 5 min d'attente), fiche du panneau remise sur l'embase ; couvercle fermé et filtre remis (règle 5), étape 2b si le boîtier a été ouvert | visuel | à la remise sous tension, le panneau marche comme avant (étape 2c) | | |
