@@ -7,10 +7,10 @@
 //  battement) par la file des periodiques, evenements trame et log, reponses
 //  aux lignes portant un id.
 //
-//  Une session par transport (origine, jsonp::kUsb puis, en tache 19, une
-//  par session reseau) : ses reglages, son n, sa file, ses pertes. Les
-//  evenements partent vers chaque session en mode machine, formates pour
-//  elle ; une reponse, vers l'origine de sa commande seulement.
+//  Une session par transport (origine : jsonp::kUsb, puis une par session
+//  reseau etablie, net_udp_wifi.cpp) : ses reglages, son n, sa file, ses
+//  pertes. Les evenements partent vers chaque session en mode machine,
+//  formates pour elle ; une reponse, vers l'origine de sa commande seulement.
 //
 //  Regles tenues ici (spec 8.7, protocole de la ScreenBar 2.3) :
 //  - un seul producteur, la tache loop ; un seul tampon de formatage ;
@@ -76,10 +76,22 @@ void jsonTrame(const capt::Partie &p, bool hasRep, uint32_t rep);
 // l'USB l'a prise (emise, plafonnee ou perdue), false pour l'afficher en texte.
 bool jsonLog(const char *src, const char *niv, const char *txt);
 
-// --- Transport reseau (cli.cpp ; etendu en tache 19) ------------------------
+// --- Transport reseau (net_udp_wifi.cpp, cli.cpp) --------------------------
 
 // Origine de la commande en cours : jsonp::kUsb hors cliRunRemote().
 void jsonSetOrigin(uint8_t origin);
 uint8_t jsonOrigin();
+// Session reseau neuve dans cet emplacement (origine), ou partie (oubliee,
+// remplacee, cle changee) : son etat de session repart de zero, sans rien
+// emettre (n continue).
+void jsonRemoteReset(uint8_t origin);
+void jsonNoteRemoteRx(uint8_t origin);  // message au MAC juste recu (bail)
+// Origine reseau, ligne avec id, avant tout le reste (cadence comprise), shown
+// etant la commande telle que la reponse la montre (reponse.cmd) :
+//  - meme id, meme commande, reponse en cache : elle repart, rien n'est execute ;
+//  - reponse differee de cet id encore en file : rien (elle partira) ;
+//  - id deja traite (hors cache, ou autre commande) : reponse deja_traite ;
+//  - sinon l'id est neuf (le plus haut id de la session avance) : false, a traiter.
+bool jsonRemoteAdmit(uint32_t id, const char *shown);
 // Ligne refusee sans reponse possible (reseau, sans id) : comptee (rejets).
 void jsonCountRejected();

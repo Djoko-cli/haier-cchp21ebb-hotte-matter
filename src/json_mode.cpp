@@ -1,4 +1,4 @@
-// Copie de benq-screenbar-halo-matter@c58a506 : src/json_mode.cpp (adapte : profil hotte, instantanes de la sonde, evenements trame et log ; sans lampe, LED, Matter ni livraison ; sessions reseau en tache 19)
+// Copie de benq-screenbar-halo-matter@c58a506 : src/json_mode.cpp (adapte : profil hotte, instantanes de la sonde, evenements trame et log ; sans lampe, LED, Matter ni livraison ; sessions reseau sur UDP/Wi-Fi)
 #include "json_mode.h"
 
 #include <bootloader_random.h>
@@ -17,6 +17,8 @@
 #include "capture_rmt.h"
 #include "config.h"
 #include "fw_version.h"
+#include "h1_proto.h"
+#include "net_udp_wifi.h"
 #include "sonde.h"
 
 using namespace jsonp;
@@ -57,11 +59,13 @@ struct PendingReply {
   Reply r;        // r.cmd pointe sur cmd ; r.code litteral ; r.msg nul
   uint32_t t0;    // durAtSend : duree_ms mesuree a l'envoi (instantane)
   bool durAtSend;
+  bool cache;     // gardee pour un id repete (reseau) ; pas un refus deja_traite
   char cmd[kCmdTextMax + 1];
 };
 
-// Une session par transport (origine). L'USB (kUsb) existe toujours ; les
-// origines reseau viennent avec le transport UDP (tache 19).
+// Une session par transport (origine). L'USB (kUsb) existe toujours ; une
+// origine reseau n'a de sens que tant que sa session H1 est etablie
+// (net_udp_wifi.cpp : jsonRemoteReset a chaque changement).
 struct Sink {
   bool machine = false;
   uint32_t periodMs = kPeriodDefault, countersMs = kCountersDefault, netMs = kNetDefault;
@@ -72,6 +76,7 @@ struct Sink {
   uint32_t n = 0;                    // n de la prochaine ligne produite sur ce transport
   uint32_t lost = 0, tooLong = 0, rejected = 0;
   uint32_t loopMaxMs = 0;            // plus long tour de loop() depuis le bloc sys emis
+  uint32_t topId = 0;                // reseau : plus haut id admis dans cette session (jsonRemoteAdmit)
   uint32_t trameNum = 0;             // reception dont les parties sont en cours (0 : aucune)
   bool trameSautee = false;          // ses parties sont sautees (plafond)
   bool nvsLog = false;               // log des valeurs hors bornes en NVS a emettre (drain)
@@ -81,6 +86,7 @@ struct Sink {
   Cadence cadence;
 };
 static Sink sSinks[kOrigins];
+static ReplyCache sCache[kOrigins - 1];  // origines reseau seulement
 static uint8_t sOrigin = kUsb;  // origine de la commande en cours
 
 // Compteurs de la sonde depuis le demarrage, toutes sessions (compteurs.sonde).
@@ -109,19 +115,23 @@ static bool anyMachine() {
 //  Emission
 // ===========================================================================
 
-// Place d'emission libre sur ce transport : octets du tampon de HWCDC (USB).
-// Transport reseau : tache 19 (d'ici la, aucune place).
+// Place d'emission libre sur ce transport : octets du tampon de HWCDC (USB),
+// ou places de la file des datagrammes x une ligne (reseau).
 static int room(uint8_t o) {
   if (o == kUsb) return Serial.availableForWrite();
-  return 0;
+  return (int)netUdpFreeSlots() * (int)kLineMax;
 }
 
 // Ecrit la ligne fermee de sW sur ce transport, entiere ou pas du tout.
 static bool emit(uint8_t o) {
   const size_t len = sW.size();
-  if (o != kUsb || Serial.availableForWrite() < (int)len) return false;
-  Serial.write(sW.data(), len);
-  return true;
+  if (o == kUsb) {
+    if (Serial.availableForWrite() < (int)len) return false;
+    Serial.write(sW.data(), len);
+    return true;
+  }
+  // Un datagramme : l'objet JSON seul, sans RS ni LF (ScreenBar 10.2).
+  return len >= 2 && netUdpSend((uint8_t)(o - 1), sW.data() + 1, len - 2);
 }
 
 // Reserve le tampon unique. false : une ligne est deja en cours (bogue :
@@ -153,6 +163,16 @@ static bool send(uint8_t o) {
     return false;
   }
   return true;
+}
+
+// Evenement frequent (trame, log) vers une session reseau : seulement s'il
+// reste ensuite la place d'une ligne periodique ou d'une reponse (deux
+// datagrammes libres). Sinon perdu, n consomme et compte.
+static bool eventRoom(uint8_t o) {
+  if (!remote(o) || room(o) >= 2 * (int)kLineMax) return true;
+  sSinks[o].n++;
+  lose(sSinks[o]);
+  return false;
 }
 
 // Texte emis par le protocole lui-meme sur l'USB (fin de bail, invite) : meme
@@ -265,6 +285,9 @@ static void helloIdentity(uint8_t o, uint32_t now) {
   sW.str(nullptr, "injection");
   sW.str(nullptr, "trames");
   sW.str(nullptr, "log");
+  sW.str(nullptr, "udp");
+  sW.str(nullptr, "cle");
+  sW.str(nullptr, "mdns");
   sW.end();
 }
 
@@ -344,11 +367,18 @@ static void compteurs(uint8_t o, uint32_t now) {
   sW.u32("rejets", sRejets);
 }
 
+// Une reponse vient de partir vers une origine reseau : gardee pour un id repete.
+static void cacheReply(uint8_t o, const Reply &r) {
+  if (remote(o) && r.fin) sCache[o - 1].put(r);
+}
+
 // Une ligne de la file de la session o : formatee maintenant, avec les
 // valeurs du moment.
 static void produce(uint8_t o, const Queued &q, uint32_t now) {
   if (!claim()) return;
   Sink &k = sSinks[o];
+  Reply sent;
+  bool isReply = false;
   switch (q.item) {
     case Item::HelloBase: helloBase(o, now); break;
     case Item::HelloId: helloIdentity(o, now); break;
@@ -357,6 +387,11 @@ static void produce(uint8_t o, const Queued &q, uint32_t now) {
     case Item::EtatCapture: etatCapture(o, now); break;
     case Item::EtatSys: etatSys(o, now); break;
     case Item::Compteurs: compteurs(o, now); break;
+    case Item::NetIp:
+      sW.begin("reseau", k.n, now);
+      sW.str("bloc", "ip");
+      netUdpJson(sW, now);
+      break;
     case Item::Heartbeat: heartbeat(sW, k.n, now, sBoot, upS(), k.lost); break;
     case Item::Reply: {
       PendingReply &p = k.replies[q.arg < kReplies ? q.arg : 0];
@@ -369,14 +404,19 @@ static void produce(uint8_t o, const Queued &q, uint32_t now) {
       }
       reply(sW, k.n, now, r);
       p.used = false;
+      sent = r;
+      isReply = p.cache;
       break;
     }
-    default:  // bloc absent de ce build (etat.injection : tache 23 ; reseau.ip : tache 19)
+    default:  // bloc absent de ce build (etat.injection : tache 23)
       sBusy = false;
       return;
   }
   // Le maximum n'est remis a 0 que s'il est parti : perdue, la ligne suivante le porte.
   if (send(o) && q.item == Item::EtatSys) k.loopMaxMs = 0;
+  // Perdue ou non, une reponse est donnee pour cet id : un id repete la renvoie
+  // (sauf un refus deja_traite, jamais garde).
+  if (isReply) cacheReply(o, sent);
 }
 
 // Valeurs hors bornes lues en NVS au demarrage (spec 8.2) : un log a chaque
@@ -432,8 +472,7 @@ static void pushState(uint8_t o, uint32_t now, bool session) {
 
 static void pushCounters(uint8_t o, uint32_t now, bool session) { push(o, Item::Compteurs, now, session); }
 
-// Bloc reseau.ip : avec le transport reseau (tache 19). Rien avant.
-static void pushNet(uint8_t, uint32_t, bool) {}
+static void pushNet(uint8_t o, uint32_t now, bool session) { push(o, Item::NetIp, now, session); }
 
 static void pushHello(uint8_t o, uint32_t now, bool session) {
   push(o, Item::HelloBase, now, session);
@@ -446,7 +485,8 @@ static void pushHello(uint8_t o, uint32_t now, bool session) {
 // ===========================================================================
 
 // Ecrit la reponse tout de suite (perdue et comptee si elle ne tient pas).
-static void replyEmit(uint8_t o, const Reply &r) {
+// Perdue ou non, elle est donnee pour cet id : gardee (reseau) pour un renvoi.
+static void replyEmit(uint8_t o, const Reply &r, bool cache) {
   if (claim()) {
     reply(sW, sSinks[o].n, millis(), r);
     send(o);
@@ -455,12 +495,13 @@ static void replyEmit(uint8_t o, const Reply &r) {
     sSinks[o].n++;
     lose(sSinks[o]);
   }
+  if (cache) cacheReply(o, r);
 }
 
 // Reponse par la file de la session o (apres les lignes deja en file) ; sans
 // place (4 reponses en attente, file pleine) : tout de suite. Differee, elle
 // perd son msg (il pointerait sur un tampon disparu).
-static void replyQueue(uint8_t o, const Reply &r, uint32_t t0, bool durAtSend) {
+static void replyQueue(uint8_t o, const Reply &r, uint32_t t0, bool durAtSend, bool cache = true) {
   Sink &k = sSinks[o];
   for (uint8_t i = 0; i < kReplies; i++) {
     PendingReply &p = k.replies[i];
@@ -473,6 +514,7 @@ static void replyQueue(uint8_t o, const Reply &r, uint32_t t0, bool durAtSend) {
     p.r.hasKid = false;
     p.t0 = t0;
     p.durAtSend = durAtSend;
+    p.cache = cache;
     copyCmd(p.cmd, r.cmd);
     if (k.q.push(Item::Reply, millis(), false, i)) return;
     p.used = false;
@@ -484,20 +526,20 @@ static void replyQueue(uint8_t o, const Reply &r, uint32_t t0, bool durAtSend) {
     now.leaseS = k.leaseS;
     now.upS = upS();
   }
-  replyEmit(o, now);
+  replyEmit(o, now, cache);
 }
 
 // Reponse immediate. Reseau : la cle n'y part jamais ; sans place, ou derriere
 // une reponse deja en file (l'ordre des reponses est garde), elle attend dans
 // la file de la session au lieu d'etre perdue.
-static void replyTo(uint8_t o, const Reply &r) {
+static void replyTo(uint8_t o, const Reply &r, bool cache = true) {
   Reply out = r;
   if (remote(o)) out.key = nullptr;
   if (remote(o) && (room(o) < (int)kLineMax || sSinks[o].q.has(Item::Reply))) {
-    replyQueue(o, out, 0, false);
+    replyQueue(o, out, 0, false, cache);
     return;
   }
-  replyEmit(o, out);
+  replyEmit(o, out, cache);
 }
 
 void jsonReply(const Reply &r) { replyTo(sOrigin, r); }
@@ -610,6 +652,74 @@ void jsonSetOrigin(uint8_t origin) {
 }
 uint8_t jsonOrigin() { return sOrigin; }
 
+void jsonRemoteReset(uint8_t origin) {
+  if (origin == kUsb || origin >= kOrigins) return;
+  // Sur place (un Sink temporaire couterait pres de 2 Ko de pile). n continue :
+  // numero de ligne du transport depuis le demarrage ; le reste repart des
+  // valeurs par defaut.
+  Sink &k = sSinks[origin];
+  k.machine = false;
+  k.periodMs = kPeriodDefault;
+  k.countersMs = kCountersDefault;
+  k.netMs = kNetDefault;
+  k.leaseS = kLeaseDefault;
+  k.frames = true;
+  k.log = false;
+  k.nextEtat = k.nextCpt = k.nextNet = k.nextHb = 0;
+  k.lastRx = k.lastCmd = 0;
+  k.lost = k.tooLong = k.rejected = 0;
+  k.loopMaxMs = 0;
+  k.topId = 0;
+  k.trameNum = 0;
+  k.trameSautee = false;
+  k.q.clear();
+  for (PendingReply &p : k.replies) p.used = false;
+  k.trameCap = RateCap(kTramesParSeconde);
+  k.logCap = RateCap(kLogCap);
+  k.cadence = Cadence();
+  sCache[origin - 1].clear();
+}
+
+void jsonNoteRemoteRx(uint8_t origin) {
+  if (origin != kUsb && origin < kOrigins) sSinks[origin].lastRx = millis();
+}
+
+bool jsonRemoteAdmit(uint32_t id, const char *shown) {
+  const uint8_t o = sOrigin;
+  if (o == kUsb || o >= kOrigins) return false;
+  Sink &k = sSinks[o];
+  // Reponse differee de cet id encore en file (instantane) : elle partira.
+  for (const PendingReply &p : k.replies)
+    if (p.used && p.r.id == id) return true;
+  const Reply *cached = sCache[o - 1].find(id);
+  if (cached && !strcmp(cached->cmd, shown)) {
+    // Meme id, meme commande : la reponse perdue repart, rien n'est reexecute.
+    Reply out = *cached;
+    char cmd[kCmdTextMax + 1];
+    copyCmd(cmd, cached->cmd);  // put() va reecrire l'entree : plus de pointeur dedans
+    out.cmd = cmd;
+    replyTo(o, out);
+    return true;
+  }
+  if (cached || id <= k.topId) {
+    // id deja traite, reponse plus en cache (ou autre commande sous le meme id) :
+    // jamais de nouvelle execution. Refus non garde (le cache reste celui de l'id).
+    Reply r;
+    r.id = id;
+    r.cmd = shown;
+    r.ok = false;
+    r.code = "deja_traite";
+    r.msg = "id deja traite (reponse plus disponible) : rien n'est reexecute";
+    replyTo(o, r, false);
+    return true;
+  }
+  k.topId = id;
+  // Nouvelle commande : la session sert de nouveau, meme apres un 'json 0'
+  // (qui, s'il est cette commande, la termine ensuite a son tour).
+  netUdpResume((uint8_t)(o - 1));
+  return false;
+}
+
 void jsonCountRejected() {
   sSinks[sOrigin].rejected++;
   sRejets++;
@@ -641,6 +751,12 @@ static void printSession(Print &out) {
              k.frames ? "oui" : "non", k.log ? "oui" : "non");
   out.printf("  lignes   : n = %lu, %lu perdue(s), %lu trop longue(s), %lu ligne(s) de l'hote refusee(s)\n",
              (unsigned long)k.n, (unsigned long)k.lost, (unsigned long)k.tooLong, (unsigned long)k.rejected);
+  for (uint8_t o = 1; o < kOrigins; o++) {
+    const Sink &r = sSinks[o];
+    if (!r.n && !r.machine) continue;
+    out.printf("  reseau %u : mode machine %s ; n = %lu, %lu perdue(s), %lu refusee(s)\n", (unsigned)o,
+               r.machine ? "actif" : "coupe", (unsigned long)r.n, (unsigned long)r.lost, (unsigned long)r.rejected);
+  }
   out.printf("  sonde    : %lu ligne(s) perdue(s), %lu trame(s) sautee(s), %lu rejet(s), toutes sessions\n",
              (unsigned long)sPerdues, (unsigned long)sSautes, (unsigned long)sRejets);
   out.printf("  demarrage : boot %08lX\n", (unsigned long)sBoot);
@@ -673,6 +789,106 @@ static bool setPeriod(char *p, uint32_t lo, bool zeroOk, uint32_t *out, uint32_t
   return true;
 }
 
+// 'json cle ...' (ScreenBar 10.4) : USB seulement. La liste blanche la refuse
+// deja au reseau ; refusee ici aussi (defense en profondeur : la reponse de
+// 'nouvelle' porte la cle).
+static void keyCommand(char *p, const JsonCmd &c) {
+  if (sOrigin != kUsb) {
+    replyNow(c, false, "interdite", "json cle : USB seulement");
+    return;
+  }
+  const char *w = nextWord(p);
+  char kid[9] = {};
+  if (!*w) {
+    const bool has = netUdpKid(kid);
+    Reply r;
+    r.id = c.id;
+    r.cmd = c.cmd;
+    r.durMs = millis() - c.t0;
+    r.hasKid = true;
+    r.kid = has ? kid : nullptr;
+    if (c.hasId) jsonReply(r);
+    else if (has) Serial.printf("json cle : empreinte %s (transport reseau actif, port UDP %u)\n", kid, kPortUdp);
+    else Serial.println("json cle : aucune cle, transport reseau coupe");
+    return;
+  }
+  if (!strcmp(w, "nouvelle")) {
+    const char *hex = nextWord(p);
+    uint8_t appRandom[32];
+    bool hexOk = strlen(hex) == 64 && !*nextWord(p);
+    for (uint8_t i = 0; hexOk && i < 32; i++) {
+      auto nib = [](char ch) -> int {
+        return ch >= '0' && ch <= '9' ? ch - '0' : ch >= 'A' && ch <= 'F' ? ch - 'A' + 10 : -1;
+      };
+      const int hi = nib(hex[2 * i]), lo = nib(hex[2 * i + 1]);
+      if (hi < 0 || lo < 0) hexOk = false;
+      else appRandom[i] = (uint8_t)(hi << 4 | lo);
+    }
+    if (!c.hasId) {
+      // La cle ne s'affiche jamais en texte : 'pio device monitor' enregistre la
+      // session (log2file) dans un fichier a la racine du depot.
+      h1::wipe(appRandom, sizeof(appRandom));
+      Serial.println("json cle nouvelle : reservee a l'outil (ligne avec id=, la cle part dans la reponse) :");
+      Serial.println("  python3 tools/hotte_udp.py cle <port>");
+      return;
+    }
+    if (!hexOk) {
+      h1::wipe(appRandom, sizeof(appRandom));
+      replyNow(c, false, "usage", "json cle nouvelle <64 hexa majuscules> (alea de l'app)");
+      return;
+    }
+    // La reponse est la seule copie de la cle : pas de cle neuve si elle ne peut
+    // pas partir tout de suite (tampon d'emission USB plein).
+    if (Serial.availableForWrite() < (int)kLineMax) {
+      h1::wipe(appRandom, sizeof(appRandom));
+      replyNow(c, false, "refuse", "tampon USB plein : rien n'est change, reessayer");
+      return;
+    }
+    char keyHex[65];
+    const NetKeyResult res = netUdpKeyNew(appRandom, keyHex, kid);
+    h1::wipe(appRandom, sizeof(appRandom));
+    if (res == NetKeyResult::Crypto || res == NetKeyResult::Nvs) {
+      replyNow(c, false, "refuse",
+               res == NetKeyResult::Nvs ? "cle non ecrite (NVS) : ancienne cle gardee"
+                                        : "cle non creee (crypto) : ancienne cle gardee");
+      return;
+    }
+    Reply r;
+    r.id = c.id;
+    r.cmd = c.cmd;
+    r.durMs = millis() - c.t0;
+    r.msg = res == NetKeyResult::Ok ? "nouvelle cle : les sessions reseau tombent"
+                                    : "cle ecrite mais pas chargee : transport reseau coupe jusqu'au redemarrage";
+    r.key = keyHex;
+    r.hasKid = true;
+    r.kid = kid;
+    jsonReply(r);
+    h1::wipe(keyHex, sizeof(keyHex));
+    return;
+  }
+  if (!strcmp(w, "efface") && !*nextWord(p)) {
+    const bool ok = netUdpKeyErase();
+    if (c.hasId) {
+      Reply r;
+      r.id = c.id;
+      r.cmd = c.cmd;
+      r.ok = ok;
+      r.code = ok ? "ok" : "refuse";
+      r.msg = ok ? "cle effacee : transport reseau coupe" : "effacement NVS en echec (cle retiree de la memoire)";
+      r.durMs = millis() - c.t0;
+      r.hasKid = true;
+      r.kid = nullptr;
+      jsonReply(r);
+    } else {
+      Serial.println(ok ? "json cle : cle effacee, transport reseau coupe"
+                        : "json cle : effacement NVS en echec (cle retiree de la memoire)");
+    }
+    return;
+  }
+  replyNow(c, false, "usage", "json cle [nouvelle <64 hexa> | efface]");
+  if (!c.hasId) Serial.println("Usage : json cle [efface]   ('json cle nouvelle' : tools/hotte_udp.py cle <port>)");
+}
+
 void jsonCommand(char *arg, const JsonCmd &c) {
   char *p = arg;
   const char *sub = nextWord(p);
@@ -681,7 +897,7 @@ void jsonCommand(char *arg, const JsonCmd &c) {
   Sink &k = sSinks[o];
   static const char *const kUsage =
       "json [1 [bail 0|10..600] | 0 | etat | hello | ping | periode ms | compteurs ms | reseau ms | "
-      "trames 0|1 | log 0|1]";
+      "trames 0|1 | log 0|1 | cle]";
   // Reseau : bornes propres (liste blanche, spec 8.5), verifiees ici aussi.
   const bool rem = remote(o);
   const char *usage = nullptr;  // non nul : arguments refuses
@@ -717,6 +933,8 @@ void jsonCommand(char *arg, const JsonCmd &c) {
       replyNow(c, true, "ok", k.machine ? nullptr : "deja en mode humain");
       if (k.machine) leaveMachine(o, false, now);
       else if (!c.hasId) Serial.println("json : mode machine deja coupe");
+      // Le client s'en va : sa place revient au suivant sans attendre 30 s (ScreenBar 10.4).
+      if (rem) netUdpEnd((uint8_t)(o - 1));
       return;
     }
   } else if (!strcmp(sub, "etat")) {
@@ -766,9 +984,7 @@ void jsonCommand(char *arg, const JsonCmd &c) {
       sessionChanged = true;
     }
   } else if (!strcmp(sub, "cle")) {
-    // Cle du transport reseau (spec 8.5) : avec le transport UDP (tache 19).
-    replyNow(c, false, "refuse", "json cle : transport reseau absent de ce firmware");
-    if (!c.hasId) Serial.println("json cle : transport reseau absent de ce firmware (USB seulement)");
+    keyCommand(p, c);
     return;
   } else {
     usage = kUsage;
@@ -808,7 +1024,7 @@ void jsonTrame(const capt::Partie &p, bool hasRep, uint32_t rep) {
       sSautes++;
       continue;
     }
-    if (!claim()) continue;
+    if (!eventRoom(o) || !claim()) continue;
     k.trameCap.take();
     trame(sW, k.n, now, p, hasRep, rep, k.trameCap.takeSkipped());
     send(o);
@@ -826,6 +1042,7 @@ bool jsonLog(const char *src, const char *niv, const char *txt) {
       if (o == kUsb) usbTaken = true;
       continue;
     }
+    if (!eventRoom(o)) continue;
     if (!claim()) continue;  // ligne en cours (jamais attendu) : en texte sur l'USB
     k.logCap.take();
     logLine(sW, k.n, now, src, niv, txt, k.logCap.takeSkipped());
@@ -874,8 +1091,9 @@ void jsonPoll() {
     sRecAt = now;
   }
 
-  // L'USB d'abord ; les sessions reseau, qui partageront la file des
-  // datagrammes et son debit, a tour de role.
+  // L'USB d'abord ; les sessions reseau, qui partagent la file des
+  // datagrammes et son debit, a tour de role (deux instantanes simultanes
+  // avancent ensemble).
   static uint8_t sTurn = 0;
   sTurn++;
   for (uint8_t i = 0; i < kOrigins; i++) {

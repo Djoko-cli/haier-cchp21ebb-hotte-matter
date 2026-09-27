@@ -10,14 +10,15 @@ document ne dit pas est **identique** à la ScreenBar.
 
 - Code : `src/json_out.*` (briques pures, testées sur l'hôte),
   `src/json_mode.*` (sessions, instantanés, événements), `src/cli.cpp`
-  (lignes de l'hôte).
+  (lignes de l'hôte), `src/net_wifi.*` et `src/net_udp_wifi.*` (transport
+  réseau), `src/h1_proto.*` (enveloppe H1, copiée de la ScreenBar).
 - Vérification : `tools/json_check.py` contrôle toute ligne machine contre ce
-  profil (capture série brute, ou `.jsonl` avec `--jsonl`). Les exemples de la
-  section 8 sont vérifiés par
+  profil (capture série brute, ou `.jsonl` avec `--jsonl`). Les exemples des
+  sections 8 et 9 sont vérifiés par
   `python3 tools/json_check.py --strict --exemples docs/PROTOCOLE-JSON.md`,
   lancé par `sh tools/tests/test_hote.sh`.
-- État : transport USB. Le transport réseau (UDP sur le Wi-Fi, ScreenBar §10)
-  et l'injection viennent ensuite ; ce document s'étendra avec eux.
+- État : transports USB et UDP sur le Wi-Fi (section 9). L'injection vient
+  ensuite ; ce document s'étendra avec elle.
 
 ## 1. Ce qui ne change pas
 
@@ -29,6 +30,7 @@ document ne dit pas est **identique** à la ScreenBar.
 | §6 Commandes : préfixe `id=<n>`, message `reponse`, cadence de 20 lignes par seconde, une commande en vol | identique ; ce qui a une réponse sans texte est en section 5 |
 | §9 Versionnage : `v` majeure, ajouts sans changer `v`, l'app ignore l'inconnu | identique ; `rev` = 4 |
 | §5, §7, §8, §11, §12 : messages et exemples de la lampe | remplacés par les sections 4 à 8 |
+| §10 Transport réseau : UDP sur Thread, enveloppe H1, liste blanche, profil distant | UDP sur le **Wi-Fi**, en IPv4, nom mDNS ; enveloppe H1 **identique** ; liste blanche et profil de la sonde (section 9) |
 
 ## 2. Écarts généraux
 
@@ -65,10 +67,10 @@ Comme la ScreenBar §3.4, avec ces bornes :
 | `json ping` | renouvelle le bail ; la `reponse` porte `bail_s` et `up_s` | |
 | `json periode <ms>` | période des `etat` | 0 ou 200..60000, défaut **1 000** |
 | `json compteurs <ms>` | période des `compteurs` | 0 ou 200..60000, défaut **1 000** |
-| `json reseau <ms>` | période des `reseau` (aucun bloc tant que le transport réseau manque) | 0 ou 1000..60000, défaut **5 000** |
+| `json reseau <ms>` | période des `reseau` (bloc `ip`, section 4.6) | 0 ou 1000..60000, défaut **5 000** |
 | `json trames 0\|1` | événements `trame` | défaut 1 |
 | `json log 0\|1` | annonces du firmware en messages `log` | défaut 0 |
-| `json cle ...` | clé du transport réseau | `refuse` tant que le transport réseau manque |
+| `json cle ...` | clé du transport réseau (section 9.3) | USB seulement ; `nouvelle` avec un `id` seulement |
 
 `json trames 0` coupe l'envoi des `trame` à cette session ; `capture off`
 arrête la capture elle-même. Les trames ne se coupent jamais seules (écart à
@@ -87,8 +89,9 @@ servent de battement (`hb` toutes les 2 s si `periode_ms` vaut 0 ou plus de
 ### 4.1 `hello`
 
 **Bloc `base`** : **tous** les champs de la ScreenBar §5.1, dans le même ordre.
-Valeurs propres : `build` = `sonde`, `reseau_build` = `aucun`, `env` =
-`sonde`, `session.transport` = `usb`. `fw` doit égaler `fw_desc`.
+Valeurs propres : `build` = `sonde`, `reseau_build` = `aucun` (pas de réseau
+Matter ; le transport UDP est dit par `caps`), `env` = `sonde`,
+`session.transport` = `usb` ou `udp`. `fw` doit égaler `fw_desc`.
 
 **Bloc `identite`** : **tous** les champs de la ScreenBar, puis `appareil`,
 puis `caps`.
@@ -102,7 +105,7 @@ puis `caps`.
 | `id.nom` | `Sonde hotte` |
 | `id.hw`, `id.hw_txt` | `1`, `C6 SuperMini, etages v1` |
 | `appareil` | `hotte` |
-| `caps` | `sonde` (capture de la ligne `D`), `injection` (présente dans ce build), `trames`, `log` ; puis `udp`, `cle`, `mdns` avec le transport réseau |
+| `caps` | `sonde` (capture de la ligne `D`), `injection` (présente dans ce build), `trames`, `log`, `udp` (transport UDP, section 9), `cle` (`json cle`), `mdns` (résoudre `reseau.ip.mdns.nom` au lieu de `srp.nom`) |
 
 ### 4.2 `config`
 
@@ -168,6 +171,32 @@ Critère 4 du banc (spec §10) : `lignes_perdues`, `debord` et `sautes` à 0.
 ### 4.5 `hb` et `fin`
 
 Identiques à la ScreenBar §5.6.
+
+### 4.6 `reseau`
+
+Période `reseau_ms` (5 000 ms sur l'USB, 30 000 ms à distance). Un bloc,
+`ip`, avec le **schéma de la ScreenBar** (§5.5, bloc `ip`), plus `mdns` et
+`wifi`. Il part aussi sur l'USB : l'app y lit l'adresse, le nom et
+l'empreinte de la clé avant d'ouvrir une session réseau.
+
+| Champ | Sens |
+|---|---|
+| `frais_ms` | 0 : les valeurs sont lues à la production de la ligne |
+| `srp` | toujours null : pas de SRP, le nom se résout en mDNS (`mdns.nom`) |
+| `adresses` | l'adresse IPv4 de la station (`type` `autre`, `pref` vrai) ; vide sans Wi-Fi |
+| `udp.port` | 5480 |
+| `udp.ouvert` | socket ouvert : une clé existe, et le Wi-Fi a eu une adresse depuis le démarrage |
+| `udp.empreinte` | empreinte de la clé (section 9.3), null sans clé |
+| `udp.sessions`, `udp.provisoire` | sessions H1 établies (0..2), poignée de main en cours |
+| `udp.rx`, `udp.rejets`, `udp.rx_perdus`, `udp.defis` | messages acceptés ; datagrammes refusés en silence (forme, clé, sid, MAC, rejeu, limite des `DEFI`) ; perdus avant lecture (plus de 256 octets, erreur de lwIP) ; `DEFI` émis |
+| `udp.tx`, `udp.tx_perdus`, `udp.tx_erreurs` | datagrammes remis à lwIP ; perdus après leur mise en file (4 s sans départ, refus durable de lwIP, file vidée par un changement de clé, session partie) ; refus de lwIP (une fois par datagramme). Une ligne qui ne trouve pas de place dans la file compte dans le `json_perdus` de sa session et dans `compteurs.sonde.lignes_perdues` |
+| `udp.tampons_libres`, `udp.tampons_min` | toujours null (tampons d'OpenThread : sans objet) |
+| `mdns.nom` | `hotte-sonde.local` |
+| `wifi.connecte` | station connectée, avec une adresse |
+| `wifi.rssi_dbm`, `wifi.ip` | force du signal du point d'accès et adresse IPv4 ; null hors connexion |
+| `wifi.pertes` | connexions perdues depuis le démarrage |
+
+Pire cas : environ 560 octets.
 
 ## 5. Commandes de l'app
 
@@ -274,16 +303,18 @@ Sonde → app :
 
 ```
 <RS>{"v":1,"t":"hello","n":0,"ms":12031,"bloc":"base","rev":4,"fw":"0.1.0-1a2b3c4","fw_desc":"0.1.0-1a2b3c4","date":"Sep 27 2026","heure":"14:02:11","env":"sonde","build":"sonde","reseau_build":"aucun","puce":"esp32c6","idf":"v5.5.5","arduino":"3.3.12","boot":"3FA2C901","reset":"mise_sous_tension","reset_n":1,"up_s":12,"session":{"transport":"usb","periode_ms":1000,"compteurs_ms":1000,"reseau_ms":5000,"bail_s":30,"trames":true,"log":false},"limites":{"ligne_max":1024,"cmd_max":127}}
-<RS>{"v":1,"t":"hello","n":1,"ms":12032,"bloc":"identite","boot":"3FA2C901","mac":"F0F5BD012345","id":{"fabricant":"Djoko-CLI","produit":"Sonde hotte Haier","serie":"HOTTE-F0F5BD012345","nom":"Sonde hotte","hw":1,"hw_txt":"C6 SuperMini, etages v1"},"appareil":"hotte","caps":["sonde","injection","trames","log"]}
+<RS>{"v":1,"t":"hello","n":1,"ms":12032,"bloc":"identite","boot":"3FA2C901","mac":"F0F5BD012345","id":{"fabricant":"Djoko-CLI","produit":"Sonde hotte Haier","serie":"HOTTE-F0F5BD012345","nom":"Sonde hotte","hw":1,"hw_txt":"C6 SuperMini, etages v1"},"appareil":"hotte","caps":["sonde","injection","trames","log","udp","cle","mdns"]}
 <RS>{"v":1,"t":"config","n":2,"ms":12033,"capture":{"gpio":6,"resol_hz":1000000,"filtre_us":1,"silence_us":5000,"mode":"tout","inverse":true}}
 <RS>{"v":1,"t":"etat","n":3,"ms":12034,"bloc":"bus","boot":"3FA2C901","up_s":12,"repos":"haut","fronts":1520,"derniere_ms":3,"receptions_s":10}
 <RS>{"v":1,"t":"etat","n":4,"ms":12035,"bloc":"capture","boot":"3FA2C901","up_s":12,"active":true,"mode":"tout","debord":0,"rep_en_cours":0}
 <RS>{"v":1,"t":"etat","n":5,"ms":12036,"bloc":"sys","boot":"3FA2C901","up_s":12,"sys":{"heap":247812,"heap_min":241600,"heap_bloc":110580,"pile_boucle":5316,"boucle_max_ms":2,"json_perdus":0,"json_trop_longs":0,"rejets":0}}
 <RS>{"v":1,"t":"compteurs","n":6,"ms":12037,"bloc":"sonde","receptions":118,"parties":118,"blocs":118,"symboles":1947,"debord":0,"rep":0,"lignes_perdues":0,"sautes":0,"rejets":0}
-<RS>{"v":1,"t":"reponse","n":7,"ms":12038,"id":1,"etape":"fin","cmd":"json 1","ok":true,"code":"ok","duree_ms":7,"bail_s":30,"up_s":12}
+<RS>{"v":1,"t":"reseau","n":7,"ms":12038,"bloc":"ip","frais_ms":0,"srp":null,"adresses":[{"adr":"192.168.1.42","type":"autre","pref":true}],"udp":{"port":5480,"ouvert":true,"empreinte":"630DCD29","sessions":0,"provisoire":false,"rx":0,"rejets":0,"rx_perdus":0,"defis":0,"tx":0,"tx_perdus":0,"tx_erreurs":0,"tampons_libres":null,"tampons_min":null},"mdns":{"nom":"hotte-sonde.local"},"wifi":{"connecte":true,"rssi_dbm":-58,"ip":"192.168.1.42","pertes":0}}
+<RS>{"v":1,"t":"reponse","n":8,"ms":12039,"id":1,"etape":"fin","cmd":"json 1","ok":true,"code":"ok","duree_ms":8,"bail_s":30,"up_s":12}
 ```
 
-Puis `etat` et `compteurs` chaque seconde, et les `trame`.
+Puis `etat` et `compteurs` chaque seconde, `reseau` toutes les 5 s, et les
+`trame`.
 
 ### 8.2 Trames
 
@@ -365,4 +396,152 @@ Format seulement (les commandes viennent avec l'étage d'injection) :
 ```
 <RS>{"v":1,"t":"reponse","n":900,"ms":123001,"id":42,"etape":"fin","cmd":"injecte durees 750 750 750 2250","ok":true,"code":"accepte","duree_ms":1,"suite":"injection"}
 <RS>{"v":1,"t":"injection","n":901,"ms":123456,"id":42,"cmd":"injecte durees 750 750 750 2250","resultat":"ok","niv0":"bas","dur_us":[750,750,750,2250],"attente_us":20412,"relu_us":[752,748,751,2249]}
+```
+
+## 9. Transport réseau : UDP sur le Wi-Fi
+
+Par différence avec la ScreenBar §10 (UDP sur Thread). Client de banc :
+`tools/hotte_udp.py` (clé par l'USB, session, enregistrement).
+
+### 9.1 Chemin et découverte
+
+- La sonde est une **station Wi-Fi** (`src/net_wifi.*`). Les identifiants se
+  posent par `wifi <ssid> <mdp>`, par l'USB seulement ; ils sont vérifiés avant
+  d'être écrits dans l'espace NVS `hotte` (clés `wifi_ssid` et `wifi_mdp`). Le
+  modem ne dort jamais (`WiFi.setSleep(false)`, spec §8.7). Tant que la
+  connexion manque, nouvel essai toutes les 10 s. Sans identifiants, la radio
+  reste éteinte.
+- **IPv4** en v1. Le Mac joint la sonde par son nom mDNS,
+  **`hotte-sonde.local`** (cap `mdns`, `reseau.ip.mdns.nom`), ou par son
+  adresse (`reseau.ip.wifi.ip`, commande `info`). Pas de SRP : `srp` vaut null.
+- Les annonces du Wi-Fi (connexion, perte) partent en `log`, `src` `reseau`,
+  avec `json log 1` ; sinon en texte sur l'USB.
+
+### 9.2 Datagrammes
+
+- Port **5480**, socket UDP de lwIP (`src/net_udp_wifi.*`). Il s'ouvre dès
+  qu'une clé existe et que le Wi-Fi a une adresse, puis reste ouvert tant que
+  la clé existe. Sans clé, lwIP répond « port injoignable ».
+- Un message = un datagramme : en-tête H1 puis l'objet JSON seul (sans RS ni
+  LF), ou la ligne de commande de l'app. 1 078 octets au plus (56 + 1 022),
+  sous la MTU de 1 500 du Wi-Fi. La sonde jette tout datagramme reçu de plus
+  de 256 octets (`udp.rx_perdus`).
+- Tout se passe dans la tâche `loop` : lecture non bloquante (4 datagrammes par
+  tour au plus ; lwIP en garde 6 en attente), commandes, émission. `h1::Peer`
+  porte l'adresse de l'app en IPv4 mappée (`::ffff:a.b.c.d`).
+- Émission : file de **32 datagrammes**, partagée par les sessions, remis à
+  lwIP sans attente, 4 par tour au plus.
+  - Débit moyen plafonné à **50 000 octets/s**, crédit de **8 192**.
+  - Pas partis en 4 s (Wi-Fi coupé) : perdus et comptés (`udp.tx_perdus`).
+  - File pleine : la ligne est perdue et comptée (`json_perdus`,
+    `lignes_perdues`), jamais attendue.
+  - Le `DEFI` d'une poignée de main passe en tête, hors plafond.
+- Un événement fréquent (`trame`, `log`) vers une session réseau n'est produit
+  que s'il reste deux datagrammes libres : la place d'une ligne périodique ou
+  d'une réponse après lui. Sinon, il est perdu (trou de `n`, `lignes_perdues`).
+- Le reste est **identique** à la ScreenBar §10.2 :
+  - `id` strictement croissants dans une session H1 ;
+  - les 8 dernières `reponse` gardées par session ; un `id` renvoyé est servi
+    depuis ce cache, sans nouvelle exécution ; un `id` déjà traité reçoit
+    `deja_traite` ;
+  - 6 s de retard admis dans la file des périodiques ; sessions servies à tour
+    de rôle.
+
+### 9.3 Authentification
+
+**Enveloppe H1 identique** à la ScreenBar §10.4 : poignée de main `SALUT` /
+`DEFI`, HMAC-SHA256, 2 sessions établies et une provisoire, fenêtre de 32,
+2 `DEFI` par seconde au plus, oubli après 10 min, place libérée par `json 0`.
+Code : `src/h1_proto.*` et `src/h1_crypto.cpp`, copiés tels quels.
+
+Écarts :
+- la clé est gardée en NVS dans l'espace **`hotte`**, clé **`cle`** (32
+  octets) ;
+- elle se crée par `id=<n> json cle nouvelle <64 hexa>`, **par l'USB
+  seulement**. Sur le Mac, `python3 tools/hotte_udp.py cle <port>` le fait et
+  range la clé dans `~/.config/hotte-sonde/cle` (droits 0600), sans jamais
+  l'afficher : seule l'empreinte l'est ;
+- ni trousseau, ni effacement à une remise à zéro Matter (pas de Matter).
+  `json cle efface` coupe le transport.
+
+Vecteurs : les mêmes que la ScreenBar §10.4, `tools/tests/test_h1.cpp` et
+`tools/tests/test_hotte_udp.py`.
+
+```
+PSK  000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
+kid  630DCD29
+na   A0A1A2A3A4A5A6A7A8A9AAABACADAEAF      nc  505152535455565758595A5B5C5D5E5F      sid 1234ABCD
+SALUT  H1 SALUT 630DCD29 A0A1A2A3A4A5A6A7A8A9AAABACADAEAF 52D853E3FFE9E9CCEFFA98BB5304B32D
+DEFI   H1 DEFI 1234ABCD 505152535455565758595A5B5C5D5E5F BFF13F71B42243E6017D2807F8E6171F
+Ks   20D6D83D97ED44F2BBF8CE56389BD475CBE2B625CE6CE24768B6B4C1C625012F
+A 1  H1 1234ABCD 1 FD97A0C9E604524B49C763452D0310CE id=1 json 1
+C 1  H1 1234ABCD 1 347A2E6A129BC822ECFF39BEC910451C {"v":1,"t":"hb","n":7,"ms":1234}
+```
+
+### 9.4 Commandes à distance : liste blanche
+
+Toute ligne reçue par le réseau porte un `id` ; sans lui, elle est ignorée et
+comptée dans `rejets`. Sont autorisées (`jsonp::remoteRefusal`,
+`src/json_out.cpp`) :
+- `json 1 [bail 10..120]`, `json 0`, `json etat`, `json hello`, `json ping` ;
+- `json periode 2000..60000`, `json compteurs 0|1000..60000`,
+  `json reseau 0|10000..60000`, `json trames 0|1`, `json log 0|1` ;
+- `capture on|off|tout|changements`, `seuils <valeurs>` (bornés, sans texte) ;
+- `injection on|off`, `injecte ...` (avec l'étage d'injection).
+
+Tout le reste reçoit la `reponse` `interdite`, et rien n'est exécuté : en
+particulier `json` seul, `json cle ...`, `wifi`, `injection monte`, `reboot`,
+`bus`, `stats`, `info` et `help`.
+
+### 9.5 Profil distant
+
+Il s'écarte volontairement de la ScreenBar §10.6 (spec §8.5) : ici, le Wi-Fi a
+de la marge, et les trames sont la raison d'être de la sonde.
+
+| Réglage | USB | UDP (Wi-Fi) |
+|---|---|---|
+| `periode_ms` (`etat`) | 1 000 | 2 000 |
+| `compteurs_ms` | 1 000 | 5 000 |
+| `reseau_ms` | 5 000 | 30 000 |
+| `trames` après `json 1` | oui | oui, sans coupure automatique |
+| plafond des `trame` | 100 par seconde | 100 par seconde, puis `sautes` |
+| file d'émission | tampon de 8 Ko | 32 datagrammes, 50 000 octets/s, crédit de 8 192 |
+
+`hello.base.session.transport` vaut `udp`. Débit : moins d'un Ko/s au repos ;
+motif `krona` du banc (`seuils 1 19000`, une quinzaine de lignes `trame` de
+~250 octets par seconde) : ~4 Ko/s. Au plafond des trames (100 lignes pleines
+par seconde, ~86 Ko/s), la file se remplit : les lignes en trop sont perdues et
+comptées.
+
+### 9.6 Exemples
+
+Datagrammes, en texte (l'en-tête H1, puis la charge) :
+
+```
+app   -> sonde : H1 SALUT 630DCD29 A0A1A2A3A4A5A6A7A8A9AAABACADAEAF 52D853E3FFE9E9CCEFFA98BB5304B32D
+sonde -> app   : H1 DEFI 1234ABCD 505152535455565758595A5B5C5D5E5F BFF13F71B42243E6017D2807F8E6171F
+app   -> sonde : H1 1234ABCD 1 FD97A0C9E604524B49C763452D0310CE id=1 json 1
+sonde -> app   : H1 1234ABCD 1 <mac> {"v":1,"t":"hello","n":0,...}
+```
+
+Objets portés par les datagrammes de la sonde, notés comme des lignes machine
+pour être vérifiés : le `hello` d'une session réseau, un refus de la liste
+blanche, un `id` déjà traité.
+
+```
+<RS>{"v":1,"t":"hello","n":0,"ms":80210,"bloc":"base","rev":4,"fw":"0.1.0-1a2b3c4","fw_desc":"0.1.0-1a2b3c4","date":"Sep 27 2026","heure":"14:02:11","env":"sonde","build":"sonde","reseau_build":"aucun","puce":"esp32c6","idf":"v5.5.5","arduino":"3.3.12","boot":"3FA2C901","reset":"mise_sous_tension","reset_n":1,"up_s":80,"session":{"transport":"udp","periode_ms":2000,"compteurs_ms":5000,"reseau_ms":30000,"bail_s":30,"trames":true,"log":false},"limites":{"ligne_max":1024,"cmd_max":127}}
+<RS>{"v":1,"t":"reponse","n":41,"ms":95002,"id":6,"etape":"fin","cmd":"reboot","ok":false,"code":"interdite","msg":"interdite a distance (10.5) : USB seulement","duree_ms":0}
+<RS>{"v":1,"t":"reponse","n":42,"ms":95510,"id":4,"etape":"fin","cmd":"json ping","ok":false,"code":"deja_traite","msg":"id deja traite (reponse plus disponible) : rien n'est reexecute","duree_ms":0}
+```
+
+Clé, par l'USB (`tools/hotte_udp.py cle` : l'aléa de l'app n'est jamais
+renvoyé, la clé ne part qu'une fois) :
+
+```
+id=900417 json cle nouvelle 5A0C...(64 hexa)
+```
+
+```
+<RS>{"v":1,"t":"reponse","n":12,"ms":5012,"id":900417,"etape":"fin","cmd":"json cle nouvelle","ok":true,"code":"ok","msg":"nouvelle cle : les sessions reseau tombent","duree_ms":3,"cle":"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F","empreinte":"630DCD29"}
+<RS>{"v":1,"t":"reponse","n":13,"ms":5230,"id":900418,"etape":"fin","cmd":"json cle","ok":true,"code":"ok","duree_ms":0,"empreinte":"630DCD29"}
 ```

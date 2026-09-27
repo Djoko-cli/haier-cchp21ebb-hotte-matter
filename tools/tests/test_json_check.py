@@ -65,6 +65,12 @@ VALIDES = {
     ("injection", None): msg("injection", id=42, cmd="injecte durees 750 750", resultat="ok", niv0="bas",
                              dur_us=[750, 750], attente_us=20412, relu_us=[752, 748]),
     ("log", None): msg("log", src="capture", niv="notice", txt="[capture] echec du RMT"),
+    ("reseau", "ip"): msg(
+        "reseau", "ip", frais_ms=0, srp=None, adresses=[{"adr": "192.168.1.42", "type": "autre", "pref": True}],
+        udp={"port": 5480, "ouvert": True, "empreinte": "630DCD29", "sessions": 1, "provisoire": False, "rx": 12,
+             "rejets": 0, "rx_perdus": 0, "defis": 1, "tx": 230, "tx_perdus": 0, "tx_erreurs": 0,
+             "tampons_libres": None, "tampons_min": None},
+        mdns={"nom": "hotte-sonde.local"}, wifi={"connecte": True, "rssi_dbm": -58, "ip": "192.168.1.42", "pertes": 0}),
 }
 
 
@@ -168,6 +174,25 @@ class Schemas(unittest.TestCase):
         errs, warns = self.modifie(base, fw_desc="0.0.9")
         self.assertEqual(errs, [])
         self.assertTrue(any("different de fw_desc" in w for w in warns), warns)
+
+    def test_reseau_ip(self):
+        cle = ("reseau", "ip")
+        ip = VALIDES[cle]
+        # Wi-Fi coupe : ni RSSI, ni IP, aucune adresse ; sans cle : socket ferme, empreinte null.
+        coupe = dict(ip["wifi"], connecte=False, rssi_dbm=None, ip=None)
+        sans_cle = dict(ip["udp"], ouvert=False, empreinte=None, sessions=0)
+        self.assertEqual(self.modifie(cle, adresses=[], wifi=coupe, udp=sans_cle), ([], []))
+        self.assertTrue(self.modifie(cle, wifi=dict(ip["wifi"], connecte=False))[0])     # deconnecte avec un RSSI
+        self.assertTrue(self.modifie(cle, wifi=dict(coupe, connecte=True))[0])          # connecte sans IP
+        self.assertTrue(self.modifie(cle, wifi=dict(ip["wifi"], rssi_dbm=5))[0])        # RSSI positif
+        self.assertTrue(self.modifie(cle, wifi=dict(ip["wifi"], ip="192.168.1"))[0])    # IPv4 incomplete
+        self.assertTrue(self.modifie(cle, udp=dict(ip["udp"], sessions=3))[0])          # 2 sessions H1 au plus
+        self.assertTrue(self.modifie(cle, udp=dict(ip["udp"], empreinte="630dcd29"))[0])
+        self.assertTrue(self.modifie(cle, sans_mdns=None)[0])
+        self.assertTrue(self.modifie(cle, srp={"nom": 5})[0])
+        ident = ("hello", "identite")
+        caps = ["sonde", "injection", "trames", "log", "udp", "cle", "mdns"]
+        self.assertEqual(self.modifie(ident, caps=caps), ([], []))
 
     def test_log(self):
         self.assertTrue(self.modifie(("log", None), src="lampe")[0])

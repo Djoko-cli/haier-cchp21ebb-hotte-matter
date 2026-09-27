@@ -1,4 +1,4 @@
-// Copie partielle de benq-screenbar-halo-matter@c58a506 : src/cli.cpp (adapte : runLine et cliPoll repris, commandes de la sonde)
+// Copie partielle de benq-screenbar-halo-matter@c58a506 : src/cli.cpp (adapte : runLine, cliPoll et cliRunRemote repris, commandes de la sonde)
 // ===========================================================================
 //  Console de la sonde sur l'USB (spec 8.3) : texte humain, 'help' liste tout.
 //
@@ -25,6 +25,7 @@
 #include "fw_version.h"
 #include "json_mode.h"
 #include "json_out.h"
+#include "net_udp_wifi.h"
 #include "net_wifi.h"
 #include "sonde.h"
 
@@ -164,6 +165,9 @@ static void cmdInfo(char *) {
                   netWifiSsid(), netWifiUp() ? "connecte" : "deconnecte (nouvel essai toutes les 10 s)", ip,
                   (int)netWifiRssi(), kNomMdns, (unsigned long)netWifiPertes());
   }
+  char kid[9];
+  if (netUdpKid(kid)) Serial.printf("udp : port %u, cle %s\n", (unsigned)kPortUdp, kid);
+  else Serial.printf("udp : port %u ferme, aucune cle ('python3 tools/hotte_udp.py cle <port>')\n", (unsigned)kPortUdp);
 }
 
 static void cmdCapture(char *args) {
@@ -290,7 +294,7 @@ static char *afterWord(char *s) {
 //    sans texte (reponse ok, usage ou refuse ; spec 8.3 : a distance, aucune
 //    commande ne produit de texte) ; sinon commande a texte entre reponse
 //    debut et reponse fin.
-// A distance (tache 19), jsonRemoteAdmit passera avant tout refus.
+// A distance, jsonRemoteAdmit passe avant tout refus (id deja vu).
 static void runLine(char *line, bool tooLong) {
   const uint32_t t0 = millis();
   const bool remote = jsonOrigin() != jsonp::kUsb;
@@ -309,6 +313,10 @@ static void runLine(char *line, bool tooLong) {
   jsonp::copyCmd(shown, cmd);  // avant que l'aiguillage ne coupe la ligne en mots
   jsonp::maskCmd(shown);       // jamais l'alea de 'json cle nouvelle' dans la reponse
   const JsonCmd c{hasId, id, shown, t0};
+  // A distance, d'abord l'id : une commande renvoyee (reponse perdue) recoit la
+  // meme reponse sans nouvelle execution, avant tout refus de cadence qui
+  // ecraserait sa reponse.
+  if (remote && jsonRemoteAdmit(id, shown)) return;
   if (tooLong) {
     jsonRefuse(c, "trop_long", "ligne de plus de 127 octets : rien n'est execute");
     return;
@@ -364,6 +372,15 @@ static void runLine(char *line, bool tooLong) {
 }
 
 // ---------------------------------------------------------------------------
+
+void cliRunRemote(uint8_t origin, char *line, bool tooLong) {
+  // Jamais l'USB par ce chemin (il echappe a la liste blanche).
+  if (origin == jsonp::kUsb || origin >= jsonp::kOrigins) return;
+  const uint8_t prev = jsonOrigin();
+  jsonSetOrigin(origin);
+  if (jsonOrigin() == origin) runLine(line, tooLong);
+  jsonSetOrigin(prev);
+}
 
 static jsonp::LineAssembler sLine;  // 127 caracteres au plus, prefixe id= compris
 
