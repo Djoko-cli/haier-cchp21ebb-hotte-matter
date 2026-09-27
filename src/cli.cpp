@@ -23,6 +23,7 @@
 #include "capture_rmt.h"
 #include "config.h"
 #include "fw_version.h"
+#include "injection_regles.h"
 #include "json_mode.h"
 #include "json_out.h"
 #include "net_udp_wifi.h"
@@ -140,6 +141,55 @@ static Resultat faireSeuils(char *args) {
   return {true, "ok", nullptr};
 }
 
+static const char kUsageInjection[] = "usage : injection [regle <nom> <valeur>]";
+
+static void afficherInjection() {
+  const ReglagesSonde &r = sondeReglages();
+  const inj::Params &p = r.injection;
+  Serial.printf("injection : etage %s (GPIO%u)\n", r.injMontee ? "declare monte" : "non monte", (unsigned)kPinInjection);
+  Serial.printf("  bas_max_us %lu, total_max_us %lu, silence_min_us %lu, attente_max_ms %lu, delai_min_ms %lu, "
+                "arme_max_s %lu, tol_us %lu\n",
+                (unsigned long)p.basMaxUs, (unsigned long)p.totalMaxUs, (unsigned long)p.silenceMinUs,
+                (unsigned long)p.attenteMaxMs, (unsigned long)p.delaiMinMs, (unsigned long)p.armeMaxS,
+                (unsigned long)p.tolUs);
+}
+
+// Reglages d'injection changes : NVS, config reemise.
+static bool appliquerInjection(const ReglagesSonde &r) { return sondeAppliquer(r); }
+
+// injection regle <nom> <valeur> : verifie avant d'ecrire en NVS (bornes : inj::bornesParam).
+static Resultat faireRegle(char *args) {
+  static char msg[jsonp::kMsgMax + 1];
+  char *valeur = splitWord(args);
+  char *reste = splitWord(valeur);
+  uint32_t v = 0;
+  if (!*args || !lireU32(valeur, &v) || *reste)
+    return {false, "usage", "usage : injection regle <nom> <valeur> ('injection' : noms et valeurs)"};
+  ReglagesSonde r = sondeReglages();
+  uint32_t lo = 0, hi = 0;
+  switch (inj::reglerParam(&r.injection, args, v)) {
+    case inj::Reglage::NomInconnu:
+      snprintf(msg, sizeof(msg), "injection regle : parametre %s inconnu ('injection' : noms)", args);
+      return {false, "usage", msg};
+    case inj::Reglage::HorsBornes:
+      inj::bornesParam(args, &lo, &hi);
+      snprintf(msg, sizeof(msg), "injection regle : %s %lu hors bornes (%lu..%lu, et bas_max_us <= total_max_us)",
+               args, (unsigned long)v, (unsigned long)lo, (unsigned long)hi);
+      return {false, "usage", msg};
+    case inj::Reglage::Ok: break;
+  }
+  if (!appliquerInjection(r)) return {false, "refuse", "injection regle : echec de l'ecriture en NVS"};
+  return {true, "ok", nullptr};
+}
+
+// injection [regle <nom> <valeur>] ; args vide : rien a faire.
+static Resultat faireInjection(char *args) {
+  char *reste = splitWord(args);
+  if (!strcmp(args, "regle")) return faireRegle(reste);
+  if (!*args) return {true, "ok", nullptr};
+  return {false, "usage", kUsageInjection};
+}
+
 // ---------------------------------------------------------------------------
 //  Commandes
 // ---------------------------------------------------------------------------
@@ -227,6 +277,16 @@ static void cmdWifi(char *args) {
   Serial.printf("wifi : identifiants enregistres, connexion a %s ('info' pour suivre)\n", args);
 }
 
+// injection [regle <nom> <valeur>] : USB seulement (liste blanche).
+static void cmdInjection(char *args) {
+  if (*args) {
+    const Resultat r = faireInjection(args);
+    if (r.msg) Serial.println(r.msg);
+    if (!r.ok) return;
+  }
+  afficherInjection();
+}
+
 static void cmdReboot(char *) {
   Serial.println("redemarrage");
   Serial.flush();
@@ -246,6 +306,7 @@ static const Commande kCommandes[] = {
   {"reboot", cmdReboot, "redemarrage"},
   {"json", cmdJson, "json [1 [bail s]|0|etat|hello|ping|periode|compteurs|reseau|trames|log] : mode machine"},
   {"wifi", cmdWifi, "wifi <ssid> <mdp>"},
+  {"injection", cmdInjection, "injection [regle <nom> <valeur>] : garde-fous de l'injection"},
 };
 
 static void cmdHelp(char *) {

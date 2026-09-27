@@ -557,13 +557,14 @@ Préparation (choix A) :
 | 1 | différentiel testé, hotte dans son état précédent (tableau plus haut), puis hotte débranchée | — | lumière éteinte par T | | sinon **ARRÊT** |
 | 2 | hotte débranchée : étage d'injection monté (WIRING.md §6), contrôles avant pose faits ; voie 2 de l'analyseur sur `TP_Dp` par le diviseur, masse d'abord sur `TP−` | visuel | | | |
 | 3 | USB branché, `injection monte 1` envoyé | — | réponse `ok` | | |
-| 4 | `config` : valeurs de l'avenant chargées | — | égales à celles de l'avenant | | sinon on corrige avant d'aller plus loin |
-| 5 | USB débranché, sonde passée sur batterie | visuel | | | |
-| 6 | contrôles de la règle 7 à jour (étape 2b refaite si le boîtier a été ouvert) ; Mac sur batterie, sans aucun autre câble | — | | | |
-| 7 | hotte branchée ; `injection on` envoyé par `hotte_udp.py`, depuis un terminal, après la confirmation que Majid tape lui-même : « Majid devant la hotte » (jamais un script ni un agent) | — | injection armée | | |
-| 8 | niveau bas obtenu par l'injection, pendant les premiers essais | — | jugement fonctionnel : la carte réagit (bip), et l'impulsion se retrouve sur la voie 2 de l'analyseur et dans `relu_us` de l'événement `injection` ; si mesuré (oscilloscope) : sous 0,8 V | | sinon : on arrête, `injection off`, hotte débranchée, puis 470 Ω remplacées par 220 Ω |
+| 4 | charger les valeurs de l'avenant : `injection regle <nom> <valeur>` (USB, hotte débranchée), une commande par valeur | — | chacune acceptée | | refusée (hors bornes) : l'avenant sort de l'enveloppe de sécurité du firmware, on le revoit |
+| 5 | `config` : valeurs de l'avenant chargées | — | égales à celles de l'avenant | | sinon on corrige avant d'aller plus loin |
+| 6 | USB débranché, sonde passée sur batterie | visuel | | | |
+| 7 | contrôles de la règle 7 à jour (étape 2b refaite si le boîtier a été ouvert) ; Mac sur batterie, sans aucun autre câble | — | | | |
+| 8 | hotte branchée ; `injection on` envoyé par `hotte_udp.py`, depuis un terminal, après la confirmation que Majid tape lui-même : « Majid devant la hotte » (jamais un script ni un agent) | — | injection armée | | |
+| 9 | niveau bas obtenu par l'injection, pendant les premiers essais | — | jugement fonctionnel : la carte réagit (bip), et l'impulsion se retrouve sur la voie 2 de l'analyseur et dans `relu_us` de l'événement `injection` ; si mesuré (oscilloscope) : sous 0,8 V | | sinon : on arrête, `injection off`, hotte débranchée, puis 470 Ω remplacées par 220 Ω |
 
-Instrument qui a donné le niveau de la ligne 8 : ☐ jugement fonctionnel
+Instrument qui a donné le niveau de la ligne 9 : ☐ jugement fonctionnel
 ☐ oscilloscope : ____.
 
 Analyseur : pinces puis USB posés hotte débranchée (règle 4) ; fin de séance
