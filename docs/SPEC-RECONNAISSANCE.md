@@ -9,6 +9,13 @@ sur Thread, avec un ESP32-C6.
 
 **Documents liés :**
 - [BRIEF-RECHERCHE.md](BRIEF-RECHERCHE.md) : faits, niveaux de preuve et 57 sources.
+- [SECURITE.md](SECURITE.md) : les règles du §5 en fiche, et les tests
+  d'isolation et de fuite pas à pas.
+- [RECONNAISSANCE.md](RECONNAISSANCE.md) : le journal des étapes −1 à 7 (§6).
+- [WIRING.md](WIRING.md) : le matériel d'interface du §7 en détail.
+- [BANC.md](BANC.md) : la procédure et les résultats du banc de validation (§10).
+- [PROTOCOLE-JSON.md](PROTOCOLE-JSON.md) : le profil « hotte » du protocole
+  compagnon (§8.5).
 - Le protocole compagnon de la ScreenBar, dans sa version de référence, figée
   au commit `c58a506` (§8.6) :
   [benq-screenbar-halo-matter/docs/PROTOCOLE-JSON.md](https://github.com/Djoko-cli/benq-screenbar-halo-matter/blob/c58a506/docs/PROTOCOLE-JSON.md).
@@ -138,8 +145,8 @@ renvoyée au sous-projet 2.
 
 ## 5. Règles de sécurité
 
-Elles valent pour toutes les étapes. `docs/SECURITE.md` les reprend en fiche
-à garder sous les yeux.
+Elles valent pour toutes les étapes. [SECURITE.md](SECURITE.md) les reprend en
+fiche à garder sous les yeux, avec les procédures des étapes 1, 2b et 3a.
 
 **Débrancher, attendre, ne pas passer la main**
 
@@ -572,6 +579,9 @@ batterie.
 
 ## 7. Matériel d'interface
 
+Le détail (schémas, valeurs, brochage du C6, nomenclature, contrôles avant
+pose) est dans [WIRING.md](WIRING.md).
+
 ### 7.1 Adaptateur, câble de sortie et boîtier de mesure
 
 L'ensemble a trois parties, pour que **tout ce qu'on mesure ou manipule soit
@@ -759,7 +769,8 @@ Mêmes conventions que la ScreenBar : texte humain par défaut, `help` liste tou
 | `json ...` | session machine (§8.5) | selon la liste blanche |
 | `injection monte 0\|1` | déclare l'étage d'injection monté (NVS) | non |
 | `injection on\|off` | arme ou désarme l'injection. Désarmée au démarrage, et désarmée seule après 10 min | oui |
-| `injecte ...` | syntaxe fixée par l'avenant de l'étape 6 | oui |
+| `injection regle <nom> <valeur>` | valeurs de l'avenant (§8.4), vérifiées avant la NVS ([PROTOCOLE-JSON.md §5.1](PROTOCOLE-JSON.md#51-injection)) | non |
+| `injecte ...` | syntaxe fixée par l'avenant de l'étape 6 ; avant lui, `injecte durees <d1> <d2> ...` ([PROTOCOLE-JSON.md §5.1](PROTOCOLE-JSON.md#51-injection)) | oui |
 | `reboot` | redémarrage | non |
 
 **À distance, aucune commande ne produit de texte humain.** Il partirait sur
@@ -785,7 +796,7 @@ Tous ces garde-fous sont dans le firmware :
   niveau émis, avec une tolérance égale au délai de l'étage mesuré au banc. En
   cas d'écart, l'émission est arrêtée : on désactive le canal, la broche est
   libérée et le 10 k bloque Q2. Résultat `collision`.
-  - Cette détection se valide au banc (§10).
+  - Cette détection se valide au banc (§10, [BANC.md §9](BANC.md#9-injection-et-collision-critère-5)).
   - Si elle s'avère impossible, on l'écrit dans l'avenant, et la collision est
     seulement constatée après coup, par relecture.
 
@@ -799,8 +810,8 @@ ScreenBar (`PROTOCOLE-JSON.md`, sections 2 à 4, 6 et 9) :
 - les champs `v`, `t`, `n`, `ms` viennent en tête, puis `bloc` ;
 - `json 1` ouvre la session, avec un bail.
 
-Le profil est documenté dans `docs/PROTOCOLE-JSON.md` de ce dépôt, **par
-différence** avec celui de la ScreenBar.
+Le profil est documenté dans [PROTOCOLE-JSON.md](PROTOCOLE-JSON.md) de ce
+dépôt, **par différence** avec celui de la ScreenBar.
 
 **Messages**
 
@@ -922,6 +933,7 @@ Le sous-projet 3 remettra ces fichiers en commun.
 ## 10. Banc de validation, avant la hotte
 
 Le second C6, avec le firmware `generateur`, imite un bus de 5 V à drain ouvert.
+Procédure pas à pas, commandes et résultats : [BANC.md](BANC.md).
 
 **Montage :**
 - **Aucune liaison avec la hotte.** Le banc se monte :
@@ -991,6 +1003,7 @@ hotte haier/
     PROTOCOL.md                  le protocole D décodé
     PROTOCOLE-JSON.md            profil hotte du protocole compagnon (par différence)
     WIRING.md                    adaptateur, boîtier de mesure, étages, brochage
+    BANC.md                      banc de validation (§10) : procédure et résultats
     photos/                      photos de Majid (numéro de série masqué), recadrages
   logs/                          ignoré par git
 ```
