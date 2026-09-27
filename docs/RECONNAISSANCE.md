@@ -60,29 +60,57 @@ notée ici.
 
 ## Étape −1 : observation d'usage
 
-**Date :**
+**Date :** 27/09/2026, vidéo de Majid `IMG_9091.MOV` (35 s, 19 h 43), analysée image par image (toutes les 0,5 s, puis toutes les 0,1 s pour le clignotement) et au spectrogramme pour les bips et le bruit du moteur. La vidéo n'est pas versée dans le dépôt (58 Mo) ; les états du panneau sont dans [photos/panneau-etats.jpg](photos/panneau-etats.jpg).
 
 **Conditions :** hotte en usage normal, fermée ; aucun outil.
 
+**Disposition du panneau**, de gauche à droite : **vitesse 3** (ventilateur à 5-6 pales), **vitesse 2** (4 pales), **vitesse 1** (3 pales), **lumière** (soleil), **marche** (⏻). L'ordre des vitesses est confirmé par le bruit du moteur (bande 100-1 500 Hz, en régime) : environ −39 dBFS en V1 (après 2 s d'accélération), −33 en V2, −29 en V3.
+
 | # | Mesure | Calibre | Attendu | Relevé | Décision |
 |---|---|---|---|---|---|
-| 1 | depuis la veille, un appui sur une vitesse sans passer par « marche » | — | rien, un bip, ou un démarrage | | |
-| 2 | la lumière s'allume-t-elle sans « marche » ? | — | oui ou non | | |
-| 3 | « marche » quand le moteur tourne | — | arrêt immédiat, **marche prolongée** (arrêt différé natif, comme les 15 min de la CDA : durée ?), ou rien | | |
-| 4 | nouvel appui sur la vitesse active | — | | | |
-| 5 | l'état « armé » après « marche » s'éteint-il seul ? Au bout de combien de temps ? | — | | | |
-| 6 | **voyants** : lesquels s'allument, et quand ? Fixes, clignotants, intensité ? Voyant de « marche » ? | — | | | |
-| 7 | **bips** : lesquels, et quand ? (le buzzer est sur la carte : chaque bip prouve que la carte a reçu quelque chose) | — | | | |
+| 1 | depuis la veille, un appui sur une vitesse sans passer par « marche » | — | rien, un bip, ou un démarrage | **pas encore observé** (la vidéo passe toujours par « marche » avant une vitesse) | à filmer |
+| 2 | la lumière s'allume-t-elle sans « marche » ? | — | oui ou non | **oui** : à 16,7 s, lumière allumée voyant ⏻ éteint ; éteinte à 18,6 s. Elle reste aussi allumée quand on coupe la marche (33,0 s) | la lumière est indépendante de la marche |
+| 3 | « marche » quand le moteur tourne | — | arrêt immédiat, **marche prolongée** (arrêt différé natif, comme les 15 min de la CDA : durée ?), ou rien | **marche prolongée** (27,7 s, en V3) : le moteur continue à la même vitesse, le voyant V3 reste fixe, le voyant ⏻ **clignote à 1 Hz** (0,5 s allumé, 0,5 s éteint). Durée **non mesurée** : interrompue à 31,2 s par un appui sur V3, qui arrête le moteur tout de suite ; le voyant ⏻ redevient alors fixe (marche maintenue) | **arrêt différé natif** : à exploiter au sous-projet 2 ; durée à mesurer |
+| 4 | nouvel appui sur la vitesse active | — | | **arrêt du moteur** (12,9 s, en V3) : voyant de vitesse éteint, marche maintenue (⏻ fixe) ; le moteur ralentit en environ 1,5 s | les vitesses sont des bascules sur elles-mêmes |
+| 5 | l'état « armé » après « marche » s'éteint-il seul ? Au bout de combien de temps ? | — | | **pas encore observé** (au plus 2 s de marche sans vitesse dans la vidéo) | à filmer |
+| 6 | **voyants** : lesquels s'allument, et quand ? Fixes, clignotants, intensité ? Voyant de « marche » ? | — | | ⏻ **fixe** = marche ; ⏻ **clignotant à 1 Hz** = marche prolongée ; **un seul** voyant de vitesse à la fois, on passe directement de V1 à V2 puis V3 sans arrêt ; ☼ allumé = lampe allumée ; éteints, les pictogrammes restent visibles en gris | à comparer au panneau seul (étape 4) : qui pilote ces voyants ? |
+| 7 | **bips** : lesquels, et quand ? (le buzzer est sur la carte : chaque bip prouve que la carte a reçu quelque chose) | — | | **un seul bip, toujours le même**, pour **chaque** appui (16 bips pour 16 appuis) : environ 200 ms à 4,11 kHz, qu'il s'agisse de marche, d'une vitesse ou de la lumière, avec ou sans marche | chaque appui du panneau passe par la ligne `D` jusqu'à la carte |
 | 8a | appui long (3 s) sur la lumière : effet caché ? comment l'annuler ? | — | verrouillage, rappel de filtre, arrêt différé, ou rien | | |
 | 8b | appui long (3 s) sur « marche » | — | idem | | |
 | 8c | appui long (3 s) sur la vitesse 1 | — | idem | | |
 | 8d | appui long (3 s) sur la vitesse 2 | — | idem | | |
 | 8e | appui long (3 s) sur la vitesse 3 | — | idem | | |
 | 9 | **reprise après coupure** : vitesse 2 et lumière allumée, fiche débranchée 10 s, rebranchée : quel état revient ? | — | | | |
-| 10 | **délai prudent entre deux changements de vitesse**, d'après ce qu'on entend des relais | — | 3 s par défaut | | fixe la valeur de l'étape 7 |
+| 10 | **délai prudent entre deux changements de vitesse**, d'après ce qu'on entend des relais | — | 3 s par défaut | pas mesuré : les relais ne se distinguent pas dans la vidéo. Majid a changé de vitesse toutes les 1,5 à 2,5 s sans incident | fixe la valeur de l'étape 7 |
+
+**Chronologie de la vidéo du 27/09** (temps de la vidéo ; « bip » = pic à 4,11 kHz) :
+
+| Temps | Appui | Effet observé |
+|---|---|---|
+| 1,8 s | marche | bip ; voyant ⏻ fixe |
+| 3,9 s | marche | bip ; voyant ⏻ éteint |
+| 5,8 s | marche | bip ; voyant ⏻ fixe |
+| 7,6 s | V1 | bip ; voyant V1 ; le moteur accélère pendant environ 2 s |
+| 9,8 s | V2 | bip ; voyant V2 à la place de V1 ; moteur plus fort |
+| 11,5 s | V3 | bip ; voyant V3 ; moteur au plus fort |
+| 12,9 s | V3 (active) | bip ; voyant V3 éteint ; le moteur s'arrête ; ⏻ reste fixe |
+| 15,1 s | marche | bip ; voyant ⏻ éteint |
+| 16,7 s | lumière | bip ; lampe et voyant ☼ allumés, sans marche |
+| 18,6 s | lumière | bip ; lampe éteinte |
+| 20,2 s | marche | bip ; voyant ⏻ fixe |
+| 20,9 s | lumière | bip ; lampe allumée |
+| 21,6 s | V1 | bip ; voyant V1 ; le moteur démarre |
+| 24,0 s | V2 | bip ; voyant V2 |
+| 25,8 s | V3 | bip ; voyant V3 |
+| 27,7 s | marche (moteur en V3) | bip ; **marche prolongée** : le moteur continue, ⏻ clignote à 1 Hz |
+| 31,2 s | V3 (active) | bip ; le moteur s'arrête ; ⏻ redevient fixe ; la lampe reste allumée |
+| 33,0 s | marche | bip ; voyant ⏻ éteint ; la lampe reste allumée |
+| 33,6 s | lumière | bip ; lampe éteinte |
+
+**Reste à observer** (même méthode : une courte vidéo avec le son) : ligne 1 (vitesse sans marche), ligne 5 (la marche s'éteint-elle seule ?), lignes 8a à 8e (appuis longs), ligne 9 (reprise après coupure), et la **durée de la marche prolongée** (laisser le moteur finir seul, chronomètre en main).
 
 **Sortie :**
-- [ ] le tableau des comportements est rempli.
+- [ ] le tableau des comportements est rempli (lignes 2, 3, 4, 6 et 7 le 27/09 ; restent 1, 5, 8, 9 et la durée de la marche prolongée).
 
 ## Étape 0 : photos, inventaire et cheminements
 
