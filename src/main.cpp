@@ -1,9 +1,10 @@
 // ===========================================================================
 //  Sonde de reconnaissance de la ligne D (docs/SPEC-RECONNAISSANCE.md)
 //
-//  setup() : GPIO7 bas en premier, reglages NVS, interruption des fronts,
-//  capture RMT, console. loop() : console, capture (parties -> texte ou
-//  lignes trame), puis la tache IDLE.
+//  setup() : GPIO7 bas en premier, port USB, identifiant de demarrage,
+//  reglages NVS, interruption des fronts, capture RMT, console. loop() :
+//  console, capture (parties -> lignes trame du mode machine, ou texte),
+//  mode machine (bail, lignes periodiques), puis la tache IDLE.
 // ===========================================================================
 #include <Arduino.h>
 
@@ -12,6 +13,7 @@
 #include "cli.h"
 #include "config.h"
 #include "fw_version.h"
+#include "json_mode.h"
 #include "json_out.h"
 #include "reglages.h"
 #include "sonde.h"
@@ -20,8 +22,13 @@ static ReglagesSonde sReglages;
 static capt::Changements sChangements;  // mode changements : receptions d'une partie
 static jsonp::RateCap sTexte(20);       // lignes trame affichees par seconde (mode humain)
 static char sLigne[1024];
+static uint32_t sRepTotal = 0;          // receptions identiques non emises depuis le demarrage
+static uint8_t sHorsBornes = 0;         // valeurs hors bornes lues en NVS au demarrage (spec 8.2)
 
 ReglagesSonde &sondeReglages() { return sReglages; }
+uint32_t sondeRepEnCours() { return sChangements.repEnCours(); }
+uint32_t sondeRepTotal() { return sRepTotal; }
+uint8_t sondeHorsBornes() { return sHorsBornes; }
 
 static bool memeCapture(const capt::Reglages &a, const capt::Reglages &b) {
   return a.resolHz == b.resolHz && a.filtreUs == b.filtreUs && a.silenceUs == b.silenceUs && a.inverse == b.inverse;
@@ -36,6 +43,7 @@ bool sondeAppliquer(const ReglagesSonde &r) {
   bool ok = true;
   if (relance) ok = captureBegin(sReglages.capture);  // captureEnd() d'abord
   if (!reglagesSauver(sReglages)) ok = false;
+  jsonConfigChanged();  // config reemise aux sessions en mode machine
   return ok;
 }
 
@@ -65,16 +73,21 @@ static void afficherTrame(const capt::Partie &p, bool hasRep, uint32_t rep) {
   Serial.write((const uint8_t *)sLigne, k);
 }
 
-// Chaque partie produite par la capture (capturePoll).
+// Chaque partie produite par la capture (capturePoll) : lignes trame vers les
+// sessions en mode machine ; texte sur l'USB hors mode machine seulement.
 static void surPartie(const capt::Partie &p, void *) {
   bool hasRep = false;
   uint32_t rep = 0;
   if (sReglages.changements) {
-    if (!sChangements.aEmettre(p)) return;  // identique a la derniere emise : comptee
+    if (!sChangements.aEmettre(p)) {  // identique a la derniere emise : comptee
+      sRepTotal++;
+      return;
+    }
     hasRep = true;
     rep = sChangements.prendreRep();
   }
-  afficherTrame(p, hasRep, rep);
+  jsonTrame(p, hasRep, rep);
+  if (!jsonMachine()) afficherTrame(p, hasRep, rep);
 }
 
 void setup() {
@@ -83,13 +96,15 @@ void setup() {
   pinMode(kPinInjection, OUTPUT);
   digitalWrite(kPinInjection, LOW);
   // Tampon d'emission de l'USB (HWCDC) : 256 octets par defaut, moins qu'une
-  // ligne trame de 110 durees. 8 Ko : afficherTrame n'ecrit qu'une ligne qui
-  // tient entiere, et une dizaine de lignes tiennent pendant que le Mac lit.
+  // ligne machine (1024). 8 Ko : une ligne periodique part s'il en reste 2048
+  // libres, et une dizaine de lignes trame tiennent pendant que le Mac lit.
   Serial.setTxBufferSize(8192);
   Serial.begin(115200);
-  const uint8_t remplaces = reglagesCharger(&sReglages);
+  jsonBegin();  // identifiant de ce demarrage (hello.boot), avant toute radio
+  // Nombre garde : un log l'annonce aussi a chaque 'json 1' (json_mode.cpp).
+  sHorsBornes = reglagesCharger(&sReglages);
   Serial.printf("firmware %s (%s)\n", FW_VERSION_FULL, FW_ENV);
-  if (remplaces) Serial.printf("[reglages] %u valeur(s) hors bornes en NVS : valeur(s) par defaut\n", remplaces);
+  if (sHorsBornes) Serial.printf("[reglages] %u valeur(s) hors bornes en NVS : valeur(s) par defaut\n", sHorsBornes);
   if (!bordBegin(kPinEcoute)) Serial.println("[bord] interruption des fronts indisponible");
   if (!captureBegin(sReglages.capture)) Serial.println("[capture] echec du RMT ('capture on' pour reessayer)");
   cliBegin();
@@ -98,5 +113,6 @@ void setup() {
 void loop() {
   cliPoll();
   capturePoll(surPartie, nullptr, 8);
+  jsonPoll();
   vTaskDelay(1);  // laisse tourner la tache IDLE
 }
