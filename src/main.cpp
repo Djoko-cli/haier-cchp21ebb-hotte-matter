@@ -2,9 +2,10 @@
 //  Sonde de reconnaissance de la ligne D (docs/SPEC-RECONNAISSANCE.md)
 //
 //  setup() : GPIO7 bas en premier, port USB, identifiant de demarrage,
-//  reglages NVS, interruption des fronts, capture RMT, console, Wi-Fi.
+//  reglages NVS, interruption des fronts, capture RMT, console, Wi-Fi, UDP.
 //  loop() : console, capture (parties -> lignes trame du mode machine, ou
-//  texte), mode machine (bail, lignes periodiques), Wi-Fi, puis la tache IDLE.
+//  texte), mode machine (bail, lignes periodiques), Wi-Fi, UDP (commandes
+//  recues, datagrammes emis), puis la tache IDLE.
 // ===========================================================================
 #include <Arduino.h>
 
@@ -15,6 +16,7 @@
 #include "fw_version.h"
 #include "json_mode.h"
 #include "json_out.h"
+#include "net_udp_wifi.h"
 #include "net_wifi.h"
 #include "reglages.h"
 #include "sonde.h"
@@ -110,6 +112,7 @@ void setup() {
   if (!captureBegin(sReglages.capture)) Serial.println("[capture] echec du RMT ('capture on' pour reessayer)");
   cliBegin();
   netWifiBegin();  // identifiants en NVS : station, mDNS ; sans eux, radio eteinte
+  netUdpBegin();   // cle H1 en NVS (hotte/cle) : socket UDP 5480 des que le Wi-Fi a une adresse
 }
 
 void loop() {
@@ -117,5 +120,6 @@ void loop() {
   capturePoll(surPartie, nullptr, 8);
   jsonPoll();
   netWifiPoll();
+  netUdpPoll();
   vTaskDelay(1);  // laisse tourner la tache IDLE
 }

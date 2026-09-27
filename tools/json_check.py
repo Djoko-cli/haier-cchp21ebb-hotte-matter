@@ -275,6 +275,42 @@ SCHEMAS = {
             "sautes": Opt(U32),
         }
     ),
+    # Transport UDP sur le Wi-Fi : schema du bloc ip de la ScreenBar (srp toujours
+    # null, tampons OpenThread null), plus mdns et wifi.
+    ("reseau", "ip"): Obj(
+        {
+            "frais_ms": Null(U32),
+            "srp": Null(Obj({"nom": Null(Str(63))})),
+            "adresses": Arr(Obj({"adr": Str(45), "type": Enum("omr", "ml_eid", "autre"), "pref": BOOL}), 4),
+            "udp": Obj(
+                {
+                    "port": Int(1, 65535),
+                    "ouvert": BOOL,
+                    "empreinte": Null(Str(8, r"^[0-9A-F]{8}$")),
+                    "sessions": Int(0, 2),
+                    "provisoire": BOOL,
+                    "rx": U32,
+                    "rejets": U32,
+                    "rx_perdus": U32,
+                    "defis": U32,
+                    "tx": U32,
+                    "tx_perdus": U32,
+                    "tx_erreurs": U32,
+                    "tampons_libres": Null(U32),
+                    "tampons_min": Null(U32),
+                }
+            ),
+            "mdns": Obj({"nom": Str(63)}),
+            "wifi": Obj(
+                {
+                    "connecte": BOOL,
+                    "rssi_dbm": Null(Int(-128, 0)),
+                    "ip": Null(Str(15, r"^[0-9]{1,3}(\.[0-9]{1,3}){3}$")),
+                    "pertes": U32,
+                }
+            ),
+        }
+    ),
 }
 
 BLOCKED = {"hello", "etat", "compteurs", "reseau"}
@@ -388,6 +424,14 @@ def coherence(t, obj, errs, warns):
     elif t == "trame":
         if obj.get("dur_us") == [] and obj.get("fin") is not True and obj.get("debord") is not True:
             errs.append("trame : dur_us vide sans fin ni debord")
+    elif t == "reseau" and obj.get("bloc") == "ip":
+        w = obj.get("wifi")
+        if isinstance(w, dict) and isinstance(w.get("connecte"), bool):
+            vus = [k for k in ("rssi_dbm", "ip") if w.get(k) is not None]
+            if w["connecte"] and len(vus) != 2:
+                errs.append("reseau/ip : wifi connecte sans rssi_dbm ou sans ip")
+            if not w["connecte"] and vus:
+                errs.append(f"reseau/ip : wifi deconnecte avec {', '.join(vus)}")
     elif t == "hello" and obj.get("bloc") == "base":
         if obj.get("fw") != obj.get("fw_desc"):
             warns.append(f"hello : fw {obj.get('fw')!r} different de fw_desc {obj.get('fw_desc')!r}")
