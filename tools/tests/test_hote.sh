@@ -17,4 +17,7 @@ $CXX src/motifs.cpp tools/tests/test_generateur.cpp -o "$OUT/test_generateur"
 "$OUT/test_generateur"
 $CXX tools/tests/test_wifi.cpp -o "$OUT/test_wifi"
 "$OUT/test_wifi"
+# Enveloppe H1 : crypto de CommonCrypto (macOS, dans libSystem : rien a lier) ; mbedTLS sur la carte.
+$CXX src/h1_proto.cpp tools/tests/test_h1.cpp -o "$OUT/test_h1"
+"$OUT/test_h1"
 echo "tests hote : OK"
