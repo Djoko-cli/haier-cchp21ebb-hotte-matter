@@ -21,7 +21,9 @@ dans un **dépôt public** : ni SSID, ni mot de passe, ni clé.
 - le générateur (second C6 SuperMini, firmware `generateur`) ;
 - Q3 (BC547 ou 2N3904), 4,7k (base), 10k (base-émetteur) ;
 - 47k et 68k : diviseur de la voie D0 de l'analyseur (§2.3) ;
-- testeur USB, s'il y en a un (critère 6, §2.4) ;
+- testeur USB, s'il y en a un (critère 6, §2.4 et §8.3) ;
+- la batterie USB de l'étape 5 (§8) et, sans testeur USB, un câble USB de
+  cette batterie qu'on peut ouvrir (fils VBUS et GND accessibles, §8.3) ;
 - pull-up de ligne : 10k (variante 1) ; 4,7k et 1 nF (variante 2) ;
 - fils Dupont, un fil de masse ;
 - multimètre (contrôles, critère 6) ;
@@ -139,7 +141,8 @@ voie.
 
 ### 2.4 Courant de la sonde (critère 6)
 
-Deux méthodes ; l'instrument est noté au §7.
+Deux méthodes ; l'instrument est noté au §7. Wi-Fi actif, sur la batterie :
+§8.3.
 
 - **Testeur USB**, s'il y en a un, entre la source et le câble USB de la
   sonde : le port du Mac (sans Wi-Fi) ou la batterie (Wi-Fi actif). On lit le
@@ -254,6 +257,7 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 | | 16 | 2 (4,7k + 1 nF) | | | | | | | |
 | | 16b | 1 (10k) | | | | | | | |
 | | 16b | 2 (4,7k + 1 nF) | | | | | | | |
+| | 21 | 1 (10k) | | | | | | | |
 
 ### Critères 1 et 2, variante 1 (10k)
 
@@ -338,7 +342,13 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 |---|---|---|---|
 | | USB, sans Wi-Fi ; testeur USB ou multimètre : ____ | capture active, bus au repos | |
 | | USB, sans Wi-Fi ; testeur USB ou multimètre : ____ | capture active, motif `krona` | |
-| | Wi-Fi actif (tâche 21) | session UDP, motif `krona` | |
+| | batterie, Wi-Fi actif (tâche 21) ; testeur USB ou multimètre : ____ (§8.3) | session UDP, motif `krona` | |
+
+### Batterie USB : 30 min en Wi-Fi (tâche 21)
+
+| Date | Modèle de la batterie | Fichier `logs/` | Boots | `up_s` (début → fin) | Plus grand trou de `rx_ms` (s) | Verdict |
+|---|---|---|---|---|---|---|
+| | | | | | | |
 
 ### Conclusions
 
@@ -346,3 +356,122 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 - Décalage et asymétrie retenus :
 - Délai de l'étage à l'analyseur, et `tol_us` proposé (tâche 16b) :
 - Limites constatées :
+
+## 8. Par le Wi-Fi, sur la batterie (critères 4 et 6)
+
+Même montage (§2, variante 1), **toujours sans aucune liaison avec la hotte**
+(§2.1) : sonde sur le boîtier détaché (hotte débranchée pendant toute la
+séance, fiche XH 4 broches retirée de l'embase, les deux **OL** relevés avant
+tout USB, batterie comprise), ou sur la plaque d'essai du banc. La sonde parle
+au Mac par le Wi-Fi (UDP, port 5480,
+[PROTOCOLE-JSON.md §9](PROTOCOLE-JSON.md#9-transport-réseau--udp-sur-le-wi-fi)).
+À partir du §8.2, elle est alimentée par la **batterie USB** de l'étape 5
+(spec §12), pas par le Mac : sans hôte qui lit, l'USB ne ralentit jamais la
+sonde. Le générateur reste sur l'USB du Mac, console ouverte ; le fil de masse
+relie les deux C6. Rien de ce qui suit ne s'écrit dans ce fichier : ni SSID,
+ni mot de passe, ni clé, ni adresse IP.
+
+Ordre : Wi-Fi et clé (§8.1), trente minutes sur la batterie (§8.2),
+consommation (§8.3), dix minutes de `krona` (§8.4).
+
+### 8.1 Une fois : Wi-Fi et clé
+
+1. **Identifiants Wi-Fi (Majid, au clavier).** Sonde sur l'USB du Mac. Majid
+   ouvre une console **hors du dépôt**, pour que `log2file` n'enregistre pas le
+   mot de passe :
+   `cd ~ && ~/.platformio/penv/bin/pio device monitor -p $PORT_SONDE -b 115200`.
+   Il tape `wifi <ssid> <mdp>`, puis `info` quelques secondes plus tard.
+   Attendu : `wifi : <ssid>, connecte, IP <a.b.c.d>, RSSI <-xx> dBm, mDNS hotte-sonde.local, 0 perte(s) depuis le demarrage`.
+   Il ferme la console (Ctrl-C) pour libérer le port.
+2. **Clé H1 (l'agent).** `python3 tools/hotte_udp.py cle $PORT_SONDE`.
+   Attendu : `cle rangee dans /Users/<nom>/.config/hotte-sonde/cle (empreinte XXXXXXXX)`.
+   La clé n'est jamais affichée.
+3. **Chemin (l'agent).** `ping -c 3 hotte-sonde.local`, puis
+   `python3 tools/hotte_udp.py session hotte-sonde.local --duree 15`.
+   Attendu : `session XXXXXXXX ouverte`, `hello/base` avec `'transport': 'udp'`,
+   `reponse id=1 fin ok « json 1 »`, un `etat` toutes les 2 s, `reseau/ip` avec
+   le RSSI, et à la fin `0 rejetee(s)`.
+
+### 8.2 Trente minutes sur la batterie
+
+La batterie de l'étape 5 doit tenir la sonde en Wi-Fi 30 min sans se couper
+(spec §12) : certaines batteries s'éteignent seules sous un faible courant.
+
+1. **Sonde sur la batterie (Majid).** Le banc à l'emplacement de test (là où
+   la sonde sera posée à l'étape 5), toujours sans liaison avec la hotte.
+   Majid débranche la sonde du Mac et la branche sur la batterie : elle
+   redémarre et rejoint le Wi-Fi. Après 10 s,
+   `python3 tools/hotte_udp.py session hotte-sonde.local --duree 10` (l'agent)
+   doit ouvrir la session.
+2. **Motif sans fin (Majid).** `motif krona 0` dans la console du générateur.
+3. **Enregistrement (l'agent)**, 31 min :
+   `python3 tools/hotte_udp.py enregistre hotte-sonde.local batterie-30min "capture tout" "seuils 1 19000" --duree 1860`.
+   À la fin, Majid tape `stop` dans la console du générateur.
+4. **Verdict (l'agent)**, sur le fichier écrit :
+   `python3 -c "import json,sys; L=[json.loads(x) for x in open(sys.argv[1])]; B={r['l']['boot'] for r in L if 'boot' in r['l']}; U=[r['l']['up_s'] for r in L if 'up_s' in r['l']]; T=[r['rx_ms'] for r in L]; print('boots', len(B), '; up_s', U[0], 'a', U[-1], '(croissant)' if U == sorted(U) else '(RECUL)', '; plus grand trou de rx_ms', max(b - a for a, b in zip(T, T[1:])) / 1000, 's')" logs/<fichier>.jsonl`.
+   Attendu : `boots 1 ; up_s <début> a <fin> (croissant) ; plus grand trou de rx_ms <g> s`.
+   La batterie convient si : **un seul boot** dans le fichier, `up_s`
+   croissant jusqu'à **1 800 au moins**, et **aucun trou de `rx_ms` de plus
+   de 10 s**. Sinon (la sonde a redémarré, ou s'est tue) : une autre batterie,
+   et on recommence.
+5. Noter le modèle de la batterie, la date et le résultat au §7 (« Batterie
+   USB ») et dans [RECONNAISSANCE.md](RECONNAISSANCE.md#installation-et-instruments)
+   (« Installation et instruments »).
+
+### 8.3 Consommation, Wi-Fi actif (critère 6)
+
+Sonde sur la batterie, pendant une session Wi-Fi avec le motif `krona`.
+L'instrument est noté au §7 (critère 6). Deux méthodes :
+
+- **Testeur USB**, s'il y en a un : entre la batterie et le câble USB de la
+  sonde.
+- **Sinon, multimètre en série sur VBUS**, depuis la batterie :
+  1. batterie débranchée ; **l'USB-C de la sonde reste débranché pendant
+     toute la mesure** : jamais deux sources sur sa broche `5V` ;
+  2. un câble USB de la batterie, **ouvert** (fils VBUS et GND accessibles) :
+     son fil GND sur `TP−` (le `GND` de la sonde) ; multimètre en courant
+     continu, **calibre 200 mA**, borne mA sur le fil VBUS, COM sur la broche
+     `5V` de la sonde ; sur le boîtier, `J2` reste ouvert ;
+  3. brancher la batterie : la sonde démarre, capture active, et rejoint le
+     Wi-Fi. Si le courant saute sans cesse, ou si la session tombe, la chute
+     de tension dans le calibre est trop forte : passer sur l'entrée 10 A ;
+  4. à la fin, débrancher la batterie, retirer le multimètre et le câble
+     ouvert, puis rebrancher la batterie sur l'USB-C de la sonde.
+
+Mesure : l'agent lance
+`python3 tools/hotte_udp.py session hotte-sonde.local --duree 60`, Majid tape
+`motif krona 400` dans la console du générateur et lit le courant moyen (de
+l'ordre de 100 mA, spec §8.7 ; les pointes d'émission ne s'y lisent pas,
+§2.4).
+
+### 8.4 Dix minutes de `krona` (critère 4)
+
+1. **Emplacement (Majid).** Sonde sur la batterie, à l'emplacement de test ;
+   générateur sur l'USB du Mac, console ouverte ; fil de masse en place.
+   Attendre 10 s après le branchement de la batterie, puis
+   `python3 tools/hotte_udp.py session hotte-sonde.local --duree 10` (l'agent)
+   doit ouvrir la session.
+2. **Enregistrement (l'agent).**
+   `python3 tools/hotte_udp.py enregistre hotte-sonde.local banc-wifi-krona "capture tout" "seuils 1 19000" --duree 660`.
+   Dans un second terminal : `tail -f logs/live.log` (un résumé toutes les
+   5 s).
+3. **Motif (Majid).** Dès que le terminal affiche
+   `reponse id=3 fin ok « seuils 1 19000 »`, Majid tape `motif krona 4500` dans
+   la console du générateur : 4 500 trames de 134 ms, soit 10 min 3 s. Il
+   regarde défiler `motif krona trame <index>` jusqu'à
+   `motif krona fini : 4500 trames`. L'enregistrement s'arrête seul à 660 s.
+4. **Verdicts (l'agent)**, sur le fichier écrit :
+   - `python3 tools/json_check.py --jsonl logs/<fichier>.jsonl` : 0 erreur, et
+     la ligne `n : ... (... ligne(s) perdue(s), X %)` ; il faut **X < 0,100**.
+   - `python3 tools/banc.py logs/<fichier>.jsonl krona --n 4500 --decalage-us <retenu au §7>` :
+     `compteurs de la sonde pendant la capture : debord +0, lignes_perdues +0, sautes +0`
+     (zéro perte côté sonde) ; `critere 1` vaut 4500 / 4500 si le Wi-Fi n'a
+     rien perdu.
+   - RSSI pendant la capture :
+     `python3 -c "import json,sys; r=[json.loads(l)['l']['wifi']['rssi_dbm'] for l in open(sys.argv[1]) if json.loads(l)['l'].get('bloc')=='ip']; print('RSSI', min(r), 'a', max(r), 'dBm sur', len(r), 'releves')" logs/<fichier>.jsonl`.
+5. Noter au §7 (critère 4) : date, emplacement (en mots, sans adresse), RSSI,
+   durée, hausses des compteurs, trous de `n`, verdict.
+
+Si le critère échoue : noter le RSSI et `wifi.pertes`, rapprocher la sonde du
+point d'accès et recommencer ; sinon, reprendre le risque « Wi-Fi trop
+faible » du §13 de la spec (enregistrement local, relu par l'USB).
