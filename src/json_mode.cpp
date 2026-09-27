@@ -18,6 +18,7 @@
 #include "config.h"
 #include "fw_version.h"
 #include "h1_proto.h"
+#include "injection.h"
 #include "net_udp_wifi.h"
 #include "sonde.h"
 
@@ -302,6 +303,18 @@ static void config(uint8_t o, uint32_t now) {
   sW.str("mode", r.changements ? "changements" : "tout");
   sW.boolean("inverse", r.capture.inverse);
   sW.end();
+  // Valeurs de l'avenant en vigueur (NVS, 'injection regle') : injectionParams().
+  const inj::Params &p = injectionParams();
+  sW.obj("injection");
+  sW.u32("gpio", kPinInjection);
+  sW.u32("bas_max_us", p.basMaxUs);
+  sW.u32("total_max_us", p.totalMaxUs);
+  sW.u32("silence_min_us", p.silenceMinUs);
+  sW.u32("attente_max_ms", p.attenteMaxMs);
+  sW.u32("delai_min_ms", p.delaiMinMs);
+  sW.u32("arme_max_s", p.armeMaxS);
+  sW.u32("tol_us", p.tolUs);
+  sW.end();
 }
 
 static void etatBus(uint8_t o, uint32_t now) {
@@ -328,6 +341,13 @@ static void etatCapture(uint8_t o, uint32_t now) {
   sW.str("mode", sondeReglages().changements ? "changements" : "tout");
   sW.u32("debord", captureStats().debord);
   sW.u32("rep_en_cours", sondeRepEnCours());
+}
+
+static void etatInjection(uint8_t o, uint32_t now) {
+  sW.begin("etat", sSinks[o].n, now);
+  sW.str("bloc", "injection");
+  bootUp();
+  injectionJson(sW, now);
 }
 
 static void etatSys(uint8_t o, uint32_t now) {
@@ -385,6 +405,7 @@ static void produce(uint8_t o, const Queued &q, uint32_t now) {
     case Item::Config: config(o, now); break;
     case Item::EtatBus: etatBus(o, now); break;
     case Item::EtatCapture: etatCapture(o, now); break;
+    case Item::EtatInjection: etatInjection(o, now); break;
     case Item::EtatSys: etatSys(o, now); break;
     case Item::Compteurs: compteurs(o, now); break;
     case Item::NetIp:
@@ -408,9 +429,6 @@ static void produce(uint8_t o, const Queued &q, uint32_t now) {
       isReply = p.cache;
       break;
     }
-    default:  // bloc absent de ce build (etat.injection : tache 23)
-      sBusy = false;
-      return;
   }
   // Le maximum n'est remis a 0 que s'il est parti : perdue, la ligne suivante le porte.
   if (send(o) && q.item == Item::EtatSys) k.loopMaxMs = 0;
@@ -467,6 +485,7 @@ static void push(uint8_t o, Item item, uint32_t now, bool session) {
 static void pushState(uint8_t o, uint32_t now, bool session) {
   push(o, Item::EtatBus, now, session);
   push(o, Item::EtatCapture, now, session);
+  push(o, Item::EtatInjection, now, session);
   push(o, Item::EtatSys, now, session);
 }
 
@@ -1027,6 +1046,21 @@ void jsonTrame(const capt::Partie &p, bool hasRep, uint32_t rep) {
     if (!eventRoom(o) || !claim()) continue;
     k.trameCap.take();
     trame(sW, k.n, now, p, hasRep, rep, k.trameCap.takeSkipped());
+    send(o);
+  }
+}
+
+void jsonInjection(const InjectionEv &e) {
+  const uint32_t now = millis();
+  for (uint8_t o = 0; o < kOrigins; o++) {
+    Sink &k = sSinks[o];
+    // L'origine attend l'evenement de son id, meme hors mode machine (comme la
+    // livraison de la ScreenBar, 7.3) ; les autres le recoivent en mode machine.
+    const bool attendu = o == sOrigin && e.id;
+    if ((!k.machine && !attendu) || !claim()) continue;
+    InjectionEv mine = e;
+    if (o != sOrigin) mine.id = 0;  // id d'une autre session : null
+    injection(sW, k.n, now, mine);
     send(o);
   }
 }

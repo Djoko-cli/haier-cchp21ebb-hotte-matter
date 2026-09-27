@@ -105,7 +105,7 @@ void trame(Writer &w, uint32_t n, uint32_t ms, const capt::Partie &p, bool hasRe
 struct InjectionEv {
   uint32_t id = 0;              // id de la commande (0 : sans id, champ null)
   const char *cmd = "";         // tronquee a kCmdTextMax
-  const char *resultat = "ok";  // ok, collision, delai
+  const char *resultat = "ok";  // ok, collision, delai, erreur
   bool niv0Haut = false;        // niveau du bus pendant dur[0] (toujours bas pour 'injecte durees')
   const uint32_t *dur = nullptr;
   uint16_t n = 0;

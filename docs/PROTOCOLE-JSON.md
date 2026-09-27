@@ -11,14 +11,17 @@ document ne dit pas est **identique** à la ScreenBar.
 - Code : `src/json_out.*` (briques pures, testées sur l'hôte),
   `src/json_mode.*` (sessions, instantanés, événements), `src/cli.cpp`
   (lignes de l'hôte), `src/net_wifi.*` et `src/net_udp_wifi.*` (transport
-  réseau), `src/h1_proto.*` (enveloppe H1, copiée de la ScreenBar).
+  réseau), `src/h1_proto.*` (enveloppe H1, copiée de la ScreenBar),
+  `src/injection_regles.*` (garde-fous de l'injection, testés sur l'hôte) et
+  `src/injection.*` (émission).
 - Vérification : `tools/json_check.py` contrôle toute ligne machine contre ce
   profil (capture série brute, ou `.jsonl` avec `--jsonl`). Les exemples des
   sections 8 et 9 sont vérifiés par
   `python3 tools/json_check.py --strict --exemples docs/PROTOCOLE-JSON.md`,
   lancé par `sh tools/tests/test_hote.sh`.
-- État : transports USB et UDP sur le Wi-Fi (section 9). L'injection vient
-  ensuite ; ce document s'étendra avec elle.
+- État : transports USB et UDP sur le Wi-Fi (section 9) ; injection bornée
+  de l'étape 7 (sections 5.1 et 6.2), avec la seule syntaxe d'avant
+  l'avenant de l'étape 6 : `injecte durees ...`.
 
 ## 1. Ce qui ne change pas
 
@@ -62,7 +65,7 @@ Comme la ScreenBar §3.4, avec ces bornes :
 | `json` | état de la session, en texte | |
 | `json 1 [bail <s>]` | mode machine ; `hello`, `config` et l'instantané complet par la file des périodiques, puis la `reponse` | bail 0 (aucun) ou 10..600 s, défaut 30 |
 | `json 0` | retour au mode humain : `fin`, puis l'invite | |
-| `json etat` | instantané : `etat` (3 blocs) et `compteurs` | |
+| `json etat` | instantané : `etat` (4 blocs) et `compteurs` | |
 | `json hello` | `hello` (2 blocs) et `config` | |
 | `json ping` | renouvelle le bail ; la `reponse` porte `bail_s` et `up_s` | |
 | `json periode <ms>` | période des `etat` | 0 ou 200..60000, défaut **1 000** |
@@ -110,9 +113,11 @@ puis `caps`.
 ### 4.2 `config`
 
 Émise avec `hello`, et de nouveau après chaque `capture tout`,
-`capture changements` ou `seuils <valeurs>` accepté, même si les valeurs ne
-changent pas (`sondeAppliquer`). `capture on` et `capture off` ne changent pas
-la `config` : l'état se lit dans `etat.capture.active`.
+`capture changements`, `seuils <valeurs>`, `injection monte 0|1` ou
+`injection regle <nom> <valeur>` accepté, même si les valeurs ne changent pas
+(`sondeAppliquer`). `capture on` et `capture off` ne changent pas la `config` :
+l'état se lit dans `etat.capture.active` ; de même, `injection on` et
+`injection off` se lisent dans `etat.injection.armee`.
 
 | Champ | Type | Sens |
 |---|---|---|
@@ -123,9 +128,26 @@ la `config` : l'état se lit dans `etat.capture.active`.
 | `capture.mode` | `tout` ou `changements` | mode d'émission (spec §8.2) |
 | `capture.inverse` | booléen | étage d'écoute inverseur : les niveaux publiés sont ceux **du bus** |
 
+Objet `injection` : les valeurs de l'avenant de l'étape 6 (spec §6), et avant
+lui les valeurs par défaut ci-dessous. Elles se règlent par l'USB seulement
+(`injection regle <nom> <valeur>`, section 5.1), sont vérifiées avant d'être
+écrites en NVS (espace `hotte`, clé `inj_params`), et de nouveau au démarrage :
+un jeu hors bornes y est remplacé tout entier par les valeurs par défaut.
+
+| Champ | Bornes | Défaut | Sens |
+|---|---|---|---|
+| `injection.gpio` | | 7 | base de l'étage d'injection |
+| `injection.bas_max_us` | 10..20 000 | 3 000 | durée basse maximale d'une impulsion |
+| `injection.total_max_us` | 100..200 000, et au moins `bas_max_us` | 200 000 | durée totale maximale d'une trame injectée (la borne haute est le défaut : `relu_us` n'est jamais tronqué, section 6.2) |
+| `injection.silence_min_us` | 1 000..1 000 000 | 20 000 | silence exigé avant d'émettre : aucun front, bus haut |
+| `injection.attente_max_ms` | 10..10 000 | 1 000 | attente maximale de ce silence, puis résultat `delai` |
+| `injection.delai_min_ms` | 1 000..60 000 | 3 000 | délai minimal entre deux injections (toutes, avant l'avenant) |
+| `injection.arme_max_s` | 10..600 | 600 | désarmement automatique après `injection on` |
+| `injection.tol_us` | 1..500 | 20 | tolérance de la surveillance des fronts (délai des étages, mesuré au banc) |
+
 ### 4.3 `etat`
 
-Période `periode_ms` (1 000 ms sur l'USB). Trois blocs.
+Période `periode_ms` (1 000 ms sur l'USB). Quatre blocs.
 
 **Bloc `bus`** :
 
@@ -144,6 +166,15 @@ Période `periode_ms` (1 000 ms sur l'USB). Trois blocs.
 | `mode` | `tout` ou `changements` | |
 | `debord` | entier | blocs perdus depuis le démarrage, tampon circulaire plein |
 | `rep_en_cours` | entier | mode `changements` : réceptions identiques depuis la dernière émise |
+
+**Bloc `injection`** :
+
+| Champ | Type | Sens |
+|---|---|---|
+| `montee` | booléen | étage d'injection déclaré monté (`injection monte 1`, NVS) |
+| `armee` | booléen | injection armée (`injection on`) ; fausse au démarrage, et d'elle-même après `arme_max_s` |
+| `arme_reste_s` | entier 0..600 | secondes avant le désarmement automatique ; 0 si désarmée |
+| `derniere` | objet ou null | dernière injection terminée depuis le démarrage : `id` (celui de la commande dans sa session, ou null) et `resultat` (section 6.2) ; null avant la première |
 
 **Bloc `sys`** : un objet `sys` **identique** à celui de la ScreenBar (§5.3,
 bloc `sante`) : `heap`, `heap_min`, `heap_bloc`, `pile_boucle`,
@@ -206,10 +237,42 @@ Même forme que la ScreenBar §6 : texte de la console préfixé par `id=<n> `.
 |---|---|---|
 | famille `json` | comme la ScreenBar | lignes produites, puis `reponse` `fin` |
 | `capture on\|off\|tout\|changements`, `seuils <filtre_us> [silence_us] [resol_hz]` | **sans texte** : la réponse porte le résultat | `reponse` `fin` : `ok` (avec un `msg` si le mode n'a pas pu être écrit en NVS), `usage` (mot inconnu ou valeur hors bornes, avec `msg`) ou `refuse` (RMT ou NVS en échec) ; puis `config` après `tout`, `changements` et `seuils` |
-| toute autre commande (`info`, `bus`, `stats`, `help`, `seuils` seul...) | inchangée : texte humain | `reponse` `debut`, le texte, puis `reponse` `fin` `execute` (ou `inconnue`) |
+| `injection on\|off`, `injection monte 0\|1`, `injection regle <nom> <valeur>` | **sans texte** (section 5.1) | `reponse` `fin` : `ok` (`on` porte un `msg`), `usage` (avec `msg`) ou `refuse` (`on` sans étage monté, NVS en échec) ; puis `config` après `monte` et `regle` |
+| `injecte durees <d1> <d2> ...` | **asynchrone**, sans texte (section 5.1) | `reponse` `fin` tout de suite : `accepte` avec `suite` = `injection`, ou `refuse` (`msg` : `non montee`, `non armee`, `delai minimal`), ou `usage` (syntaxe, bornes) ; puis, si acceptée, l'événement `injection` avec le même `id` (section 6.2) |
+| toute autre commande (`info`, `bus`, `stats`, `help`, `seuils` seul, `injection` seul...) | inchangée : texte humain | `reponse` `debut`, le texte, puis `reponse` `fin` `execute` (ou `inconnue`) |
 
 Sans `id`, rien ne change : texte humain, aucune `reponse`. `seuils` vérifie
 toutes les valeurs **avant** d'écrire en NVS (spec §8.2).
+
+### 5.1 Injection
+
+Spec §8.3 et §8.4. Tous les garde-fous sont dans le firmware.
+
+- **`injecte durees <d1> <d2> ...`** : la seule syntaxe avant l'avenant de
+  l'étape 6. Durées en µs, entiers > 0, alternées, la première au niveau
+  **bas** du bus ; 64 au plus (et la ligne fait 127 caractères au plus) ;
+  chaque durée basse (rang pair) au plus `bas_max_us`, la somme au plus
+  `total_max_us`. Sinon `usage`, avec un `msg`.
+- **Refus**, dans cet ordre : `non montee` (`injection monte 1` jamais
+  envoyé), `non armee`, `delai minimal` (moins de `delai_min_ms` depuis la fin
+  de la dernière émission ; une injection encore en attente du silence compte
+  aussi).
+- **Acceptée** : elle attend le silence (`silence_min_us` sans front, bus
+  haut), part en une seule transaction RMT sur GPIO7 (GPIO7 haut = bus tiré
+  bas, par Q2), sous la surveillance des fronts de GPIO6, puis l'événement
+  `injection` donne le résultat (section 6.2).
+- **`injection on`** n'arme que si l'étage est déclaré monté. L'injection est
+  désarmée au démarrage, par `injection off`, par `injection monte 0`, et
+  d'elle-même après `arme_max_s` (annonce `log` `injection`). Une injection
+  en attente du silence n'est pas émise si l'injection est désarmée entre-temps
+  (résultat `erreur`).
+- **`injection monte 0|1`** et **`injection regle <nom> <valeur>`** (noms :
+  les champs de `config.injection`, sauf `gpio`) : USB seulement, vérifiés avant
+  la NVS. `injection` seul affiche l'état et les valeurs en texte.
+- À distance, seuls `injection on|off` et `injecte ...` passent (section 9.4) ;
+  `tools/hotte_udp.py` n'envoie `injection on` qu'après une confirmation tapée
+  dans un terminal, la phrase exacte « Majid devant la hotte » (règle 11 de la
+  spec) ; sans terminal (script, agent), il refuse.
 
 ## 6. Événements
 
@@ -221,7 +284,7 @@ cette session, ne consomme pas de `n`, et le suivant du même type porte
 |---|---|---|
 | `trame` | 100 par seconde | `json trames 1` (défaut) |
 | `log` | 20 par seconde | `json log 1` |
-| `injection` | aucun | toujours |
+| `injection` | aucun | toujours ; `id` pour la seule session qui a envoyé la commande |
 
 ### 6.1 `trame` : une partie de réception
 
@@ -253,12 +316,45 @@ Règles :
 
 ### 6.2 `injection` : fin d'une injection
 
-Les commandes `injection` et `injecte` (spec §8.3 et §8.4) arrivent avec
-l'étage d'injection ; le format de leur événement est fixé :
-`id` (celui de la commande, ou null), `cmd` (40 caractères au plus),
-`resultat` (`ok`, `collision`, `delai`), `niv0`, `dur_us` (durées émises, 64
-au plus), `attente_us` (attente du silence), `relu_us` (durées relues pendant
-l'émission).
+Suit la `reponse` `accepte` d'un `injecte` : une ligne par demande acceptée,
+vers chaque session en mode machine. Seule la session qui a envoyé la commande
+reçoit son `id`, même hors mode machine si la commande en portait un ; les
+autres voient `id` null (mêmes règles que la `livraison` de la ScreenBar §7.3).
+Une commande de la console sans `id`, en mode humain, reçoit le résultat en
+texte : `injection : ok, attente 412 us ; emises 750 750 750 2250 ; relues 752 748 751`.
+
+| Champ | Type | Sens |
+|---|---|---|
+| `id` | entier ou null | id de la commande dans la session qui l'a envoyée ; null dans les autres sessions, et pour une commande de la console sans id |
+| `cmd` | chaîne, 40 caractères au plus | la commande |
+| `resultat` | `ok`, `collision`, `delai`, `erreur` | voir ci-dessous |
+| `niv0` | `bas` | niveau du bus pendant `dur_us[0]` (toujours `bas` avec `injecte durees`) |
+| `dur_us` | tableau de 1 à 64 entiers | durées demandées, en µs : émises en entier si `ok`, jusqu'à l'arrêt si `collision`, pas du tout si `delai` ou `erreur` |
+| `attente_us` | entier | de l'acceptation au début de l'émission (ou à l'abandon) |
+| `relu_us` | tableau de 64 entiers au plus | durées entre fronts successifs lus sur GPIO6 pendant l'émission, depuis son premier front : n − 1 valeurs pour n durées en nombre pair (le dernier palier haut se fond dans le repos), n en nombre impair ; vide si rien n'a été émis |
+
+Résultats :
+- **`ok`** : émise en entier, sans front anormal. Sans aucune durée relue, un
+  `log` `injection` le signale (étage d'injection, ligne ou étage d'écoute à
+  vérifier).
+- **`collision`** : un front anormal pendant l'émission (le bus change de
+  niveau loin de tout front programmé, à `tol_us` près, vers un autre niveau
+  que celui émis), ou un premier front qui n'est pas celui de l'émission (vers
+  le haut, ou plus de 500 µs après le départ). L'émission est arrêtée tout de
+  suite (`rmt_disable`) et GPIO7 revient à l'état bas ; `relu_us` s'arrête au
+  front anormal.
+- **`delai`** : le bus ne s'est pas tu dans `attente_max_ms` ; rien n'est émis.
+- **`erreur`** : rien n'est émis, ou l'émission n'a pas pu finir (RMT
+  indisponible, interruption des fronts absente, injection désarmée ou étage
+  déclaré démonté pendant l'attente du silence) ; un `log` `injection` en
+  donne la cause.
+
+La trame injectée est aussi capturée comme toute trame du bus (`trame`,
+section 6.1) : c'est ainsi qu'on « retrouve la trame sur le bus » (spec §6,
+étape 7). La ligne tient le budget de 896 octets : à la borne haute de
+`total_max_us` (200 000 µs), une commande `injecte` de 64 durées garde toutes
+ses durées relues (test hôte `test_json`). `relu_us` ne serait coupé qu'au-delà
+du budget, ce qu'aucune commande acceptée n'atteint.
 
 ### 6.3 `log` : annonces du firmware
 
@@ -304,13 +400,14 @@ Sonde → app :
 ```
 <RS>{"v":1,"t":"hello","n":0,"ms":12031,"bloc":"base","rev":4,"fw":"0.1.0-1a2b3c4","fw_desc":"0.1.0-1a2b3c4","date":"Sep 27 2026","heure":"14:02:11","env":"sonde","build":"sonde","reseau_build":"aucun","puce":"esp32c6","idf":"v5.5.5","arduino":"3.3.12","boot":"3FA2C901","reset":"mise_sous_tension","reset_n":1,"up_s":12,"session":{"transport":"usb","periode_ms":1000,"compteurs_ms":1000,"reseau_ms":5000,"bail_s":30,"trames":true,"log":false},"limites":{"ligne_max":1024,"cmd_max":127}}
 <RS>{"v":1,"t":"hello","n":1,"ms":12032,"bloc":"identite","boot":"3FA2C901","mac":"F0F5BD012345","id":{"fabricant":"Djoko-CLI","produit":"Sonde hotte Haier","serie":"HOTTE-F0F5BD012345","nom":"Sonde hotte","hw":1,"hw_txt":"C6 SuperMini, etages v1"},"appareil":"hotte","caps":["sonde","injection","trames","log","udp","cle","mdns"]}
-<RS>{"v":1,"t":"config","n":2,"ms":12033,"capture":{"gpio":6,"resol_hz":1000000,"filtre_us":1,"silence_us":5000,"mode":"tout","inverse":true}}
+<RS>{"v":1,"t":"config","n":2,"ms":12033,"capture":{"gpio":6,"resol_hz":1000000,"filtre_us":1,"silence_us":5000,"mode":"tout","inverse":true},"injection":{"gpio":7,"bas_max_us":3000,"total_max_us":200000,"silence_min_us":20000,"attente_max_ms":1000,"delai_min_ms":3000,"arme_max_s":600,"tol_us":20}}
 <RS>{"v":1,"t":"etat","n":3,"ms":12034,"bloc":"bus","boot":"3FA2C901","up_s":12,"repos":"haut","fronts":1520,"derniere_ms":3,"receptions_s":10}
 <RS>{"v":1,"t":"etat","n":4,"ms":12035,"bloc":"capture","boot":"3FA2C901","up_s":12,"active":true,"mode":"tout","debord":0,"rep_en_cours":0}
-<RS>{"v":1,"t":"etat","n":5,"ms":12036,"bloc":"sys","boot":"3FA2C901","up_s":12,"sys":{"heap":247812,"heap_min":241600,"heap_bloc":110580,"pile_boucle":5316,"boucle_max_ms":2,"json_perdus":0,"json_trop_longs":0,"rejets":0}}
-<RS>{"v":1,"t":"compteurs","n":6,"ms":12037,"bloc":"sonde","receptions":118,"parties":118,"blocs":118,"symboles":1947,"debord":0,"rep":0,"lignes_perdues":0,"sautes":0,"rejets":0}
-<RS>{"v":1,"t":"reseau","n":7,"ms":12038,"bloc":"ip","frais_ms":0,"srp":null,"adresses":[{"adr":"192.168.1.42","type":"autre","pref":true}],"udp":{"port":5480,"ouvert":true,"empreinte":"630DCD29","sessions":0,"provisoire":false,"rx":0,"rejets":0,"rx_perdus":0,"defis":0,"tx":0,"tx_perdus":0,"tx_erreurs":0,"tampons_libres":null,"tampons_min":null},"mdns":{"nom":"hotte-sonde.local"},"wifi":{"connecte":true,"rssi_dbm":-58,"ip":"192.168.1.42","pertes":0}}
-<RS>{"v":1,"t":"reponse","n":8,"ms":12039,"id":1,"etape":"fin","cmd":"json 1","ok":true,"code":"ok","duree_ms":8,"bail_s":30,"up_s":12}
+<RS>{"v":1,"t":"etat","n":5,"ms":12036,"bloc":"injection","boot":"3FA2C901","up_s":12,"montee":false,"armee":false,"arme_reste_s":0,"derniere":null}
+<RS>{"v":1,"t":"etat","n":6,"ms":12037,"bloc":"sys","boot":"3FA2C901","up_s":12,"sys":{"heap":247812,"heap_min":241600,"heap_bloc":110580,"pile_boucle":5316,"boucle_max_ms":2,"json_perdus":0,"json_trop_longs":0,"rejets":0}}
+<RS>{"v":1,"t":"compteurs","n":7,"ms":12038,"bloc":"sonde","receptions":118,"parties":118,"blocs":118,"symboles":1947,"debord":0,"rep":0,"lignes_perdues":0,"sautes":0,"rejets":0}
+<RS>{"v":1,"t":"reseau","n":8,"ms":12039,"bloc":"ip","frais_ms":0,"srp":null,"adresses":[{"adr":"192.168.1.42","type":"autre","pref":true}],"udp":{"port":5480,"ouvert":true,"empreinte":"630DCD29","sessions":0,"provisoire":false,"rx":0,"rejets":0,"rx_perdus":0,"defis":0,"tx":0,"tx_perdus":0,"tx_erreurs":0,"tampons_libres":null,"tampons_min":null},"mdns":{"nom":"hotte-sonde.local"},"wifi":{"connecte":true,"rssi_dbm":-58,"ip":"192.168.1.42","pertes":0}}
+<RS>{"v":1,"t":"reponse","n":9,"ms":12040,"id":1,"etape":"fin","cmd":"json 1","ok":true,"code":"ok","duree_ms":9,"bail_s":30,"up_s":12}
 ```
 
 Puis `etat` et `compteurs` chaque seconde, `reseau` toutes les 5 s, et les
@@ -350,7 +447,7 @@ id=3 seuils 2 40000
 
 ```
 <RS>{"v":1,"t":"reponse","n":502,"ms":40002,"id":2,"etape":"fin","cmd":"capture changements","ok":true,"code":"ok","duree_ms":14}
-<RS>{"v":1,"t":"config","n":503,"ms":40003,"capture":{"gpio":6,"resol_hz":1000000,"filtre_us":1,"silence_us":5000,"mode":"changements","inverse":true}}
+<RS>{"v":1,"t":"config","n":503,"ms":40003,"capture":{"gpio":6,"resol_hz":1000000,"filtre_us":1,"silence_us":5000,"mode":"changements","inverse":true},"injection":{"gpio":7,"bas_max_us":3000,"total_max_us":200000,"silence_min_us":20000,"attente_max_ms":1000,"delai_min_ms":3000,"arme_max_s":600,"tol_us":20}}
 <RS>{"v":1,"t":"reponse","n":510,"ms":40410,"id":3,"etape":"fin","cmd":"seuils 2 40000","ok":false,"code":"usage","msg":"seuils : silence 40000 us hors bornes a 1000000 Hz (1000..32767)","duree_ms":0}
 ```
 
@@ -389,13 +486,49 @@ json : mode machine coupe (hote muet depuis 30 s)
 >
 ```
 
-### 8.6 Événement `injection`
+### 8.6 Injection
 
-Format seulement (les commandes viennent avec l'étage d'injection) :
+Par l'USB, étage monté (au banc, tâche 24) ; `injection monte 1` a été envoyé
+une fois (NVS) :
 
 ```
-<RS>{"v":1,"t":"reponse","n":900,"ms":123001,"id":42,"etape":"fin","cmd":"injecte durees 750 750 750 2250","ok":true,"code":"accepte","duree_ms":1,"suite":"injection"}
-<RS>{"v":1,"t":"injection","n":901,"ms":123456,"id":42,"cmd":"injecte durees 750 750 750 2250","resultat":"ok","niv0":"bas","dur_us":[750,750,750,2250],"attente_us":20412,"relu_us":[752,748,751,2249]}
+id=40 injection on
+id=41 injecte durees 750 750 750 2250
+id=42 injecte durees 750
+```
+
+L'injection est armée pour 600 s. La première demande est acceptée ; le bus est
+au repos, elle part aussitôt. Ses trois premiers paliers sont relus (le dernier,
+haut, se fond dans le repos), puis la capture rend la même trame. La seconde
+arrive dans les 3 s : délai minimal.
+
+```
+<RS>{"v":1,"t":"reponse","n":898,"ms":122500,"id":40,"etape":"fin","cmd":"injection on","ok":true,"code":"ok","msg":"injection armee pour 600 s ('injection off' pour desarmer)","duree_ms":0}
+<RS>{"v":1,"t":"reponse","n":900,"ms":123001,"id":41,"etape":"fin","cmd":"injecte durees 750 750 750 2250","ok":true,"code":"accepte","duree_ms":0,"suite":"injection"}
+<RS>{"v":1,"t":"injection","n":901,"ms":123006,"id":41,"cmd":"injecte durees 750 750 750 2250","resultat":"ok","niv0":"bas","dur_us":[750,750,750,2250],"attente_us":412,"relu_us":[752,748,751]}
+<RS>{"v":1,"t":"trame","n":902,"ms":123011,"num":2204,"part":0,"fin":true,"t_us":123001455,"niv0":"bas","dur_us":[751,749,751],"debord":false}
+<RS>{"v":1,"t":"etat","n":903,"ms":124000,"bloc":"injection","boot":"3FA2C901","up_s":124,"montee":true,"armee":true,"arme_reste_s":599,"derniere":{"id":41,"resultat":"ok"}}
+<RS>{"v":1,"t":"reponse","n":905,"ms":124100,"id":42,"etape":"fin","cmd":"injecte durees 750","ok":false,"code":"refuse","msg":"injecte : delai minimal (3000 ms entre deux injections)","duree_ms":0}
+```
+
+Collision (critère 5 du banc) : le générateur tire la ligne 500 µs toutes les
+50 ms ; son impulsion tombe dans le second palier haut de 20 ms. L'émission
+s'arrête au front anormal : la dernière impulsion basse n'est jamais émise.
+Puis une demande pendant un trafic continu (motif `wtc`, pauses de 6 ms) :
+aucun silence de 20 ms en 1 s. Une autre session, ouverte en même temps, voit
+la même injection sans son `id`.
+
+```
+<RS>{"v":1,"t":"injection","n":1210,"ms":161052,"id":43,"cmd":"injecte durees 500 20000 500 20000 500","resultat":"collision","niv0":"bas","dur_us":[500,20000,500,20000,500],"attente_us":19630,"relu_us":[502,19998,503,8012]}
+<RS>{"v":1,"t":"injection","n":1388,"ms":170230,"id":44,"cmd":"injecte durees 1000","resultat":"delai","niv0":"bas","dur_us":[1000],"attente_us":1000204,"relu_us":[]}
+<RS>{"v":1,"t":"injection","n":77,"ms":161052,"id":null,"cmd":"injecte durees 500 20000 500 20000 500","resultat":"collision","niv0":"bas","dur_us":[500,20000,500,20000,500],"attente_us":19630,"relu_us":[502,19998,503,8012]}
+```
+
+Refus : sans `injection on`, et `injection regle` à distance (USB seulement) :
+
+```
+<RS>{"v":1,"t":"reponse","n":52,"ms":95012,"id":8,"etape":"fin","cmd":"injecte durees 750 750","ok":false,"code":"refuse","msg":"injecte : non armee ('injection on')","duree_ms":0}
+<RS>{"v":1,"t":"reponse","n":53,"ms":95230,"id":9,"etape":"fin","cmd":"injection regle tol_us 30","ok":false,"code":"interdite","msg":"interdite a distance (10.5) : USB seulement","duree_ms":0}
 ```
 
 ## 9. Transport réseau : UDP sur le Wi-Fi
@@ -487,11 +620,12 @@ comptée dans `rejets`. Sont autorisées (`jsonp::remoteRefusal`,
 - `json periode 2000..60000`, `json compteurs 0|1000..60000`,
   `json reseau 0|10000..60000`, `json trames 0|1`, `json log 0|1` ;
 - `capture on|off|tout|changements`, `seuils <valeurs>` (bornés, sans texte) ;
-- `injection on|off`, `injecte ...` (avec l'étage d'injection).
+- `injection on|off`, `injecte ...` (section 5.1).
 
 Tout le reste reçoit la `reponse` `interdite`, et rien n'est exécuté : en
-particulier `json` seul, `json cle ...`, `wifi`, `injection monte`, `reboot`,
-`bus`, `stats`, `info` et `help`.
+particulier `json` seul, `json cle ...`, `wifi`, `injection` seul,
+`injection monte`, `injection regle`, `reboot`, `bus`, `stats`, `info` et
+`help`.
 
 ### 9.5 Profil distant
 

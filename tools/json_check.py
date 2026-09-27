@@ -22,7 +22,8 @@ Pour chaque ligne machine :
     etat, compteurs, reseau ; entiers seulement (t_us jusqu'a 2^53 - 1) ;
   - contenu : champs obligatoires, types, bornes, enumerations, tailles des
     chaines, coherences simples (etape et code d'une reponse, reglages de
-    capture, trame vide...) ; un champ inconnu est un avertissement ;
+    capture et d'injection, etat de l'injection, trame vide...) ; un champ
+    inconnu est un avertissement ;
   - continuite : trous de n (pertes, avec leur taux), n qui recule.
 
 Usage :
@@ -52,6 +53,16 @@ SILENCE_MIN_US = 1000
 SILENCE_MAX_TICKS = 32767
 DUR_MAX = 110       # durees par ligne trame
 INJ_DUR_MAX = 64    # durees par injection
+# Bornes des valeurs d'injection (kChamps de src/injection_regles.cpp ; test_json_check le verifie).
+INJ_BORNES = {
+    "bas_max_us": (10, 20000),
+    "total_max_us": (100, 200000),
+    "silence_min_us": (1000, 1000000),
+    "attente_max_ms": (10, 10000),
+    "delai_min_ms": (1000, 60000),
+    "arme_max_s": (10, 600),
+    "tol_us": (1, 500),
+}
 
 # ---------------------------------------------------------------------------
 #  Petit langage de schema
@@ -119,6 +130,7 @@ RESET = Enum(
     "mise_sous_tension", "broche", "logiciel", "panique", "chien_int", "chien_tache", "chien",
     "baisse_tension", "usb", "inconnue",
 )
+RESULTAT = Enum("ok", "collision", "delai", "erreur")  # evenement injection, etat.injection.derniere
 OK_CODES = {"ok", "accepte", "en_cours", "execute"}
 KO_CODES = {"usage", "refuse", "inconnue", "trop_long", "cadence", "interdite", "deja_traite"}
 
@@ -189,6 +201,8 @@ SCHEMAS = {
                     "inverse": BOOL,
                 }
             ),
+            # Absent des captures faites avant l'injection (taches 16 et 21) : facultatif.
+            "injection": Opt(Obj(dict({"gpio": U8}, **{k: U32 for k in INJ_BORNES}))),
         }
     ),
     ("etat", "bus"): Obj(
@@ -209,6 +223,16 @@ SCHEMAS = {
             "mode": MODE,
             "debord": U32,
             "rep_en_cours": U32,
+        }
+    ),
+    ("etat", "injection"): Obj(
+        {
+            "boot": BOOT,
+            "up_s": U32,
+            "montee": BOOL,
+            "armee": BOOL,
+            "arme_reste_s": Int(0, 600),
+            "derniere": Null(Obj({"id": Null(Int(1, 999999999)), "resultat": RESULTAT})),
         }
     ),
     ("etat", "sys"): Obj(
@@ -260,7 +284,7 @@ SCHEMAS = {
         {
             "id": Null(Int(1, 999999999)),
             "cmd": Str(40),
-            "resultat": Enum("ok", "collision", "delai"),
+            "resultat": RESULTAT,
             "niv0": NIVEAU,
             "dur_us": Arr(Int(1, U32_MAX), INJ_DUR_MAX),
             "attente_us": U32,
@@ -421,6 +445,26 @@ def coherence(t, obj, errs, warns):
             elif isinstance(hz, int) and isinstance(sil, int) and not isinstance(sil, bool):
                 if sil < SILENCE_MIN_US or sil * hz > SILENCE_MAX_TICKS * 1000000:
                     errs.append(f"config : silence_us {sil} hors bornes a {hz} Hz")
+        i = obj.get("injection")
+        if isinstance(i, dict):
+            for k, (lo, hi) in INJ_BORNES.items():
+                v = i.get(k)
+                if isinstance(v, int) and not isinstance(v, bool) and not lo <= v <= hi:
+                    errs.append(f"config : injection.{k} {v} hors bornes ({lo}..{hi})")
+            b, t = i.get("bas_max_us"), i.get("total_max_us")
+            if isinstance(b, int) and isinstance(t, int) and b > t:
+                errs.append(f"config : injection.bas_max_us {b} au-dela de total_max_us {t}")
+    elif t == "etat" and obj.get("bloc") == "injection":
+        armee, reste = obj.get("armee"), obj.get("arme_reste_s")
+        if armee is True and obj.get("montee") is not True:
+            errs.append("etat/injection : armee sans etage monte")
+        if armee is True and reste == 0:
+            errs.append("etat/injection : armee avec arme_reste_s 0")
+        if armee is False and isinstance(reste, int) and reste:
+            errs.append(f"etat/injection : desarmee avec arme_reste_s {reste}")
+    elif t == "injection":
+        if obj.get("dur_us") == []:
+            errs.append("injection : dur_us vide (une demande a au moins une duree)")
     elif t == "trame":
         if obj.get("dur_us") == [] and obj.get("fin") is not True and obj.get("debord") is not True:
             errs.append("trame : dur_us vide sans fin ni debord")

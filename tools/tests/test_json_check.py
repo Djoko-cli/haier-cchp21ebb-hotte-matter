@@ -5,6 +5,7 @@ import copy
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -45,11 +46,15 @@ VALIDES = {
         appareil="hotte", caps=["sonde", "injection", "trames", "log"]),
     ("config", None): msg(
         "config", capture={"gpio": 6, "resol_hz": 1000000, "filtre_us": 1, "silence_us": 5000, "mode": "tout",
-                           "inverse": True}),
+                           "inverse": True},
+        injection={"gpio": 7, "bas_max_us": 3000, "total_max_us": 200000, "silence_min_us": 20000,
+                   "attente_max_ms": 1000, "delai_min_ms": 3000, "arme_max_s": 600, "tol_us": 20}),
     ("etat", "bus"): msg("etat", "bus", boot="3FA2C901", up_s=12, repos="haut", fronts=1520, derniere_ms=3,
                          receptions_s=17),
     ("etat", "capture"): msg("etat", "capture", boot="3FA2C901", up_s=12, active=True, mode="tout", debord=0,
                              rep_en_cours=0),
+    ("etat", "injection"): msg("etat", "injection", boot="3FA2C901", up_s=12, montee=True, armee=True,
+                               arme_reste_s=587, derniere={"id": 42, "resultat": "ok"}),
     ("etat", "sys"): msg(
         "etat", "sys", boot="3FA2C901", up_s=12,
         sys={"heap": 250000, "heap_min": 240000, "heap_bloc": 110000, "pile_boucle": 5200, "boucle_max_ms": 2,
@@ -163,6 +168,39 @@ class Schemas(unittest.TestCase):
         self.assertTrue(self.modifie(cle, capture=dict(capture, filtre_us=4))[0])
         self.assertTrue(self.modifie(cle, capture=dict(capture, mode="rafale"))[0])
 
+    def test_config_injection(self):
+        cle = ("config", None)
+        inj = VALIDES[cle]["injection"]
+        self.assertEqual(self.modifie(cle, sans_injection=None), ([], []))  # captures d'avant la tache 23
+        self.assertTrue(self.modifie(cle, injection=dict(inj, tol_us=0))[0])
+        self.assertTrue(self.modifie(cle, injection=dict(inj, arme_max_s=601))[0])
+        self.assertTrue(self.modifie(cle, injection=dict(inj, delai_min_ms=999))[0])
+        self.assertTrue(self.modifie(cle, injection=dict(inj, bas_max_us=5000, total_max_us=4000))[0])
+        self.assertTrue(self.modifie(cle, injection=dict(inj, total_max_us=200001))[0])  # borne haute : le defaut
+        self.assertEqual(self.modifie(cle, injection=dict(inj, bas_max_us=20000, total_max_us=200000))[0], [])
+
+    def test_etat_injection(self):
+        cle = ("etat", "injection")
+        self.assertEqual(self.modifie(cle, armee=False, arme_reste_s=0, derniere=None), ([], []))
+        self.assertEqual(self.modifie(cle, derniere={"id": None, "resultat": "delai"}), ([], []))
+        self.assertEqual(self.modifie(cle, derniere={"id": 7, "resultat": "erreur"}), ([], []))
+        self.assertTrue(self.modifie(cle, montee=False)[0])       # armee sans etage monte
+        self.assertTrue(self.modifie(cle, armee=False)[0])        # desarmee avec un reste
+        self.assertTrue(self.modifie(cle, arme_reste_s=0)[0])     # armee sans reste
+        self.assertTrue(self.modifie(cle, arme_reste_s=601)[0])   # 10 min au plus
+        self.assertTrue(self.modifie(cle, derniere={"id": 42, "resultat": "annulee"})[0])
+        self.assertTrue(self.modifie(cle, sans_derniere=None)[0])
+
+    def test_injection_evenement(self):
+        cle = ("injection", None)
+        self.assertEqual(self.modifie(cle, resultat="erreur", relu_us=[]), ([], []))
+        self.assertEqual(self.modifie(cle, resultat="collision", id=None), ([], []))
+        self.assertTrue(self.modifie(cle, resultat="annulee")[0])
+        self.assertTrue(self.modifie(cle, dur_us=[1] * 65)[0])
+        self.assertTrue(self.modifie(cle, relu_us=[1] * 65)[0])
+        self.assertTrue(self.modifie(cle, dur_us=[])[0])          # une demande a au moins une duree
+        self.assertTrue(self.modifie(cle, id=0)[0])               # sans id : null
+
     def test_hello(self):
         ident = ("hello", "identite")
         self.assertTrue(self.modifie(ident, appareil="screenbar")[0])
@@ -205,6 +243,16 @@ class Schemas(unittest.TestCase):
         self.assertEqual(verifier(obj)[0], [])
         _, errs, _ = json_check.check_line(b"\x1e" + json.dumps(VALIDES[("fin", None)]).encode())
         self.assertTrue(any("non compacte" in e for e in errs), errs)
+
+
+class BornesInjection(unittest.TestCase):
+    def test_memes_bornes_que_le_firmware(self):
+        # kChamps de src/injection_regles.cpp : nom, champ, borne basse, borne haute.
+        with open(os.path.join(ICI, "..", "..", "src", "injection_regles.cpp"), encoding="utf-8") as f:
+            texte = f.read()
+        c = {m[0]: (int(m[1]), int(m[2])) for m in re.findall(r'\{"(\w+)", &Params::\w+, (\d+), (\d+)\}', texte)}
+        self.assertEqual(len(c), 7)
+        self.assertEqual(c, json_check.INJ_BORNES)
 
 
 class Fichiers(unittest.TestCase):

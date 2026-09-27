@@ -227,6 +227,85 @@ static void testSymboles() {
   VERIF(versSymboles(Demande(), y, kSymMax) == 0);
 }
 
+// Surveillance d'une emission (tache 23) : fronts passes par l'interruption
+// (temps esp_timer, niveau du bus), origine au premier front vers le bas.
+static void testSurveillance() {
+  const Params p;
+  Demande d;
+  VERIF(analyser("durees 750 750 750 2250", p, &d) == Refus::Aucun);
+  uint32_t r[kDurMax] = {};
+  Surveillance s;
+  VERIF(!s.active() && !s.collision() && s.relu(r, kDurMax) == 0);
+  s.front(5000, false);  // inactive : ignore
+  VERIF(!s.collision());
+
+  // Emission normale : l'emission commence 30 us apres t0 (latence du RMT).
+  const uint64_t t0 = 1000000, a = t0 + 30;
+  s.debut(&d, t0, 20);
+  VERIF(s.active() && !s.ancree());
+  s.front(a, false);  // origine
+  VERIF(s.ancree() && !s.collision());
+  s.front(a + 752, true);
+  s.front(a + 1500, false);
+  s.front(a + 2251, true);  // puis 2250 us haut : pas de front, le bus reste relache
+  VERIF(!s.collision());
+  s.front(a + 4600, false);  // apres la fenetre (4500 + 20) : trafic d'un autre, ignore
+  VERIF(!s.collision());
+  VERIF(s.relu(r, kDurMax) == 3 && r[0] == 752 && r[1] == 748 && r[2] == 751);
+  VERIF(s.relu(r, 2) == 2);
+  s.fin();
+  VERIF(!s.active());
+  s.front(a + 4700, true);
+  VERIF(!s.collision() && s.relu(r, kDurMax) == 3);
+
+  // Collision : quelqu'un tire la ligne pendant un palier haut ; la suite est ignoree.
+  s.debut(&d, t0, 20);
+  s.front(t0 + 10, false);
+  s.front(t0 + 10 + 752, true);
+  VERIF(!s.collision());
+  s.front(t0 + 10 + 1000, false);
+  VERIF(s.collision());
+  s.front(t0 + 10 + 1100, true);
+  VERIF(s.relu(r, kDurMax) == 2 && r[0] == 752 && r[1] == 248);
+
+  // Front masque : un autre emetteur tient la ligne basse pendant notre
+  // relachement a 750 us, puis la relache a 1100 us. Ce front va vers le
+  // niveau emis (haut), mais loin de tout front programme : collision.
+  VERIF(!frontAnormal(d, 1100, true, 20));  // a lui seul, frontAnormal ne le voit pas
+  s.debut(&d, t0, 20);
+  s.front(t0 + 10, false);
+  s.front(t0 + 10 + 1100, true);
+  VERIF(s.collision());
+  VERIF(s.relu(r, kDurMax) == 1 && r[0] == 1100);
+
+  // Premier front vers le haut (le bus etait tenu bas par un autre) : collision.
+  s.debut(&d, t0, 20);
+  VERIF(!s.collision());
+  s.front(t0 + 40, true);
+  VERIF(s.collision() && !s.ancree());
+  // Premier front trop tard apres t0 (au-dela de kDepartMaxUs) : collision.
+  s.debut(&d, t0, 20);
+  s.front(t0 + kDepartMaxUs + 1, false);
+  VERIF(s.collision());
+  s.debut(&d, t0, 20);
+  s.front(t0 + kDepartMaxUs, false);
+  VERIF(!s.collision() && s.ancree());
+
+  // Nombre impair de durees : le relachement final est relu.
+  VERIF(analyser("durees 1500 750 750", p, &d) == Refus::Aucun);
+  s.debut(&d, t0, 20);
+  s.front(t0 + 20, false);
+  s.front(t0 + 20 + 1502, true);
+  s.front(t0 + 20 + 2250, false);
+  s.front(t0 + 20 + 3004, true);
+  VERIF(!s.collision());
+  VERIF(s.relu(r, kDurMax) == 3 && r[0] == 1502 && r[1] == 748 && r[2] == 754);
+
+  // debut() remet tout a zero.
+  s.debut(&d, t0, 20);
+  VERIF(s.active() && !s.ancree() && !s.collision() && s.relu(r, kDurMax) == 0);
+}
+
 // Liste blanche a distance (jsonp::remoteRefusal) : 'injection on|off' et
 // 'injecte ...' seulement ; 'injection regle' et 'injection monte' : USB.
 static void testDistance() {
@@ -247,6 +326,7 @@ int main() {
   testEtat();
   testNiveauEtFront();
   testSymboles();
+  testSurveillance();
   testDistance();
   return bilan("test_injection");
 }

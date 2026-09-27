@@ -91,4 +91,38 @@ struct Sym {
 constexpr size_t kSymMax = 48;  // une memoire de canal RMT ; le pire cas des bornes en prend 35
 size_t versSymboles(const Demande &d, Sym *out, size_t cap);
 
+// Ajout (tache 23) : surveillance d'une emission. L'interruption des fronts
+// de la ligne (bord.cpp) passe chaque front a front(), sous sa section
+// critique. Le premier front, vers le bas, dans les kDepartMaxUs qui suivent
+// t0Us (heure d'appel de rmt_transmit), fixe l'origine : le debut reel de
+// l'emission. Tout autre premier front est une collision (un autre emetteur).
+// Ensuite, chaque front jusqu'a la fin de la demande plus tolUs est juge :
+// loin de tout front programme, il est anormal, qu'il aille vers un autre
+// niveau que l'emis (frontAnormal) ou vers le niveau emis (le front
+// precedent manquait : masque par un autre emetteur qui tenait la ligne).
+// Les fronts plus tardifs sont ignores (trafic d'un autre emetteur apres
+// l'emission). relu : durees entre fronts successifs depuis
+// l'origine (n - 1 pour un nombre pair de durees : le dernier palier haut n'a
+// pas de front de fin ; n pour un nombre impair). Apres une collision, plus
+// rien n'est compte.
+constexpr uint32_t kDepartMaxUs = 500;
+class Surveillance {
+ public:
+  void debut(const Demande *d, uint64_t t0Us, uint32_t tolUs);
+  void front(uint64_t tUs, bool busHaut);
+  void fin() { actif_ = false; }
+  bool active() const { return actif_; }
+  bool ancree() const { return ancre_; }
+  bool collision() const { return coll_; }
+  uint16_t relu(uint32_t *out, uint16_t cap) const;
+
+ private:
+  const Demande *d_ = nullptr;
+  bool actif_ = false, ancre_ = false, coll_ = false;
+  uint64_t t0_ = 0, prec_ = 0;
+  uint32_t tol_ = 0, finRel_ = 0;
+  uint16_t n_ = 0;
+  uint32_t relu_[kDurMax] = {};
+};
+
 }  // namespace inj
