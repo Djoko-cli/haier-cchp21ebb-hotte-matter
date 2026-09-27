@@ -13,4 +13,6 @@ $CXX src/json_out.cpp tools/tests/test_json.cpp -o "$OUT/test_json"
 # Lignes realistes de test_json et exemples du protocole : conformes au profil hotte.
 python3 tools/json_check.py --strict --independantes -q "$OUT/test_json_lignes.txt"
 python3 tools/json_check.py --strict -q --exemples docs/PROTOCOLE-JSON.md
+$CXX src/motifs.cpp tools/tests/test_generateur.cpp -o "$OUT/test_generateur"
+"$OUT/test_generateur"
 echo "tests hote : OK"
