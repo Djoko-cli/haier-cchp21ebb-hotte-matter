@@ -75,6 +75,19 @@ inline size_t symboles(const motif::Seg *s, size_t n, Sym *out, size_t cap) {
   return k / 2;
 }
 
+// Commande 'impulsions <bas_us> <periode_ms> [n]' (critere 5 du banc : une
+// collision pendant une injection de la sonde) : une impulsion basse de
+// bas_us, repetee toutes les periode_ms, ligne haute entre deux. Bornes :
+// 10..30000 us, 60 s de periode au plus, et au moins 1 ms de ligne haute
+// entre deux impulsions.
+constexpr uint32_t kImpulsionMinUs = 10;
+constexpr uint32_t kImpulsionMaxUs = 30000;
+constexpr uint32_t kPeriodeMaxMs = 60000;
+inline bool impulsionValide(uint32_t basUs, uint32_t periodeMs) {
+  return basUs >= kImpulsionMinUs && basUs <= kImpulsionMaxUs && periodeMs <= kPeriodeMaxMs &&
+         (uint64_t)periodeMs * 1000u >= (uint64_t)basUs + 1000u;
+}
+
 // Les kRafaleBoucle symboles de la boucle de la rafale : ligne haute puis basse, kRafaleUs chacune.
 inline void rafale(Sym *out) {
   for (size_t i = 0; i < kRafaleBoucle; i++)

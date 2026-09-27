@@ -96,10 +96,33 @@ static void testRafale() {
   VERIF(ok);
 }
 
+// Commande 'impulsions' (critere 5 du banc) : bornes, et une impulsion basse
+// devient un symbole de deux moities GPIO haut (ligne basse).
+static void testImpulsions() {
+  VERIF(gen::impulsionValide(500, 50));
+  VERIF(gen::impulsionValide(gen::kImpulsionMinUs, 2));
+  VERIF(!gen::impulsionValide(gen::kImpulsionMinUs - 1, 50));
+  VERIF(gen::impulsionValide(gen::kImpulsionMaxUs, 31));
+  VERIF(!gen::impulsionValide(gen::kImpulsionMaxUs + 1, 60));
+  VERIF(!gen::impulsionValide(gen::kImpulsionMaxUs, 30));  // au moins 1 ms de ligne haute entre deux
+  VERIF(!gen::impulsionValide(500, 1));
+  VERIF(gen::impulsionValide(500, gen::kPeriodeMaxMs));
+  VERIF(!gen::impulsionValide(500, gen::kPeriodeMaxMs + 1));
+  VERIF(!gen::impulsionValide(500, 0));
+  gen::Sym y[2] = {};
+  const Seg s[] = {{false, 500}};
+  VERIF(gen::symboles(s, 1, y, 2) == 1);
+  VERIF(y[0].d0 == 250 && y[0].l0 == 1 && y[0].d1 == 250 && y[0].l1 == 1);
+  const Seg l[] = {{false, gen::kImpulsionMaxUs}};
+  VERIF(gen::symboles(l, 1, y, 2) == 1);
+  VERIF(y[0].d0 + y[0].d1 == gen::kImpulsionMaxUs && y[0].l0 == 1 && y[0].l1 == 1);
+}
+
 int main() {
   testNiveaux();
   testCasSimples();
   testTousLesMotifs();
   testRafale();
+  testImpulsions();
   return bilan("test_generateur");
 }

@@ -27,7 +27,8 @@ dans un **dépôt public** : ni SSID, ni mot de passe, ni clé.
 - pull-up de ligne : 10k (variante 1) ; 4,7k et 1 nF (variante 2) ;
 - fils Dupont, un fil de masse ;
 - multimètre (contrôles, critère 6) ;
-- plus tard : l'analyseur FX2 (critère 2 complet) et l'étage d'injection (critère 5).
+- plus tard : l'analyseur FX2 (critère 2 complet) ; l'étage d'injection de la
+  sonde (critère 5, §9) : Q2 (BC547 ou 2N3904), 4,7k, 10k, 470 Ω.
 
 ## 2. Montage
 
@@ -176,8 +177,10 @@ Wi-Fi, de l'ordre de 100 mA Wi-Fi actif (spec §8.7).
 - **Console du générateur**, dans un terminal à part, ouvert pendant tout le banc :
   `~/.platformio/penv/bin/pio device monitor -e generateur -p $PORT_GEN`.
   Commandes : `motif <nom> [n] [pause_ms]` (1 000 trames par défaut, 1 pour la
-  rafale ; 0 : sans fin), `stop`, `etat`, `help`. Il affiche
-  `motif <nom> trame <index>` à chaque trame, puis `motif <nom> fini : <n> trames`.
+  rafale ; 0 : sans fin), `impulsions <bas_us> <periode_ms> [n]` (critère 5,
+  §9 ; 0 ou rien : sans fin), `stop`, `etat`, `help`. Il affiche
+  `motif <nom> trame <index>` à chaque trame, puis `motif <nom> fini : <n> trames`
+  (`impulsion <index>` à chaque impulsion).
 - **Enregistrement de la sonde** (mode machine par l'USB, fichier
   `logs/AAAA-MM-JJ-hhmm-<scénario>.jsonl`) :
   `python3 tools/serie_enregistre.py $PORT_SONDE <scénario> "capture tout" "seuils 1 <silence>" --duree <s>`.
@@ -240,7 +243,7 @@ Contenus (identiques dans `src/motifs.cpp` et `tools/signaux.py`) :
 | 2 | Durées à ±2 µs du nominal, une fois corrigé le décalage de l'étage ; asymétrie inférieure à 5 µs, ou documentée et compensée | sans FX2 : `banc.py` donne le `decalage suggere` (asymétrie de toute la chaîne), puis `--decalage-us` et `critere 2 : ... OK`. Avec le FX2 : une voie sur la LIGNE à travers 47k/68k, une voie sur GPIO6, délai et asymétrie de l'étage mesurés | 16 (sans FX2), puis à l'arrivée du FX2 |
 | 3 | Rafale : aucune perte, ou une perte signalée par `debord`, et le débit maximal documenté | `banc.py <capture> rafale` : `critere 3`, compteurs de la sonde (`debord`, `lignes_perdues`, `sautes`) | 16 |
 | 4 | 10 min de `krona` par le Wi-Fi, mode `tout`, sonde à son emplacement de test : zéro perte côté sonde, trous de `n` côté Mac sous 0,1 %, avec le RSSI | `hotte_udp.py enregistre`, `json_check.py --jsonl`, compteurs | 21 |
-| 5 | Collision détectée et émission arrêtée ; à défaut, la limite est documentée | étage d'injection monté au banc, le générateur émet pendant une injection | 24 |
+| 5 | Collision détectée et émission arrêtée ; à défaut, la limite est documentée | étage d'injection monté au banc (§9) ; `impulsions 500 50` du générateur pendant une injection : résultat `collision`, et la trame capturée s'arrête à l'impulsion du générateur | 24 |
 | 6 | Consommation de la sonde relevée, Wi-Fi actif | USB d'abord (tâche 16), Wi-Fi actif ensuite | 16 (USB), 21 (Wi-Fi) |
 
 ## 7. Résultats
@@ -258,6 +261,7 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 | | 16b | 1 (10k) | | | | | | | |
 | | 16b | 2 (4,7k + 1 nF) | | | | | | | |
 | | 21 | 1 (10k) | | | | | | | |
+| | 24 | 1 (10k) | | | | | | | |
 
 ### Critères 1 et 2, variante 1 (10k)
 
@@ -332,9 +336,15 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 
 ### Critère 5 : collision (tâche 24)
 
-| Date | Essai | Résultat de `injection` | Émission arrêtée ? | Remarque |
+| Date | Essai (§9) | Résultat de `injection` | Émission arrêtée ? | Remarque |
 |---|---|---|---|---|
-| | | | | |
+| | 9.1 refus : sans montage, sans armement | `non montee`, `non armee` | — | |
+| | 9.2 injection simple × 10 | `ok` : __ / 10 ; écart max relu − émis : __ µs | — | trame capturée identique (±2 µs après décalage) : __ / 10 ; `delai minimal` vu : oui / non |
+| | 9.3 collision × 10 | `collision` : __ / 10 | bas le plus long sous 2 000 µs : __ / 10 | |
+| | 9.4 bus jamais silencieux | `delai`, attente __ µs | `relu_us` vide : oui / non | |
+| | 9.5 désarmement seul (30 s) | annonce reçue : oui / non ; puis `non armee` : oui / non | — | |
+| | 9.6 fin | GPIO7 au repos : __ V | — | `injection monte 0` envoyé : oui / non |
+| | 9.6 démontage, USB débranchés | étage d'injection démonté : oui / non | — | `TP_Dp` → broche 7, deux sens : __ / __ kΩ (plus de 100 kΩ) |
 
 ### Critère 6 : consommation de la sonde
 
@@ -475,3 +485,162 @@ l'ordre de 100 mA, spec §8.7 ; les pointes d'émission ne s'y lisent pas,
 Si le critère échoue : noter le RSSI et `wifi.pertes`, rapprocher la sonde du
 point d'accès et recommencer ; sinon, reprendre le risque « Wi-Fi trop
 faible » du §13 de la spec (enregistrement local, relu par l'USB).
+
+## 9. Injection et collision (critère 5)
+
+Même montage (§2, variante 1), **toujours sans aucune liaison avec la hotte**
+(§2.1) : sonde sur le boîtier détaché (hotte débranchée pendant toute la
+séance, fiche XH 4 broches retirée de l'embase, les deux **OL** relevés avant
+tout USB), ou sur la plaque d'essai du banc. On y ajoute l'**étage d'injection
+de la sonde**
+([WIRING.md §6](WIRING.md#6-étage-dinjection-voie-1--gpio7-vers-d_panneau-étape-7-seulement)),
+son collecteur sur la LIGNE : sur le boîtier, à la place prévue (WIRING §4) ;
+sur la plaque d'essai, à côté de l'étage d'écoute. Il n'est monté que pour ce
+paragraphe et se démonte à la fin (§9.6). Tout se câble **les deux câbles USB
+débranchés** :
+
+```
+  GPIO7 (sonde) ── 4,7k ──┬── base de Q2
+                         10k
+  TP− (GND sonde) ────────┴── émetteur de Q2
+  LIGNE ── 470 Ω ──────────── collecteur de Q2      (GPIO7 haut → LIGNE tirée bas)
+```
+
+Contrôles hors tension, au multimètre, **avant tout USB** : GPIO7 de la sonde
+n'est relié qu'au 4,7k ; GPIO6 n'est relié qu'au collecteur de Q1 et à son 10k
+(**jamais GPIO6 et GPIO7 intervertis**) ; LIGNE vers masse, plus de 10 kΩ ; sur
+le boîtier, les deux **OL** du §2.1 (`TP−` vers la terre de la fiche de la
+hotte, puis vers la vis de la carcasse). Aucun secteur : les deux C6 sont sur
+l'USB du Mac.
+
+La sonde parle au Mac soit par `tools/serie_enregistre.py` (mode machine,
+fichier `.jsonl`), soit par une console humaine
+(`~/.platformio/penv/bin/pio device monitor -p $PORT_SONDE -b 115200`), jamais
+les deux à la fois. Résumé des injections d'un ou de plusieurs
+enregistrements : chaque événement `injection`, chaque trame capturée de plus
+d'une durée, et le plus long palier bas capturé :
+
+```
+python3 -c "
+import json, os, sys
+for f in sys.argv[1:]:
+    n = os.path.basename(f)
+    ms = [json.loads(l)['l'] for l in open(f)]
+    for m in ms:
+        if m['t'] == 'injection':
+            print(n, 'injection', m['id'], m['resultat'], 'attente', m['attente_us'], 'emises', m['dur_us'], 'relues', m['relu_us'])
+        elif m['t'] == 'trame' and len(m['dur_us']) > 1:
+            print(n, 'trame', m['niv0'], m['dur_us'])
+    bas = [d for m in ms if m['t'] == 'trame' for i, d in enumerate(m['dur_us']) if (i % 2 == 0) == (m['niv0'] == 'bas')]
+    print(n, 'bas le plus long :', max(bas) if bas else None, 'us')
+" logs/<fichier>.jsonl [...]
+```
+
+### 9.1 Au repos, puis refus
+
+Console humaine de la sonde, générateur arrêté (`stop`).
+
+1. `info` : `ecoute GPIO6, injection GPIO7 (tenue basse)`. Au multimètre :
+   GPIO7 à 0 V, LIGNE à 5 V environ.
+2. `injection` : `injection : etage non monte (GPIO7), desarmee`, puis les
+   valeurs (`bas_max_us 3000, total_max_us 200000, ...`).
+3. `injecte durees 1000` : `injecte : non montee ('injection monte 1' par l'USB)`.
+4. `injection on` : `injection : non montee ('injection monte 1' par l'USB, etage monte)`.
+5. `injection monte 1` : `injection : etage declare monte (GPIO7), desarmee`.
+6. `injecte durees 1000` : `injecte : non armee ('injection on')`.
+7. Si le §7 (« Critère 2 à l'analyseur ») propose un `tol_us` au-dessus de 20 :
+   `injection regle tol_us <valeur>` ; les valeurs affichées le montrent.
+8. Fermer la console (Ctrl-C).
+
+### 9.2 Injection simple, relue par la voie 1
+
+Générateur arrêté (`stop`) : la LIGNE est au repos haut.
+
+1. `python3 tools/serie_enregistre.py $PORT_SONDE banc-injection "injection on" "injecte durees 1500 750 750 750 750 2250 750" "injecte durees 1000" --duree 6`.
+   Attendu : `id=2 injection on : ok (injection armee pour 600 s ('injection off' pour desarmer))`,
+   `id=3 injecte durees 1500 750 750 750 750 2250 750 : accepte`,
+   `id=4 injecte durees 1000 : refuse (injecte : delai minimal (3000 ms entre deux injections))`.
+2. Résumé (commande plus haut) sur le fichier écrit. Attendu :
+   - `injection 3 ok attente <a> emises [1500, 750, 750, 750, 750, 2250, 750] relues [...]` :
+     7 durées relues, chacune à 20 µs (`tol_us`) au plus de la durée émise ;
+   - `trame bas [...]` : la même trame, capturée par la voie 1, 7 durées à
+     ±2 µs des émises une fois corrigé le décalage retenu au §7.
+3. `python3 tools/json_check.py --jsonl logs/<fichier>.jsonl` : 0 erreur.
+4. Recommencer 10 fois (le délai minimal de 3 s est tenu : chaque lancement
+   dure plus de 6 s) ; noter les `ok` et le plus grand écart relu − émis.
+
+Si une injection simple donne `collision` : le délai des étages dépasse
+`tol_us`. Noter l'écart, puis, par la console, `injection regle tol_us <écart + 10>`,
+et recommencer ; la valeur retenue ira dans l'avenant de l'étape 6.
+
+### 9.3 Collision provoquée
+
+La sonde émet `500 20000 500 20000 2500` : deux impulsions basses de 500 µs
+séparées de 20 ms, puis, 20 ms plus loin, une impulsion basse de **2 500 µs**,
+plus longue que tout ce que la LIGNE porte d'autre. Le générateur tire la ligne
+500 µs toutes les 50 ms. La sonde attend 20 ms de silence après une impulsion :
+la suivante tombe donc toujours avant la fin du second palier haut. Si
+l'émission s'arrête à la collision, le palier bas de 2 500 µs ne passe jamais
+sur la LIGNE.
+
+1. Générateur : `impulsions 500 50` (sans fin). Il affiche `impulsion 0`,
+   `impulsion 1`...
+2. Sonde, dix fois :
+   `for i in 1 2 3 4 5 6 7 8 9 10; do python3 tools/serie_enregistre.py $PORT_SONDE banc-collision-$i "seuils 1 30000" "injection on" "injecte durees 500 20000 500 20000 2500" --duree 4; done`.
+   Le silence de capture de 30 ms réunit l'injection et l'impulsion qui la
+   heurte en une seule réception ; les impulsions suivantes, 49,5 ms plus
+   loin, font chacune la leur.
+3. Générateur : `stop`.
+4. Résumé sur les dix fichiers (`logs/*-banc-collision-*.jsonl`). Attendu pour
+   chacun :
+   - `injection 4 collision ... relues [...]` (`id` 4 : `injecte` est la
+     troisième commande donnée, après `json 1 bail 0` qui prend l'`id` 1) :
+     de 1 à 4 durées relues, la dernière finissant au front où la collision a
+     été vue (l'impulsion du générateur, ou sa fin si elle a commencé pendant
+     un palier bas de la sonde) ;
+   - `bas le plus long : <500 à 1 000> us`, **sous 2 000 µs** : l'impulsion de
+     2 500 µs n'est jamais partie, **l'émission s'est arrêtée**. Sans arrêt,
+     on lirait 2 500.
+
+### 9.4 Bus jamais silencieux
+
+1. Générateur : `motif wtc 0` (sans fin : pauses de 6 ms, jamais 20 ms de
+   silence).
+2. Sonde : `python3 tools/serie_enregistre.py $PORT_SONDE banc-delai "injection on" "injecte durees 1000" --duree 4`.
+3. Résumé. Attendu : `injection 3 delai attente <environ 1000000> emises [1000] relues []` :
+   rien n'est émis.
+4. Générateur : `stop`.
+
+### 9.5 Désarmement seul
+
+Console humaine de la sonde.
+
+1. `injection regle arme_max_s 30`, puis `injection on` :
+   `injection armee pour 30 s ('injection off' pour desarmer)`.
+2. Attendre 35 s : `[injection] desarmee seule (30 s ecoulees)` s'affiche.
+3. `injecte durees 1000` : `injecte : non armee ('injection on')`.
+4. `injection regle arme_max_s 600`.
+
+### 9.6 Fin
+
+1. Console : `injection monte 0` (la sonde retournera sur la hotte sans étage
+   d'injection jusqu'à l'étape 7), `seuils 1 5000`, puis `injection` :
+   `injection : etage non monte (GPIO7), desarmee`.
+2. Au multimètre : GPIO7 à 0 V, LIGNE à 5 V environ.
+3. Si le Wi-Fi est en place (tâche 21) :
+   `python3 tools/hotte_udp.py session hotte-sonde.local "injection regle tol_us 30" "injection monte 1" --duree 5`.
+   Attendu : deux `reponse` `interdite` (USB seulement).
+4. **Les deux câbles USB débranchés, démonter l'étage d'injection** : Q2, le
+   4,7k, le 10k et les 470 Ω retirés, ou au moins le collecteur de Q2 dessoudé
+   de la LIGNE. `injection monte 0` ne suffit pas : le boîtier ne retourne sur
+   la hotte que sans étage d'injection (WIRING.md §6 : étape 7 seulement).
+5. Contrôle hors tension, au multimètre, calibre le plus élevé : `TP_Dp` vers
+   la broche 7 des barrettes (GPIO7 de la sonde ; sur la plaque d'essai, la
+   broche GPIO7), dans les deux sens : **plus de 100 kΩ**. Sinon, l'étage
+   n'est pas démonté : on finit de le retirer, puis on refait la mesure.
+6. Noter les résultats au §7 (critère 5), démontage compris.
+
+Si une collision n'est pas vue (résultat `ok` au §9.3), ou si l'émission ne
+s'arrête pas (palier bas de 2 500 µs capturé) : on le note au §7 avec les durées
+relues, et la limite part dans l'avenant de l'étape 6 (spec §8.4 : la collision
+n'est alors constatée qu'après coup, par relecture).
