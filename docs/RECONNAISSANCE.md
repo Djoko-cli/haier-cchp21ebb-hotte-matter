@@ -68,19 +68,19 @@ notée ici.
 
 | # | Mesure | Calibre | Attendu | Relevé | Décision |
 |---|---|---|---|---|---|
-| 1 | depuis la veille, un appui sur une vitesse sans passer par « marche » | — | rien, un bip, ou un démarrage | **pas encore observé** (la vidéo passe toujours par « marche » avant une vitesse) | à filmer |
+| 1 | depuis la veille, un appui sur une vitesse sans passer par « marche » | — | rien, un bip, ou un démarrage | **rien** (réponse de Majid, 27/09) : une vitesse n'agit que si « marche » a été appuyée avant | une vitesse injectée depuis l'arrêt devra être précédée de « marche » (séquence de l'avenant) ; bip ou non : à regarder pendant la capture de l'étape 5, pour savoir qui garde l'état « marche » |
 | 2 | la lumière s'allume-t-elle sans « marche » ? | — | oui ou non | **oui** : à 16,7 s, lumière allumée voyant ⏻ éteint ; éteinte à 18,6 s. Elle reste aussi allumée quand on coupe la marche (33,0 s) | la lumière est indépendante de la marche |
-| 3 | « marche » quand le moteur tourne | — | arrêt immédiat, **marche prolongée** (arrêt différé natif, comme les 15 min de la CDA : durée ?), ou rien | **marche prolongée** (27,7 s, en V3) : le moteur continue à la même vitesse, le voyant V3 reste fixe, le voyant ⏻ **clignote à 1 Hz** (0,5 s allumé, 0,5 s éteint). Durée **non mesurée** : interrompue à 31,2 s par un appui sur V3, qui arrête le moteur tout de suite ; le voyant ⏻ redevient alors fixe (marche maintenue) | **arrêt différé natif** : à exploiter au sous-projet 2 ; durée à mesurer |
+| 3 | « marche » quand le moteur tourne | — | arrêt immédiat, **marche prolongée** (arrêt différé natif, comme les 15 min de la CDA : durée ?), ou rien | **marche prolongée** (27,7 s, en V3) : le moteur continue à la même vitesse, le voyant V3 reste fixe, le voyant ⏻ **clignote à 1 Hz** (0,5 s allumé, 0,5 s éteint). Durée : **15 min** (réponse de Majid, 27/09). Dans la vidéo, interrompue à 31,2 s par un appui sur V3, qui arrête le moteur tout de suite ; le voyant ⏻ redevient alors fixe (marche maintenue) | **arrêt différé natif de 15 min** : à exploiter au sous-projet 2 |
 | 4 | nouvel appui sur la vitesse active | — | | **arrêt du moteur** (12,9 s, en V3) : voyant de vitesse éteint, marche maintenue (⏻ fixe) ; le moteur ralentit en environ 1,5 s | les vitesses sont des bascules sur elles-mêmes |
-| 5 | l'état « armé » après « marche » s'éteint-il seul ? Au bout de combien de temps ? | — | | **pas encore observé** (au plus 2 s de marche sans vitesse dans la vidéo) | à filmer |
+| 5 | l'état « armé » après « marche » s'éteint-il seul ? Au bout de combien de temps ? | — | | **non**, ou pas avant 30 min (réponse de Majid, 27/09) | « marche » peut rester armée longtemps : le produit ne peut pas compter sur une extinction seule |
 | 6 | **voyants** : lesquels s'allument, et quand ? Fixes, clignotants, intensité ? Voyant de « marche » ? | — | | ⏻ **fixe** = marche ; ⏻ **clignotant à 1 Hz** = marche prolongée ; **un seul** voyant de vitesse à la fois, on passe directement de V1 à V2 puis V3 sans arrêt ; ☼ allumé = lampe allumée ; éteints, les pictogrammes restent visibles en gris | à comparer au panneau seul (étape 4) : qui pilote ces voyants ? |
 | 7 | **bips** : lesquels, et quand ? (le buzzer est sur la carte : chaque bip prouve que la carte a reçu quelque chose) | — | | **un seul bip, toujours le même**, pour **chaque** appui (16 bips pour 16 appuis) : environ 200 ms à 4,11 kHz, qu'il s'agisse de marche, d'une vitesse ou de la lumière, avec ou sans marche | chaque appui du panneau passe par la ligne `D` jusqu'à la carte |
-| 8a | appui long (3 s) sur la lumière : effet caché ? comment l'annuler ? | — | verrouillage, rappel de filtre, arrêt différé, ou rien | | |
-| 8b | appui long (3 s) sur « marche » | — | idem | | |
-| 8c | appui long (3 s) sur la vitesse 1 | — | idem | | |
-| 8d | appui long (3 s) sur la vitesse 2 | — | idem | | |
-| 8e | appui long (3 s) sur la vitesse 3 | — | idem | | |
-| 9 | **reprise après coupure** : vitesse 2 et lumière allumée, fiche débranchée 10 s, rebranchée : quel état revient ? | — | | | |
+| 8a | appui long (3 s) sur la lumière : effet caché ? comment l'annuler ? | — | verrouillage, rappel de filtre, arrêt différé, ou rien | **rien** (réponse de Majid, 27/09) | aucune fonction cachée |
+| 8b | appui long (3 s) sur « marche » | — | idem | **rien** | idem |
+| 8c | appui long (3 s) sur la vitesse 1 | — | idem | **rien** | idem |
+| 8d | appui long (3 s) sur la vitesse 2 | — | idem | **rien** | idem |
+| 8e | appui long (3 s) sur la vitesse 3 | — | idem | **rien** | idem |
+| 9 | **reprise après coupure** : vitesse 2 et lumière allumée, fiche débranchée 10 s, rebranchée : quel état revient ? | — | | **rien ne se rallume** ; un seul bip au rebranchement (réponse de Majid, 27/09) | l'état n'est pas gardé : après une coupure, la hotte est éteinte (moteur, lumière, marche). Le bip de mise sous tension vient de la carte |
 | 10 | **délai prudent entre deux changements de vitesse**, d'après ce qu'on entend des relais | — | 3 s par défaut | pas mesuré : les relais ne se distinguent pas dans la vidéo. Majid a changé de vitesse toutes les 1,5 à 2,5 s sans incident | fixe la valeur de l'étape 7 |
 
 **Chronologie de la vidéo du 27/09** (temps de la vidéo ; « bip » = pic à 4,11 kHz) :
@@ -107,10 +107,10 @@ notée ici.
 | 33,0 s | marche | bip ; voyant ⏻ éteint ; la lampe reste allumée |
 | 33,6 s | lumière | bip ; lampe éteinte |
 
-**Reste à observer** (même méthode : une courte vidéo avec le son) : ligne 1 (vitesse sans marche), ligne 5 (la marche s'éteint-elle seule ?), lignes 8a à 8e (appuis longs), ligne 9 (reprise après coupure), et la **durée de la marche prolongée** (laisser le moteur finir seul, chronomètre en main).
+**Complété le 27/09** par les réponses de Majid : lignes 1, 5, 8a à 8e, 9 et la durée de la marche prolongée (15 min). Seule la ligne 10 reste sans mesure : on garde les 3 s par défaut.
 
 **Sortie :**
-- [ ] le tableau des comportements est rempli (lignes 2, 3, 4, 6 et 7 le 27/09 ; restent 1, 5, 8, 9 et la durée de la marche prolongée).
+- [x] le tableau des comportements est rempli (27/09 : vidéo pour les lignes 2, 3, 4, 6 et 7, réponses de Majid pour 1, 5, 8 et 9 ; ligne 10 : 3 s par défaut).
 
 ## Étape 0 : photos, inventaire et cheminements
 
