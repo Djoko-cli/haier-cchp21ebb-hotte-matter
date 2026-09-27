@@ -125,7 +125,7 @@ notée ici.
 | 1c | IC4 : marquage, nombre de broches | photo macro | abaisseur, SOP-8 | | |
 | 1d | relais : marquage | photo macro | 3 relais L, M, H | | |
 | 2a | `CN3` : fiche collée ? | visuel | | | si oui : décoller avec un outil en plastique, **sans tirer sur les fils** |
-| 2b | pas de `CN3`, entre les broches extrêmes | règle ou pied à coulisse en plastique | 5,0 mm : JST XH ; 4,0 mm : JST PH | | connectique de l'adaptateur |
+| 2b | pas de `CN3`, entre les broches extrêmes | règle ou pied à coulisse en plastique | 5,0 mm : JST XH ; 4,0 mm : JST PH | 28/09, sur la fiche du panneau débranchée : **largeur 8,32 mm** (PH : 8,0 ; XH : 9,9) et **4,57 mm** du bord du trou 1 au bord du trou 3 (PH : environ 4,6 ; XH : environ 5,8) | **JST PH, pas de 2,0 mm** : fiche et embase de l'adaptateur en PH 2,0 mm 3 broches ; le XH 4 broches (câble de sortie, boîtier de mesure) ne change pas |
 | 3 | accès : comment retirer le filtre, où est le boîtier, comment s'ouvre son couvercle | — | | | |
 | 4 | trajet des fils du condensateur et du connecteur blanc, par rapport à `CN3` et au passage de sortie | photo | | | |
 | 5a | câble du panneau : longueur libre | mètre | | | |
@@ -145,7 +145,7 @@ notée ici.
 - [ ] Photo cheminement choisi et emplacement du boîtier de mesure : `docs/photos/etape0-cheminement.jpg`
 
 **Sortie :**
-- [ ] le pas de `CN3` et les longueurs sont connus : connectique ☐ XH ☐ PH ;
+- [ ] le pas de `CN3` et les longueurs sont connus : connectique ☐ XH ☒ PH (28/09) ; longueurs : à relever ;
 - [ ] on sait si le panneau s'ouvre : ☐ oui (C possible) ☐ non, ou résiné ;
 - [ ] le cheminement est choisi, avec une photo.
 
