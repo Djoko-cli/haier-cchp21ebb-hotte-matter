@@ -8,4 +8,6 @@ CXX="clang++ -std=c++17 -Wall -Wextra -Werror -Isrc"
 # Une commande par ligne : sous 'set -e', un echec a gauche d'un '&&' passerait inapercu.
 $CXX src/capture_model.cpp tools/tests/test_capture.cpp -o "$OUT/test_capture"
 "$OUT/test_capture"
+$CXX src/json_out.cpp tools/tests/test_json.cpp -o "$OUT/test_json"
+"$OUT/test_json" "$OUT/test_json_lignes.txt"
 echo "tests hote : OK"
