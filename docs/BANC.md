@@ -251,6 +251,54 @@ Contenus (identiques dans `src/motifs.cpp` et `tools/signaux.py`) :
 
 ## 7. Résultats
 
+### Banc 0 : les firmwares seuls, sans étages (28/09/2026)
+
+En attendant les pièces, les deux C6 sont reliés **directement** : GPIO7 du
+générateur sur GPIO6 de la sonde, masses communes, les deux sur l'USB du Mac
+(câblage fait USB débranché). Ni NPN, ni pull-up, ni étage d'écoute, ni
+5 V. Les deux inversions s'annulent : le générateur met GPIO7 haut pour une
+ligne basse, et la sonde, en `inverse` (réglage par défaut), lit GPIO bas
+comme bus haut. Ce banc valide les firmwares et la chaîne d'outils (capture
+RMT, découpe, décodeurs, `banc.py`), **pas les étages** : variantes, décalage,
+tensions et consommation restent pour la tâche 16. Les motifs ont été lancés
+par un script de l'agent : réglages du §4, générateur mis à `stop` avant
+chaque capture, sa console lue pendant le motif.
+
+Sonde `0.1.0-2b223b1` sur `/dev/cu.usbmodem144401`, générateur
+`0.1.0-68262a1` sur `/dev/cu.usbmodem144201`.
+
+| Motif | Fichier `logs/` | Trames reconnues / 1000 | Décodeur de `auto` | Écart moyen hauts / bas (µs) | Écart max (µs) | Décalage suggéré (µs) | Verdict |
+|---|---|---|---|---|---|---|---|
+| `uart500` | `2026-09-28-1348-banc0-uart500.jsonl` | 1000 | uart 500 bauds, 0 erreur | −0,01 / −0,01 | 1 | 0,0 | OK |
+| `uart500inv` | `2026-09-28-1351-banc0-uart500inv.jsonl` | 1000 | uart 500 bauds inverse, 0 erreur | −0,01 / −0,01 | 1 | 0,0 | OK |
+| `uart2400` | `2026-09-28-1340-banc0-uart2400.jsonl` | 1000 | uart 2400 bauds, 0 erreur | 0,00 / 0,00 | 1 | 0,0 | OK |
+| `uart2400inv` | `2026-09-28-1342-banc0-uart2400inv.jsonl` | 1000 | uart 2400 bauds inverse, 0 erreur | 0,00 / 0,00 | 1 | 0,0 | OK |
+| `uart9600` | `2026-09-28-1339-banc0-uart9600.jsonl` | 1000 | uart 9600 bauds, 0 erreur | 0,00 / 0,00 | 1 | 0,0 | OK |
+| `uart9600inv` | `2026-09-28-1340-banc0-uart9600inv.jsonl` | 1000 | uart 9600 bauds inverse, 0 erreur | 0,00 / 0,00 | 1 | 0,0 | OK |
+| `wtc` | `2026-09-28-1343-banc0-wtc.jsonl` | 1000 | distance d'impulsion T = 750 µs, 0 erreur | 0,00 / 0,00 | 1 | 0,0 | OK |
+| `krona` | `2026-09-28-1345-banc0-krona.jsonl` | 1000 (1250 réceptions, 750 trames comparées) | uart 500 bauds inverse, 0 erreur | −0,01 / −0,02 | 1 | 0,0 | OK |
+| `rafale` | `2026-09-28-1344-banc0-rafale.jsonl` | critère 3 : 1 / 1 rafale complète, aucune perte (10 000 fronts/s) | — | 0,00 / 0,00 | 1 | 0,0 | OK |
+
+Pour tous les motifs : `debord`, `lignes_perdues` et `sautes` restent à 0, et
+`json_check.py` ne signale ni erreur ni trou de `n`.
+
+Défauts trouvés par ce banc, puis corrigés :
+- `68262a1`, générateur : console fermée, chaque ligne `motif … trame N`
+  attendait 2 s (HWCDC : 20 essais de 100 ms), et le motif tombait à une trame
+  toutes les 2 s. La ligne est maintenant sautée et comptée (ligne `fini`).
+- `2b223b1`, sonde : dans une réception à nombre pair de durées, le mot qui
+  porte le marqueur de fin du RMT reprend la dernière durée, qui était comptée
+  deux fois. Premier relevé : trame 0 de `krona` (repos pris 18 ms avant, sous
+  le silence de 19 ms), 2000 µs lus 4000, soit 0xFF lu 0xFE, d'où
+  `critere 1 : 999 / 1000`. Reproduit avec `uart9600inv` et une pause de 3 ms :
+  208 µs lus 416. Sur la hotte, une réception peut aussi commencer par un
+  palier de repos, par exemple si la capture démarre en pleine trame.
+
+Observation sans effet sur les critères : la pause du générateur vaut la
+valeur demandée plus 48 à 51 µs (médiane). Mais 3 à 10 pauses sur 1000 durent
+1 à 4 ms de plus, la tâche `loop` du générateur ayant pris du retard. Seul
+compte ici un repos au moins égal au silence de la sonde.
+
 ### Montage et firmwares
 
 Sonde sur : `boîtier` (détaché de la hotte, §2.1) ou `plaque` (plaque d'essai
