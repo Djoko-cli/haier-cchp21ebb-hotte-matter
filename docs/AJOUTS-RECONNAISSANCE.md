@@ -5,7 +5,7 @@ prolongée, (b) arrêt de l'étape 7, (c) repos de 60 s, (d) mesure sans risque.
 **L'amendement de Majid du 28/09 au soir réduit (d) à la mesure radio
 comparative M1** : le relevé de température en cuisson (l'ancienne M2) et
 l'achat du thermomètre sont retirés. S'y ajoute une correction factuelle liée,
-à confirmer par Majid : le repérage de la SuperMini violette dans WIRING.md
+confirmée par Majid le 29/09 : le repérage de la SuperMini violette dans WIRING.md
 (F1). Aucun fichier du dépôt n'a été modifié.
 
 ## 0. Mode d'emploi
@@ -805,6 +805,6 @@ rendre le texte testable :
 7. **Test 6 (A5, A6)** : sans trame de fin sur `D`, le module du produit voit la
    fin de la marche prolongée à la répétition de l'état, ou par la lecture
    d'état annexe. La minuterie de 15 min d'abord proposée est écartée : elle
-   publierait un état deviné (spec du produit, §5.9).
+   publierait un état deviné (spec du produit, §5.9). Validé par Majid le 29/09.
 8. **Bloc F1** : correction du repérage de WIRING.md §9, hors des ajouts (a) à
-   (d) approuvés. Elle ne change que le texte de repérage.
+   (d) approuvés, mais validée par Majid le 29/09. Elle ne change que le texte de repérage.
