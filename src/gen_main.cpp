@@ -21,7 +21,10 @@
 //    etat                         motif, trame, pause, niveau de la ligne
 //    help                         commandes et motifs
 //  A chaque trame emise : 'motif <nom> trame <index>' (index depuis 0) ;
-//  a chaque impulsion : 'impulsion <index>'.
+//  a chaque impulsion : 'impulsion <index>'. Jamais d'attente : sans la place
+//  de la ligne entiere dans le tampon d'emission de l'USB (console fermee), la
+//  ligne est sautee et comptee (ligne 'fini'), car elle attendrait 2 s et
+//  etirerait d'autant la pause.
 //
 //  Deroulement : prise du repos (un symbole bref au niveau du repos, qui y
 //  laisse la ligne : eot_level), pause, trame 0, pause, trame 1, ... Chaque
@@ -74,6 +77,7 @@ struct Course {
   uint32_t index = 0;     // prochaine trame
   Etape etape = Etape::Arret;
   bool reposHaut = true;  // niveau de la ligne entre deux trames
+  uint32_t sautees = 0;   // lignes de progression sautees (console non lue)
 };
 Course sC;
 motif::Seg sSeg[motif::kSegMax];
@@ -191,6 +195,23 @@ void demarrerImpulsions(uint32_t basUs, uint32_t periodeMs, uint32_t n) {
                 (unsigned long)periodeMs);
 }
 
+// Ligne de progression (une par trame ou impulsion), entiere ou pas du tout,
+// sans jamais attendre (regle de la sonde, spec 8.7) : Mac qui ne lit plus, le
+// tampon d'emission de l'USB est plein et Serial.printf attendrait 2 s (HWCDC :
+// 20 x 100 ms) avant de rendre la main ; la pause en serait allongee d'autant
+// (banc 0 du 28/09 : une trame toutes les 2 s).
+void progression() {
+  char l[48];
+  const int k = sC.impulsions
+                    ? snprintf(l, sizeof(l), "impulsion %lu\n", (unsigned long)sC.index)
+                    : snprintf(l, sizeof(l), "motif %s trame %lu\n", motif::nom(sC.id), (unsigned long)sC.index);
+  if (k <= 0 || k >= (int)sizeof(l) || Serial.availableForWrite() < k) {
+    sC.sautees++;
+    return;
+  }
+  Serial.write((const uint8_t *)l, (size_t)k);
+}
+
 void avancer() {
   if (sC.etape == Etape::Emission && !sOccupe) sC.etape = Etape::Pause;
   if (sC.etape != Etape::Pause) return;
@@ -202,10 +223,12 @@ void avancer() {
   }
   if (sC.n && sC.index >= sC.n) {
     sC.etape = Etape::Fini;
-    if (sC.impulsions) Serial.printf("impulsions finies : %lu, ligne haute\n", (unsigned long)sC.n);
+    if (sC.impulsions) Serial.printf("impulsions finies : %lu, ligne haute", (unsigned long)sC.n);
     else
-      Serial.printf("motif %s fini : %lu trames, ligne au repos %s\n", motif::nom(sC.id), (unsigned long)sC.n,
+      Serial.printf("motif %s fini : %lu trames, ligne au repos %s", motif::nom(sC.id), (unsigned long)sC.n,
                     texteRepos(sC.reposHaut));
+    if (sC.sautees) Serial.printf(" ; %lu ligne(s) de progression sautee(s), console non lue", (unsigned long)sC.sautees);
+    Serial.println();
     return;
   }
   bool ok;
@@ -229,8 +252,7 @@ void avancer() {
     return;
   }
   sC.etape = Etape::Emission;
-  if (sC.impulsions) Serial.printf("impulsion %lu\n", (unsigned long)sC.index);
-  else Serial.printf("motif %s trame %lu\n", motif::nom(sC.id), (unsigned long)sC.index);
+  progression();
   sC.index++;
 }
 
