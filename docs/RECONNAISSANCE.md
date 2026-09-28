@@ -157,7 +157,8 @@ Procédure pas à pas : [SECURITE.md](SECURITE.md), « Procédure : étape 1 ».
 
 **Conditions :** hotte débranchée depuis 5 min ; broches rondes de la fiche
 reliées par le fil à pinces crocodile ; `CN3` piqué par l'arrière avec
-l'aiguille ; aucune partie métallique des pointes touchée.
+l'aiguille, ou, si la colle gêne, fiche du panneau retirée et pointe posée sur
+la broche de `CN3` ; aucune partie métallique des pointes touchée.
 
 | # | Mesure | Calibre | Attendu | Relevé | Décision |
 |---|---|---|---|---|---|

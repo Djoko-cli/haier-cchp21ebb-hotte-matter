@@ -169,7 +169,11 @@ la sonde (5), l'analyseur (5b) et l'étage d'injection (7).
    qu'à `CN3` et au câble du panneau (règle 3).
 3. Relier les deux broches rondes de la fiche par le fil à pinces crocodile.
 4. Piquer `CN3` par l'arrière de la fiche, côté fils, avec l'aiguille, sur la
-   broche à mesurer.
+   broche à mesurer. Si la colle de la sortie des fils gêne (étape 0, ligne
+   2a), retirer plutôt la fiche du panneau, en la tenant par son boîtier, et
+   poser la pointe du cordon sur la broche de `CN3` elle-même : même mesure,
+   le panneau n'étant relié à rien d'autre qu'à `CN3`. Remettre la fiche au
+   point 7.
 5. Ne toucher aucune partie métallique des pointes : le corps en parallèle
    fausserait la mesure.
 6. Mesurer, et noter chaque lecture dans `RECONNAISSANCE.md` :
@@ -180,8 +184,9 @@ la sonde (5), l'analyseur (5b) et l'étage d'injection (7).
 | b | contact de terre de la fiche (dans le trou qui reçoit la broche de terre de la prise) vers `CN3 −` | le plus élevé | OL : secondaire flottant | environ 0 Ω : secondaire relié à la terre ; ce n'est pas un défaut, on le note. Valeur intermédiaire (kΩ à MΩ) : **ARRÊT** et analyse |
 | c | contact de terre de la fiche vers la vis de terre de la carcasse, ou une vis nue (la carcasse est peinte) | 200 Ω ; cordons court-circuités d'abord (valeur à soustraire) | **moins de 1 Ω** : liaison de classe I | **ARRÊT** : défaut de terre |
 
-7. Retirer l'aiguille et le fil à pinces, refermer le couvercle, remettre le
-   filtre sans rien pincer.
+7. Retirer l'aiguille et le fil à pinces (fiche du panneau remise sur `CN3`,
+   si elle a été retirée), refermer le couvercle, remettre le filtre sans rien
+   pincer.
 
 **Limite.** Un ohmmètre ne voit pas un claquage qui n'apparaîtrait qu'à 230 V.
 La mesure en charge de l'étape 3a couvre une partie de ce risque.
