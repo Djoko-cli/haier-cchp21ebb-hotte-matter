@@ -33,8 +33,29 @@ static void testMdp() {
   VERIF(!netWifiValides("maison", nullptr));
 }
 
+// Raison du refus : la regle en cause et, pour un octet interdit, sa position
+// et sa valeur, jamais le mot de passe (28/09 : un mot de passe colle refuse
+// sans dire pourquoi, accepte une fois tape a la main).
+static void testRaison() {
+  char t[200];
+  VERIF(!netWifiRefus("maison", "motdepasse", t, sizeof(t)) && t[0] == 0);
+  VERIF(netWifiRefus("maison", "1234567", t, sizeof(t)) && strstr(t, "7 caracteres"));
+  VERIF(netWifiRefus("maison", std::string(65, 'a').c_str(), t, sizeof(t)) && strstr(t, "65 caracteres"));
+  VERIF(netWifiRefus("maison", std::string(64, 'p').c_str(), t, sizeof(t)) && strstr(t, "hexa"));
+  // Espace insecable (Option-Espace sur un Mac francais) : octets C2 A0.
+  VERIF(netWifiRefus("maison", "secretXYZ\xc2\xa0", t, sizeof(t)) && strstr(t, "octet 0xC2 en position 10"));
+  VERIF(!strstr(t, "secretXYZ"));
+  VERIF(netWifiRefus("maison", "secretXYZ\t", t, sizeof(t)) && strstr(t, "octet 0x09 en position 10"));
+  VERIF(netWifiRefus("caf\xc3\xa9", "motdepasse", t, sizeof(t)) && strstr(t, "ssid") && strstr(t, "octet 0xC3 en position 4"));
+  VERIF(netWifiRefus(std::string(33, 's').c_str(), "motdepasse", t, sizeof(t)) && strstr(t, "33 caracteres"));
+  // Sans tampon : le verdict seul.
+  VERIF(netWifiRefus("maison", "1234567", nullptr, 0));
+  VERIF(!netWifiRefus("maison", "12345678", nullptr, 0));
+}
+
 int main() {
   testSsid();
   testMdp();
+  testRaison();
   return bilan("test_wifi");
 }

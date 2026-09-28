@@ -440,8 +440,13 @@ consommation (§8.3), dix minutes de `krona` (§8.4).
 1. **Identifiants Wi-Fi (Majid, au clavier).** Sonde sur l'USB du Mac. Majid
    ouvre une console **hors du dépôt**, pour que `log2file` n'enregistre pas le
    mot de passe :
-   `cd ~ && ~/.platformio/penv/bin/pio device monitor -p $PORT_SONDE -b 115200`.
-   Il tape `wifi <ssid> <mdp>`, puis `info` quelques secondes plus tard.
+   `cd ~ && ~/.platformio/penv/bin/pio device monitor -p $PORT_SONDE -b 115200`
+   (ou, depuis le dépôt, avec `-f direct` en plus : un filtre donné en ligne de
+   commande remplace ceux de `platformio.ini`, `log2file` compris).
+   Il tape `wifi <ssid> <mdp>`, puis `info` quelques secondes plus tard. Le mot
+   de passe se **tape à la main** : collé, il peut porter un caractère invisible
+   (espace insécable, apostrophe typographique), et la sonde refuse en donnant
+   l'octet et sa position (`wifi : refuse, rien ne change : mot de passe : octet 0xC2 en position 10 ...`).
    Attendu : `wifi : <ssid>, connecte, IP <a.b.c.d>, RSSI <-xx> dBm, mDNS hotte-sonde.local, 0 perte(s) depuis le demarrage`.
    Il ferme la console (Ctrl-C) pour libérer le port.
 2. **Clé H1 (l'agent).** `python3 tools/hotte_udp.py cle $PORT_SONDE`.

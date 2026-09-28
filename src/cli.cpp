@@ -332,8 +332,9 @@ static void cmdWifi(char *args) {
     Serial.println("usage : wifi <ssid> <mdp>   (mdp absent : reseau ouvert)");
     return;
   }
-  if (!netWifiValides(args, mdp)) {
-    Serial.println("wifi : refuse (ssid de 1 a 32 caracteres sans espace ; mdp vide, de 8 a 63 caracteres, ou 64 hexa)");
+  char raison[200];
+  if (netWifiRefus(args, mdp, raison, sizeof(raison))) {
+    Serial.printf("wifi : refuse, rien ne change : %s\n", raison);
     return;
   }
   if (!netWifiSet(args, mdp)) {

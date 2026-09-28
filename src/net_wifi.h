@@ -14,6 +14,7 @@
 //  texte sur l'USB.
 // ===========================================================================
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 void netWifiBegin();                              // NVS -> STA, WiFi.setSleep(false), mDNS kNomMdns
@@ -31,21 +32,56 @@ uint32_t netWifiPertes();
 // ecriture en NVS : SSID de 1 a 32 caracteres ASCII imprimables sans espace
 // (la commande coupe au premier) ; mot de passe vide (reseau ouvert), de 8 a
 // 63 caracteres ASCII imprimables (phrase WPA, espaces compris), ou 64
-// chiffres hexadecimaux (cle WPA brute). Pur : teste sur l'hote
-// (tools/tests/test_wifi.cpp).
-inline bool netWifiValides(const char *ssid, const char *mdp) {
-  if (!ssid || !mdp) return false;
+// chiffres hexadecimaux (cle WPA brute). Refus : true, et la raison dans out
+// (si out) : la regle en cause et, pour un octet interdit, sa position et sa
+// valeur, jamais le mot de passe. Un copier-coller y met parfois un caractere
+// invisible (espace insecable C2 A0, apostrophe typographique E2 80 99) :
+// 28/09, un mot de passe colle refuse, accepte une fois tape a la main. Pur :
+// teste sur l'hote (tools/tests/test_wifi.cpp).
+inline bool netWifiRefus(const char *ssid, const char *mdp, char *out, size_t n) {
+  if (out && n) out[0] = 0;
+  if (!ssid || !mdp) {
+    if (out) snprintf(out, n, "identifiants absents");
+    return true;
+  }
   const size_t ns = strlen(ssid), nm = strlen(mdp);
-  if (ns < 1 || ns > 32 || (nm > 0 && nm < 8) || nm > 64) return false;
+  if (ns < 1 || ns > 32) {
+    if (out) snprintf(out, n, "ssid de %u caracteres (1 a 32)", (unsigned)ns);
+    return true;
+  }
   for (size_t i = 0; i < ns; i++) {
     const unsigned char c = (unsigned char)ssid[i];
-    if (c <= 0x20 || c > 0x7E) return false;
+    if (c <= 0x20 || c > 0x7E) {
+      if (out)
+        snprintf(out, n, "ssid : octet 0x%02X en position %u (ASCII imprimable sans espace seulement)", c,
+                 (unsigned)(i + 1));
+      return true;
+    }
+  }
+  if ((nm > 0 && nm < 8) || nm > 64) {
+    if (out) snprintf(out, n, "mot de passe de %u caracteres (8 a 63, ou 64 hexa)", (unsigned)nm);
+    return true;
   }
   for (size_t i = 0; i < nm; i++) {
     const unsigned char c = (unsigned char)mdp[i];
-    if (c < 0x20 || c > 0x7E) return false;
-    const bool hexa = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-    if (nm == 64 && !hexa) return false;
+    if (c < 0x20 || c > 0x7E) {
+      if (out)
+        snprintf(out, n,
+                 "mot de passe : octet 0x%02X en position %u (ASCII imprimable seulement ; colle, il peut porter "
+                 "un caractere invisible : le taper a la main)",
+                 c, (unsigned)(i + 1));
+      return true;
+    }
   }
-  return true;
+  for (size_t i = 0; nm == 64 && i < nm; i++) {
+    const unsigned char c = (unsigned char)mdp[i];
+    const bool hexa = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    if (!hexa) {
+      if (out) snprintf(out, n, "mot de passe de 64 caracteres : cle brute, chiffres hexadecimaux seulement");
+      return true;
+    }
+  }
+  return false;
 }
+
+inline bool netWifiValides(const char *ssid, const char *mdp) { return !netWifiRefus(ssid, mdp, nullptr, 0); }
