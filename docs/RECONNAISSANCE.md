@@ -134,7 +134,7 @@ notée ici.
 | 5d | le panneau se démonte-t-il, sans forcer ? Si oui, référence de la puce tactile | visuel | | | décide si C est possible |
 | 6a | cheminement possible du câble de sortie jusqu'au boîtier de mesure | photo | par exemple le long du câble du panneau vers l'avant, ou au bord du filtre sans pincement | | |
 | 6b | longueur nécessaire du câble de sortie | mètre | | | |
-| 6c | emplacement du boîtier de mesure | — | à côté de la hotte, visible, hors de l'aplomb de la plaque de cuisson | | |
+| 6c | emplacement du boîtier de mesure | — | à côté de la hotte, visible, hors de l'aplomb de la plaque de cuisson | | 28/09 : Majid confirme le boîtier de mesure **provisoire, dehors**, le temps de la reconnaissance ; le module final ira dans le boîtier électronique de la hotte, en boîtier imprimé 3D (sous-projet 2) |
 
 **Photos :**
 - [x] Photo IC2, IC3, IC4 (macro) : `docs/photos/etape0-ic.jpg` (image de la vidéo `IMG_9111`, 37 s ; on y voit aussi `CN3`)
