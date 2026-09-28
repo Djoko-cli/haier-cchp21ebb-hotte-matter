@@ -114,20 +114,20 @@ notée ici.
 
 ## Étape 0 : photos, inventaire et cheminements
 
-**Date :**
+**Date :** 28/09/2026 (vidéos `IMG_9111` et `IMG_9112` de Majid, 15 h 19 et 15 h 22 ; lignes 1a à 4) ; lignes 5 et 6 : à faire.
 
 **Conditions :** hotte débranchée depuis 5 min (débranchée à : ____).
 
 | # | Mesure | Calibre | Attendu | Relevé | Décision |
 |---|---|---|---|---|---|
-| 1a | IC2 : marquage, nombre de broches | photo macro | SOP-14 sans marquage (comme la CDA) | | |
-| 1b | IC3 : marquage, nombre de broches | photo macro | `ULN2003` | | |
-| 1c | IC4 : marquage, nombre de broches | photo macro | abaisseur, SOP-8 | | |
-| 1d | relais : marquage | photo macro | 3 relais L, M, H | | |
+| 1a | IC2 : marquage, nombre de broches | photo macro | SOP-14 sans marquage (comme la CDA) | SOP-14, sans marquage visible (`etape0-ic.jpg`) | comme la CDA : le microcontrôleur, protocole de `D` inconnu, à apprendre |
+| 1b | IC3 : marquage, nombre de broches | photo macro | `ULN2003` | `ULN2003H`, SOP-16 (`etape0-ic.jpg`) | conforme : il commande les relais |
+| 1c | IC4 : marquage, nombre de broches | photo macro | abaisseur, SOP-8 | `XL1509-5.0` (XLSEMI), SOP-8 : abaisseur 5 V, avec `D1` SS14 et `L1` 68 µH (`etape0-ic.jpg`) | côté basse tension : le `+` de `CN3` est sans doute à 5 V, à mesurer (3b) |
+| 1d | relais : marquage | photo macro | 3 relais L, M, H | 3 relais noirs ; leur marquage est caché par une étiquette « LIAO YUAN QC PASS » (`etape0-relais.jpg`) | sans objet : on ne touche pas aux relais |
 | 2a | `CN3` : fiche collée ? | visuel | | non : la fiche du panneau se débranche ; elle porte un dépôt de colle translucide à la sortie des fils (28/09) | on la tient par le boîtier, jamais par les fils ni par la colle |
 | 2b | pas de `CN3`, entre les broches extrêmes | règle ou pied à coulisse en plastique | 5,0 mm : JST XH ; 4,0 mm : JST PH | 28/09 : fiche du panneau au pied à coulisse, **8,32 mm** (mesure difficile : la fiche déborde des mâchoires sur la photo) ; embase `CN3` photographiée à côté d'une règle : **environ 10,2 mm** (19,7 px/mm sur la règle, 203 px pour l'embase). Fiches techniques JST, 3 broches : XH = fiche 9,8 mm, embase 9,9 mm ; PH = fiche 7,8 mm, embase 7,9 mm | **JST XH, pas de 2,5 mm** : deux mesures sur photo avec règle concordent, l'embase `CN3` (environ 10,2 mm) et la fiche du panneau posée près de la règle (corps d'environ 10,4 mm, 2e photo du 28/09). Le PH (7,8 à 7,9 mm) est exclu ; la mesure de 8,32 mm au pied à coulisse était fausse. Achats : XH 3P et 4P ; les PH 3P sont inutiles |
-| 3 | accès : comment retirer le filtre, où est le boîtier, comment s'ouvre son couvercle | — | | | |
-| 4 | trajet des fils du condensateur et du connecteur blanc, par rapport à `CN3` et au passage de sortie | photo | | | |
+| 3 | accès : comment retirer le filtre, où est le boîtier, comment s'ouvre son couvercle | — | | filtre : on tire la languette avant, il bascule vers le bas et se retire (`IMG_9112`) ; boîtier : plastique noir sous le moteur ; couvercle à charnière côté avant, clipsé côté moteur : on le tire vers soi, il bascule, sans outil (`IMG_9111`, 0 à 3 s) | accès sans outil, filtre retiré |
+| 4 | trajet des fils du condensateur et du connecteur blanc, par rapport à `CN3` et au passage de sortie | photo | | boîtier ouvert, avant toute manipulation (`etape0-fils.jpg`) : condensateur du moteur CBB61 5 µF 450 V à gauche, gros connecteur blanc du moteur en bas à droite, `CN3` en haut à droite de la carte ; les câbles sortent par la droite du boîtier | à revoir avec le cheminement (ligne 6a) |
 | 5a | câble du panneau : longueur libre | mètre | | | |
 | 5b | comment sa fiche peut sortir du boîtier ; ruban et colliers à refaire à l'identique | photo | | | placement de l'adaptateur (WIRING.md §2) |
 | 5c | connecteur intermédiaire sur le câble du panneau ? | visuel | | | |
@@ -137,10 +137,10 @@ notée ici.
 | 6c | emplacement du boîtier de mesure | — | à côté de la hotte, visible, hors de l'aplomb de la plaque de cuisson | | |
 
 **Photos :**
-- [ ] Photo IC2, IC3, IC4 (macro) : `docs/photos/etape0-ic.jpg`
-- [ ] Photo relais : `docs/photos/etape0-relais.jpg`
+- [x] Photo IC2, IC3, IC4 (macro) : `docs/photos/etape0-ic.jpg` (image de la vidéo `IMG_9111`, 37 s ; on y voit aussi `CN3`)
+- [x] Photo relais : `docs/photos/etape0-relais.jpg` (`IMG_9111`, 10,5 s : vue d'ensemble de la carte)
 - [ ] Photo `CN3` de près : `docs/photos/etape0-cn3.jpg`
-- [ ] Photo fils du condensateur et connecteur blanc, avant toute manipulation : `docs/photos/etape0-fils.jpg`
+- [x] Photo fils du condensateur et connecteur blanc, avant toute manipulation : `docs/photos/etape0-fils.jpg` (`IMG_9111`, 3,1 s)
 - [ ] Photo câble du panneau, sa sortie, ruban et colliers : `docs/photos/etape0-cable.jpg`
 - [ ] Photo cheminement choisi et emplacement du boîtier de mesure : `docs/photos/etape0-cheminement.jpg`
 
@@ -153,7 +153,9 @@ notée ici.
 
 Procédure pas à pas : [SECURITE.md](SECURITE.md), « Procédure : étape 1 ».
 
-**Date :**
+**Date :** 28/09/2026. Multimètre de Majid, à calibre automatique : `OL` avec
+« MΩ » pointes dans le vide, 0 pointes l'une contre l'autre (repères relevés
+avant la mesure).
 
 **Conditions :** hotte débranchée depuis 5 min ; broches rondes de la fiche
 reliées par le fil à pinces crocodile ; `CN3` piqué par l'arrière avec
@@ -162,17 +164,18 @@ la broche de `CN3` ; aucune partie métallique des pointes touchée.
 
 | # | Mesure | Calibre | Attendu | Relevé | Décision |
 |---|---|---|---|---|---|
-| a1 | broches reliées vers `CN3 −` | le plus élevé (20 MΩ ou plus) | OL après 10 s (une valeur qui monte vers OL est normale) | | valeur stable : **ARRÊT** |
-| a2 | `CN3 −` vers broches reliées (cordons inversés) | idem | OL | | idem |
-| a3 | broches reliées vers `D` | idem | OL | | idem |
-| a4 | `D` vers broches reliées | idem | OL | | idem |
-| a5 | broches reliées vers `+` | idem | OL | | idem |
-| a6 | `+` vers broches reliées | idem | OL | | idem |
-| b | contact de terre de la fiche vers `CN3 −` | le plus élevé | OL : secondaire flottant ; environ 0 Ω : relié à la terre (pas un défaut, on le note) | | kΩ à MΩ : **ARRÊT** et analyse |
-| c0 | cordons court-circuités | 200 Ω | valeur à soustraire | | |
-| c | contact de terre de la fiche vers la vis de terre de la carcasse (ou une vis nue) | 200 Ω | moins de 1 Ω, après soustraction | | sinon **ARRÊT** : défaut de terre |
+| a1 | broches reliées vers `CN3 −` | le plus élevé (20 MΩ ou plus) | OL après 10 s (une valeur qui monte vers OL est normale) | OL (MΩ), calibre automatique | isolé |
+| a2 | `CN3 −` vers broches reliées (cordons inversés) | idem | OL | OL (MΩ) | isolé |
+| a3 | broches reliées vers `D` | idem | OL | OL (MΩ) | isolé |
+| a4 | `D` vers broches reliées | idem | OL | OL (MΩ) | isolé |
+| a5 | broches reliées vers `+` | idem | OL | OL (MΩ) | isolé |
+| a6 | `+` vers broches reliées | idem | OL | OL (MΩ) | isolé |
+| b | contact de terre de la fiche vers `CN3 −` | le plus élevé | OL : secondaire flottant ; environ 0 Ω : relié à la terre (pas un défaut, on le note) | 0 Ω : **le `−` de `CN3` est relié à la terre** | noté : pas un défaut |
+| c0 | cordons court-circuités | 200 Ω | valeur à soustraire | 0 après quelques instants (calibre automatique) | rien à soustraire à cette résolution |
+| c | contact de terre de la fiche vers la vis de terre de la carcasse (ou une vis nue) | 200 Ω | moins de 1 Ω, après soustraction | vers le point de masse prévu dans la hotte : fluctue un instant, puis 0 | moins de 1 Ω : liaison de terre bonne |
 
-**Sortie :** ☐ feu vert pour construire l'adaptateur ☐ **ARRÊT** (raison : ____).
+**Sortie :** ☒ feu vert pour construire l'adaptateur (28/09/2026) ☐ **ARRÊT** (raison : ____).
+Aussi vu sur la carte (`etape0-ic.jpg`, `etape0-relais.jpg`) : transformateur `BK-22-2232`, optocoupleur `PC817C` et condensateurs Y `CY1` à la frontière, alimentation isolée comme prévu ; près de `CN3`, `R13` 4,7 kΩ et `R1` 1 kΩ (pull-up et résistance série de `D` ? à vérifier en 3c) ; `CN1` marqué `12V_LED`.
 
 ## Étape 2 : adaptateur et boîtier de mesure
 
