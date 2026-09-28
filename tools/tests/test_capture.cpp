@@ -110,18 +110,44 @@ static void testConversion() {
   VERIF(!gParts[0].niv0Haut && gParts[0].n == 5);
 }
 
+// Hors bloc dernier (celui du marqueur de fin : testMarqueurFin), une duree
+// nulle est retiree.
 static void testDureesNulles() {
   Decoupeur d;
   const Reglages r;
   // Nulle en tete : la premiere duree est celle de d1 (GPIO 1 : bus bas).
   const Sym tete[2] = {{0, 0, 300, 1}, {400, 0, 0, 1}};
-  VERIF(traite(d, Bloc{1000000, true, false, 2, tete}, r) == 1);
+  VERIF(traite(d, Bloc{1000000, false, false, 2, tete}, r) == 1);
   VERIF(gParts[0].n == 2 && !gParts[0].niv0Haut && gParts[0].dur[0] == 300 && gParts[0].dur[1] == 400);
   // Nulle au milieu : les deux durees voisines de meme niveau sont fondues (les niveaux restent alternes).
   const Sym milieu[3] = {{100, 0, 200, 1}, {0, 0, 50, 1}, {80, 0, 0, 1}};
-  VERIF(traite(d, Bloc{1000000, true, false, 3, milieu}, r) == 1);
+  VERIF(traite(d, Bloc{1000000, false, false, 3, milieu}, r) == 1);
   VERIF(gParts[0].n == 3 && gParts[0].dur[0] == 100 && gParts[0].dur[1] == 250 && gParts[0].dur[2] == 80);
-  VERIF(gParts[0].tUs == 1000000u - 430u - 5000u);
+  VERIF(gParts[0].tUs == 1000000u - 430u);
+}
+
+// Marqueur de fin du RMT (duree nulle) dans le bloc dernier : rien ne compte
+// apres. Nombre pair de durees : le marqueur ouvre un mot, dont le C6 remplit
+// la seconde moitie avec la derniere duree recue, niveau compris (banc 0 du
+// 28/09 : krona, 2000 us lus 4000 ; uart9600inv, 208 us lus 416).
+static void testMarqueurFin() {
+  Decoupeur d;
+  const Reglages r;  // inverse : GPIO 1 = bus bas
+  // Repos pris avant la trame (bus bas 18047), puis haut 2000, bas 6000, haut 2000 : 4 durees.
+  const Sym paire[3] = {{18047, 1, 2000, 0}, {6000, 1, 2000, 0}, {0, 1, 2000, 0}};
+  VERIF(traite(d, Bloc{1000000, true, false, 3, paire}, r) == 1);
+  VERIF(gParts[0].n == 4 && !gParts[0].niv0Haut && gParts[0].fin);
+  VERIF(gParts[0].dur[0] == 18047 && gParts[0].dur[1] == 2000 && gParts[0].dur[2] == 6000 && gParts[0].dur[3] == 2000);
+  VERIF(gParts[0].tUs == 1000000u - 28047u - 5000u);
+  // Marqueur en tete du bloc dernier d'une reception en cours : partie vide, fin.
+  const Sym plein[1] = {{100, 0, 200, 1}};
+  const Sym tete[1] = {{0, 0, 200, 1}};
+  VERIF(traite(d, Bloc{2000000, false, false, 1, plein}, r) == 1);
+  VERIF(traite(d, Bloc{2005000, true, false, 1, tete}, r) == 1);
+  VERIF(gParts[0].part == 1 && gParts[0].fin && gParts[0].n == 0 && gParts[0].tUs == 2005000u - 5000u);
+  // Un front seul, puis le silence : rien, aucune reception comptee.
+  VERIF(traite(d, Bloc{3000000, true, false, 1, tete}, r) == 0);
+  VERIF(d.receptions() == 2);
 }
 
 static void testDecoupe() {
@@ -268,6 +294,7 @@ int main() {
   testBorner();
   testConversion();
   testDureesNulles();
+  testMarqueurFin();
   testDecoupe();
   testReceptions();
   testBlocsVides();
