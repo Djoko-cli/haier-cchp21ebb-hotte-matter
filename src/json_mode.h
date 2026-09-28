@@ -81,6 +81,11 @@ void jsonInjection(const jsonp::InjectionEv &e);
 // injection|reseau, niv notice|trace), 20 par seconde au plus ; true si
 // l'USB l'a prise (emise, plafonnee ou perdue), false pour l'afficher en texte.
 bool jsonLog(const char *src, const char *niv, const char *txt);
+// Annonce en texte sur l'USB, quand jsonLog ne l'a pas prise : la ligne
+// entiere ou rien, jamais d'attente ; perdue, elle est comptee
+// (lignes_perdues). Un Mac qui alimente la sonde sans lire son port ferait
+// attendre un Serial.println 2 s (generateur, banc 0 du 28/09).
+void jsonTexteUsb(const char *txt);
 
 // --- Transport reseau (net_udp_wifi.cpp, cli.cpp) --------------------------
 

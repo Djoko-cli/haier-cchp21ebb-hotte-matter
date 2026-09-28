@@ -89,7 +89,7 @@ bool IRAM_ATTR finEmission(rmt_channel_handle_t, const rmt_tx_done_event_data_t 
 
 // Annonce : log 'injection' en mode 'json log 1', sinon texte sur l'USB.
 void annonce(const char *txt) {
-  if (!jsonLog("injection", "notice", txt)) Serial.println(txt);
+  if (!jsonLog("injection", "notice", txt)) jsonTexteUsb(txt);
 }
 
 // GPIO7 : sortie simple a l'etat bas (bus relache, Q2 bloque).

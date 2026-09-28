@@ -181,6 +181,16 @@ static void textNb(const char *s) {
   Serial.write((const uint8_t *)s, len);
 }
 
+void jsonTexteUsb(const char *txt) {
+  const size_t len = strlen(txt);
+  if (Serial.availableForWrite() < (int)(len + 2)) {
+    lose(sSinks[kUsb]);
+    return;
+  }
+  Serial.write((const uint8_t *)txt, len);
+  Serial.write((const uint8_t *)"\r\n", 2);
+}
+
 // ===========================================================================
 //  Textes
 // ===========================================================================

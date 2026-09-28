@@ -23,7 +23,7 @@ static uint32_t sEssaiAt = 0, sPertes = 0;
 
 // Annonce : log 'reseau' en mode 'json log 1', sinon texte sur l'USB.
 static void annonce(const char *txt) {
-  if (!jsonLog("reseau", "notice", txt)) Serial.println(txt);
+  if (!jsonLog("reseau", "notice", txt)) jsonTexteUsb(txt);
 }
 
 static void lireIdentifiants() {
