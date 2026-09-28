@@ -54,10 +54,11 @@ uint8_t borner(Reglages *r) {
 //  reset() clot la reception en cours sans rien emettre ; la numerotation
 //  continue (num : depuis le demarrage).
 //
-//  Le pilote alterne les niveaux d'un demi-symbole au suivant ; si une duree
-//  nulle retiree en laissait deux voisines de meme niveau, elles seraient
-//  fondues, pour que les niveaux d'une partie restent alternes (niv0Haut dit
-//  celui de dur[0]).
+//  Dans le bloc dernier, la premiere duree nulle est le marqueur de fin du
+//  RMT : rien ne compte apres (demiSymboles). Le pilote alterne les niveaux
+//  d'un demi-symbole au suivant ; si une duree nulle retiree ailleurs en
+//  laissait deux voisines de meme niveau, elles seraient fondues, pour que les
+//  niveaux d'une partie restent alternes (niv0Haut dit celui de dur[0]).
 // ===========================================================================
 
 void Decoupeur::reset() {
@@ -70,10 +71,25 @@ static uint32_t versUs(uint16_t ticks, uint32_t hz) {
   return hz ? (uint32_t)((uint64_t)ticks * 1000000u / hz) : ticks;
 }
 
+static uint16_t demi(const Sym &s, uint32_t k) { return k & 1 ? s.d1 : s.d0; }
+
+// Demi-symboles du bloc a lire : dans le bloc dernier, jusqu'au marqueur de
+// fin. Quand il ouvre un mot (nombre pair de durees), le C6 remplit la seconde
+// moitie de ce mot avec la derniere duree recue, niveau compris : lue, elle
+// serait fondue avec l'originale (banc 0 du 28/09 : 2000 us lus 4000).
+static uint32_t demiSymboles(const Bloc &b) {
+  const uint32_t n = 2u * b.nSym;
+  if (b.dernier)
+    for (uint32_t k = 0; k < n; k++)
+      if (!demi(b.sym[k / 2], k)) return k;
+  return n;
+}
+
 size_t Decoupeur::traiter(const Bloc &b, const Reglages &r, EmetPartie emit, void *ctx) {
   if (b.debordAvant) enCours_ = false;  // continuite perdue : nouvelle reception
+  const uint32_t nDemi = demiSymboles(b);
   uint64_t total = 0;
-  for (uint16_t i = 0; i < b.nSym; i++) total += versUs(b.sym[i].d0, r.resolHz) + versUs(b.sym[i].d1, r.resolHz);
+  for (uint32_t k = 0; k < nDemi; k++) total += versUs(demi(b.sym[k / 2], k), r.resolHz);
   // Rien a publier, sauf pour clore une reception en cours ou signaler une perte.
   if (!total && !b.debordAvant && !(b.dernier && enCours_)) {
     if (b.dernier) enCours_ = false;
@@ -93,32 +109,31 @@ size_t Decoupeur::traiter(const Bloc &b, const Reglages &r, EmetPartie emit, voi
   uint64_t dansPartie = 0;  // somme des durees de p
   bool dernierHaut = false;
   size_t emises = 0;
-  for (uint16_t i = 0; i < b.nSym; i++) {
-    for (uint8_t moitie = 0; moitie < 2; moitie++) {
-      const uint32_t us = versUs(moitie ? b.sym[i].d1 : b.sym[i].d0, r.resolHz);
-      if (!us) continue;
-      const bool gpioHaut = (moitie ? b.sym[i].l1 : b.sym[i].l0) != 0;
-      const bool haut = r.inverse ? !gpioHaut : gpioHaut;
-      if (p.n && haut == dernierHaut) {  // voisine de meme niveau : fondue
-        p.dur[p.n - 1] += us;
-        dansPartie += us;
-        continue;
-      }
-      if (p.n == kDurMax) {  // partie pleine : elle part, la suivante commence a sa fin
-        emit(p, ctx);
-        emises++;
-        part_++;
-        p.part = part_;
-        p.tUs += dansPartie;
-        p.debord = false;
-        p.n = 0;
-        dansPartie = 0;
-      }
-      if (!p.n) p.niv0Haut = haut;
-      p.dur[p.n++] = us;
+  for (uint32_t k = 0; k < nDemi; k++) {
+    const Sym &s = b.sym[k / 2];
+    const uint32_t us = versUs(demi(s, k), r.resolHz);
+    if (!us) continue;
+    const bool gpioHaut = (k & 1 ? s.l1 : s.l0) != 0;
+    const bool haut = r.inverse ? !gpioHaut : gpioHaut;
+    if (p.n && haut == dernierHaut) {  // voisine de meme niveau : fondue
+      p.dur[p.n - 1] += us;
       dansPartie += us;
-      dernierHaut = haut;
+      continue;
     }
+    if (p.n == kDurMax) {  // partie pleine : elle part, la suivante commence a sa fin
+      emit(p, ctx);
+      emises++;
+      part_++;
+      p.part = part_;
+      p.tUs += dansPartie;
+      p.debord = false;
+      p.n = 0;
+      dansPartie = 0;
+    }
+    if (!p.n) p.niv0Haut = haut;
+    p.dur[p.n++] = us;
+    dansPartie += us;
+    dernierHaut = haut;
   }
   p.fin = b.dernier;
   emit(p, ctx);
