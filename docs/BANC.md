@@ -299,6 +299,19 @@ valeur demandée plus 48 à 51 µs (médiane). Mais 3 à 10 pauses sur 1000 dure
 1 à 4 ms de plus, la tâche `loop` du générateur ayant pris du retard. Seul
 compte ici un repos au moins égal au silence de la sonde.
 
+Par le Wi-Fi, en préliminaire au critère 4 (§8.1, puis §8.4 adapté) : sonde
+`0.1.0-2b223b1` alimentée par l'USB du Mac (pas par la batterie), posée sur le
+bureau à côté du Mac ; le motif est lancé par le script de l'agent. `krona`,
+4 500 trames (10 min 3 s), enregistrées 660 s par `hotte_udp.py enregistre` :
+`2026-09-28-1417-banc0-wifi-krona.jsonl`.
+
+| RSSI (dBm) | Critère 1 | Écart max (µs) | Trous de `n` (`json_check`) | Compteurs de la sonde | H1 | `wifi.pertes` | Verdict |
+|---|---|---|---|---|---|---|---|
+| −75 à −64 (22 relevés) | 4500 / 4500 | 1 | 0 sur 7 179 lignes (0,000 %) | `debord`, `lignes_perdues`, `sautes`, `json_perdus` : +0 | 0 rejetée, 0 renvoi, 1 session | 0 | OK |
+
+Reste pour la tâche 21 : la même mesure sur la batterie, à l'emplacement de
+test.
+
 ### Montage et firmwares
 
 Sonde sur : `boîtier` (détaché de la hotte, §2.1) ou `plaque` (plaque d'essai
