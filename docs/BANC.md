@@ -180,7 +180,10 @@ Wi-Fi, de l'ordre de 100 mA Wi-Fi actif (spec §8.7).
   rafale ; 0 : sans fin), `impulsions <bas_us> <periode_ms> [n]` (critère 5,
   §9 ; 0 ou rien : sans fin), `stop`, `etat`, `help`. Il affiche
   `motif <nom> trame <index>` à chaque trame, puis `motif <nom> fini : <n> trames`
-  (`impulsion <index>` à chaque impulsion).
+  (`impulsion <index>` à chaque impulsion). Console fermée, le générateur
+  n'attend pas : les lignes qui ne tiennent plus dans son tampon USB sont
+  sautées et la ligne `fini` en donne le nombre (`; <k> ligne(s) de progression
+  sautee(s), console non lue`) ; la cadence des trames n'en dépend pas.
 - **Enregistrement de la sonde** (mode machine par l'USB, fichier
   `logs/AAAA-MM-JJ-hhmm-<scénario>.jsonl`) :
   `python3 tools/serie_enregistre.py $PORT_SONDE <scénario> "capture tout" "seuils 1 <silence>" --duree <s>`.
