@@ -63,6 +63,22 @@ On ne flashe la sonde que **hotte débranchée** ou au banc
 (`-t upload --upload-port <port>`). Sur la console USB (115200 bauds), `help`
 liste les commandes.
 
+## Le module produit
+
+Sous-projet 2 ([docs/SPEC-PRODUIT.md](docs/SPEC-PRODUIT.md)) : un nœud Matter
+sur Thread, EP1 Ventilateur (trois paliers) et EP2 Lumière, qui commande la
+hotte à travers son panneau d'origine. Environnement PlatformIO `produit`,
+sources dans `src/produit/`. **Pour l'instant, pilote de ligne simulé** :
+aucune broche pilotée ; le pilote réel (A, B ou C) viendra après l'étape 6.
+
+```
+~/.platformio/penv/bin/pio run -e produit -t erase    # premier flash (Thread)
+~/.platformio/penv/bin/pio run -e produit -t upload
+```
+
+Banc sans hotte : [docs/BANC-MATTER.md](docs/BANC-MATTER.md). Profil
+compagnon : [docs/PROTOCOLE-JSON-PRODUIT.md](docs/PROTOCOLE-JSON-PRODUIT.md).
+
 ## Outils Mac
 
 Python 3.11, bibliothèque standard seulement (le port série s'ouvre par
@@ -71,12 +87,12 @@ Python 3.11, bibliothèque standard seulement (le port série s'ouvre par
 | Outil | Rôle |
 |---|---|
 | `tools/serie_enregistre.py <port> <scénario> [commande ...]` | session machine par l'USB, enregistrée dans `logs/AAAA-MM-JJ-hhmm-<scénario>.jsonl` |
-| `tools/hotte_udp.py cle <port>` | clé H1 posée par l'USB, rangée dans `~/.config/hotte-sonde/cle` (jamais affichée) |
+| `tools/hotte_udp.py [--appareil sonde\|produit] cle <port>` | clé H1 posée par l'USB, rangée dans `~/.config/hotte-<appareil>/cle` (jamais affichée) ; l'appareil se lit dans `hello` s'il n'est pas donné |
 | `tools/hotte_udp.py session <hôte> [commande ...]` | session réseau, résumé lisible ; `injection on` ne part qu'après la phrase « Majid devant la hotte », tapée dans un terminal (règle 11) |
 | `tools/hotte_udp.py enregistre <hôte> <scénario> [commande ...]` | même session, enregistrée en `.jsonl`, résumé dans `logs/live.log` |
 | `tools/analyse.py histo\|trames\|auto\|uart\|diff <capture>` | histogrammes, redécoupage en trames, décodage UART, distance d'impulsion ou Manchester, différences entre scénarios (étape 6) |
 | `tools/banc.py <capture> <motif>` | verdicts du banc : trames décodées au bit près, écarts de durées |
-| `tools/json_check.py [--jsonl] <capture>` | conformité des lignes machine au profil hotte |
+| `tools/json_check.py [--jsonl] [--profil sonde\|produit] <capture>` | conformité des lignes machine au profil hotte (sonde ou produit) |
 | `tools/verse_capture.py <capture.jsonl> <nom>` | verse une capture de référence (étapes 5 et 5b) de `logs/` dans `captures/`, avec sa provenance ; refuse toute clé, tout SSID ou mot de passe |
 
 Tests sans carte, depuis la racine du dépôt :
@@ -96,6 +112,9 @@ python3 -m unittest discover -s tools/tests -v  # outils Python
 | [docs/WIRING.md](docs/WIRING.md) | adaptateur, câble de sortie, boîtier de mesure, étages, brochage, nomenclature |
 | [docs/BANC.md](docs/BANC.md) | banc de validation : procédure, critères 1 à 6, résultats |
 | [docs/PROTOCOLE-JSON.md](docs/PROTOCOLE-JSON.md) | profil hotte du protocole compagnon, par différence avec la ScreenBar |
+| [docs/SPEC-PRODUIT.md](docs/SPEC-PRODUIT.md) | sous-projet 2 : le produit Matter (exposition, automate, matériel, vérification) |
+| [docs/PROTOCOLE-JSON-PRODUIT.md](docs/PROTOCOLE-JSON-PRODUIT.md) | profil hotte du module produit, par différence |
+| [docs/BANC-MATTER.md](docs/BANC-MATTER.md) | banc Matter sans hotte : procédure et résultats |
 | [docs/BRIEF-RECHERCHE.md](docs/BRIEF-RECHERCHE.md) | recherche du 24/09/2026 : identification de la carte, protocoles plausibles, Matter et Apple Home, 57 sources |
 | [docs/photos/](docs/photos/) | photos de la carte et de l'étiquette (numéro de série masqué) |
 | [captures/](captures/README.md) | captures de référence des étapes 5 et 5b, versées par `tools/verse_capture.py` : règles et provenance |
@@ -104,8 +123,8 @@ python3 -m unittest discover -s tools/tests -v  # outils Python
 
 1. **Reconnaissance** (en cours) : décoder la ligne `D`, choisir l'architecture,
    prouver l'injection.
-2. **Produit** : interface définitive et firmware Matter (ventilateur 3 vitesses,
-   lumière, arrêt différé).
+2. **Produit** (en cours : automate, couche Matter et compagnon, pilote simulé) :
+   interface définitive et firmware Matter (ventilateur 3 vitesses, lumière).
 3. **Bibliothèque commune et app compagnon** multi-appareils, partagées avec le
    projet frère.
 
