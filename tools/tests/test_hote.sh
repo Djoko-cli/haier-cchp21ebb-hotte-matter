@@ -28,4 +28,6 @@ $CXXP src/produit/hotte_etat.cpp tools/tests/test_hotte_etat.cpp -o "$OUT/test_h
 "$OUT/test_hotte_etat"
 $CXXP src/produit/hotte_etat.cpp src/produit/pilote_simule.cpp tools/tests/test_pilote_simule.cpp -o "$OUT/test_pilote_simule"
 "$OUT/test_pilote_simule"
+$CXXP src/produit/hotte_etat.cpp src/produit/pilote_simule.cpp tools/tests/test_sequences.cpp -o "$OUT/test_sequences"
+"$OUT/test_sequences"
 echo "tests hote : OK"
