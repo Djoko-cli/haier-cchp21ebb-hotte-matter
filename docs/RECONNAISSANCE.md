@@ -31,6 +31,9 @@ valeurs : [WIRING.md](WIRING.md).
 | Firmware de la sonde (`fw` de `hello`) | |
 | Couleurs du câble de sortie : fil 1 `−`, fil 2 `+`, fil 3 `D_panneau`, fil 4 `D_carte` | prévu (UL1007 22 AWG commandé le 27/09) : noir `−`, rouge `+`, blanc `D_panneau`, marron `D_carte`, comme le câble d'origine du panneau (noir `−`, blanc `D`, rouge `+`) |
 | `R_be` de l'étage d'écoute (100k par défaut ; changements notés à l'étape 5b) | |
+| Carte de la sonde : modèle (le produit prévoit la SuperMini violette, antenne céramique) | |
+| Point d'accès Wi-Fi pour M1 : pièce, distance à la hotte, canal 2,4 GHz (ni SSID ni adresse : dépôt public) | |
+| Routeurs de bordure Thread : modèles, distance à la hotte | dans la même pièce, à moins de 5 m (Majid, 28/09) ; modèles : ____ |
 
 ## Tests du différentiel (règle 2)
 
@@ -111,6 +114,33 @@ notée ici.
 
 **Sortie :**
 - [x] le tableau des comportements est rempli (27/09 : vidéo pour les lignes 2, 3, 4, 6 et 7, réponses de Majid pour 1, 5, 8 et 9 ; ligne 10 : 3 s par défaut).
+
+## Étape −1b : marche prolongée (ajout du 28/09)
+
+Complète les lignes 3 et 4 de l'étape −1 : les transitions de la marche
+prolongée que la vidéo du 27/09 n'a pas montrées. L'étape 5 (lignes 7b1 à 7b5)
+en capturera les trames.
+
+**Date :**
+
+**Conditions :** hotte en usage normal, fermée (l'adaptateur peut être en place,
+`J1` fermé) ; un téléphone filme le panneau, avec le son ; chronomètre. On ne
+touche qu'aux touches du panneau.
+
+**Départ de chaque ligne :** hotte éteinte (⏻ éteint) ; « marche », V2, 10 s
+d'attente ; puis « marche » moteur tournant : la prolongation commence (⏻
+clignote), et l'on lance le chronomètre. **Retour à l'état éteint entre deux
+lignes :** vitesse active, moteur arrêté (⏻ fixe), puis « marche ».
+
+| # | Mesure | Calibre | Attendu | Relevé | Décision |
+|---|---|---|---|---|---|
+| 11 | fin de la prolongation, **lampe allumée avant le départ**, sans rien toucher ; vidéo de 14 min 30 à 16 min après l'appui | chronomètre ; vidéo | fin vers 15 min (ligne 3) ; état final inconnu | fin à ____ min ____ s ; moteur : ____ ; ⏻ : ☐ éteint ☐ fixe ☐ clignote ; voyant de vitesse : ____ ; lampe : ☐ allumée ☐ éteinte ; bip à la fin : ☐ oui ☐ non | transition « prolongée → fin » de l'automate. Pas de fin à 16 min : on filme jusqu'à la fin, 30 min au plus après l'appui, puis on éteint au panneau et on le note |
+| 12 | vitesse active (V2), 5 s après le début de la prolongation | vidéo | état armé : moteur arrêté, ⏻ fixe (vidéo du 27/09, 31,2 s) | | confirme la ligne 3 |
+| 13 | « marche », 5 s après le début de la prolongation | vidéo | inconnu : éteinte (sur la CDA, un 2e appui arrête : brief §1.2, ligne 25), état armé, prolongation relancée, ou rien | moteur : ____ ; ⏻ : ____ ; bip : ☐ oui ☐ non | transition de l'automate |
+| 14 | autre vitesse (V3), 5 s après le début de la prolongation | vidéo | inconnu : V3 en marche normale (⏻ fixe), prolongation poursuivie en V3 (⏻ clignote), ou rien | moteur : ____ ; ⏻ : ____ ; bip : ☐ oui ☐ non | transition de l'automate |
+
+**Sortie :**
+- [ ] les lignes 11 à 14 sont remplies ; l'automate du sous-projet 2 reprend ces transitions.
 
 ## Étape 0 : photos, inventaire et cheminements
 
@@ -426,7 +456,8 @@ repère un câble pincé à la fermeture.
 - [ ] sonde sur son boîtier de mesure, fiche XH 4 br. du câble de sortie enfichée, **sur batterie** (modèle vérifié), `J2` ouvert ;
 - [ ] session réseau par Wi-Fi ; RSSI au boîtier de mesure : ____ dBm.
 
-Un fichier par scénario, 10 s chacun, dans cet ordre :
+Un fichier par scénario, 10 s chacun sauf 7b2, 7c1 et 7c2 (commandes sous le
+tableau), dans cet ordre :
 `python3 tools/hotte_udp.py enregistre hotte-sonde.local <scénario> "capture tout" --duree 10`,
 qui écrit `logs/AAAA-MM-JJ-hhmm-<scénario>.jsonl` ; résumé à suivre avec
 `tail -f logs/live.log`. La commande `capture tout` remet le mode `tout` : la
@@ -441,12 +472,34 @@ sonde garde en NVS le dernier mode choisi, peut-être `changements`.
 | 5a | vitesse 1 (`v1`) | — | idem | | |
 | 5b | vitesse 2 (`v2`) | — | idem | | |
 | 5c | vitesse 3 (`v3`) | — | idem | | |
-| 6 | arrêt (`arret`) | — | idem | | |
+| 6 | arrêt (`arret`) : depuis V2 (moteur en marche depuis 10 s au moins) ; appui sur V2 vers 1 s ; moteur arrêté et ⏻ fixe, appui sur « marche » vers 6 s | — | idem ; hotte éteinte, ⏻ éteint, sans clignotement | | ⏻ qui clignote : « marche » est partie moteur tournant ; on éteint (V2, puis « marche ») et on refait le scénario |
 | 6b | vitesse appuyée **sans** marche (`v-sans-marche`) : marche éteinte, appui sur V2 | — | idem ; pas de bip (étape −1, ligne 1) | | une trame sur `D` : la carte reçoit la touche et l'ignore ; aucune trame : c'est le panneau qui garde l'état « marche » |
 | 7 | chaque bip entendu (`bip-<touche>`) | — | idem | | |
+| 7b1 | début de la marche prolongée (`prol-debut`) : « marche », V2, 10 s d'attente ; enregistrement lancé, appui sur « marche » vers 2 s | — | un fichier de 10 s ; moteur toujours en V2, ⏻ clignote à 1 Hz, bip (étape −1, ligne 3) | | trame de « marche » moteur tournant, identique ou non à celle de « marche » moteur arrêté. Une activité à 1 Hz sur `D` pendant le clignotement est un indice que la carte pilote ⏻ (test 4 de l'étape 6) |
+| 7b2 | fin de la marche prolongée (`prol-fin`) : lampe allumée, « marche », V2, 10 s d'attente ; enregistrement de 17 min lancé (commande sous le tableau), appui sur « marche » vers 5 s, chronomètre lancé ; plus aucun appui ; vidéo du panneau de 14 min 30 à 16 min | chronomètre ; vidéo | fin vers 15 min ; état final : celui de l'étape −1b, ligne 11 | fin à ____ min ____ s (heure du Mac : ____) ; moteur : ____ ; ⏻ : ____ ; lampe : ____ ; bip : ☐ oui ☐ non ; trame à la fin : ☐ oui ☐ non | test 6 de l'étape 6. Pas de fin à 17 min : nouvel enregistrement (`prol-fin-suite`) et vidéo jusqu'à la fin, 30 min au plus après l'appui |
+| 7b3 | vitesse active pendant la prolongation (`prol-vactive`) : « marche », V2, 10 s d'attente ; enregistrement lancé ; « marche » vers 1 s, puis V2 vers 6 s | — | un fichier de 10 s ; moteur arrêté, ⏻ fixe, bip (étape −1, ligne 3) | | trames de la transition « prolongée → armée » |
+| 7b4 | « marche » pendant la prolongation (`prol-marche`) : même départ ; « marche » vers 1 s, puis de nouveau « marche » vers 6 s | — | un fichier de 10 s ; effet relevé à l'étape −1b, ligne 13 (sinon, le noter ici) | | trames de cette transition |
+| 7b5 | autre vitesse pendant la prolongation (`prol-autre-v`) : même départ ; « marche » vers 1 s, puis V3 vers 6 s | — | un fichier de 10 s ; effet relevé à l'étape −1b, ligne 14 (sinon, le noter ici) | | trames de cette transition |
+| 7c1 | repos moteur tournant (`repos-v2`) : « marche », V2, lampe allumée, 10 s d'attente ; enregistrement de 60 s, **sans aucun appui** | — | un fichier de 60 s : trames périodiques, ou silence | réceptions en 60 s : ____ ; période : ____ s | test 5 de l'étape 6 |
+| 7c2 | repos armé (`repos-arme`) : « marche » seule (⏻ fixe, moteur arrêté), lampe éteinte ; 60 s sans appui | — | idem | réceptions en 60 s : ____ ; période : ____ s | test 5 : armée ou éteinte, l'automate doit le savoir pour choisir la séquence |
 | 8 | panneau déconnecté (`panneau-off`) : **hotte débranchée**, filtre retiré (si cela ouvre le boîtier : 5 min d'attente), fiche du panneau retirée de l'embase ; couvercle fermé et filtre remis (règle 5), étape 2b si le boîtier a été ouvert ; puis hotte rebranchée | — | on voit si la carte émet seule | | |
 | 8b | après `panneau-off` : **hotte débranchée**, filtre retiré (si cela ouvre le boîtier : 5 min d'attente), fiche du panneau remise sur l'embase ; couvercle fermé et filtre remis (règle 5), étape 2b si le boîtier a été ouvert | visuel | à la remise sous tension, le panneau marche comme avant (étape 2c) | | |
 | 9 | compteurs de la sonde après la série : `debord`, `lignes_perdues`, `sautes` | — | 0 partout | | sinon on refait le scénario |
+
+**Lignes 7b et 7c (ajout du 28/09).** Départ de chaque ligne : hotte éteinte
+(⏻ éteint). Entre deux lignes, on revient à l'état éteint au panneau : vitesse
+active, moteur arrêté (⏻ fixe), puis « marche ». Jamais « marche » moteur
+tournant : elle lance la prolongation. Deux commandes changent :
+- 7b2 : `python3 tools/hotte_udp.py enregistre hotte-sonde.local prol-fin "capture changements" --duree 1020`.
+  Le mode `changements` garde le fichier petit si la carte répète ses trames.
+  En mode `tout`, un trafic continu donnerait jusqu'à 90 Mo en 17 min
+  (100 lignes par seconde). Une réception identique à la précédente n'est pas
+  émise, mais elle se voit dans `etat.capture.rep_en_cours`. La ligne suivante
+  remet `capture tout` ;
+- 7c1 et 7c2 : `python3 tools/hotte_udp.py enregistre hotte-sonde.local <scénario> "capture tout" --duree 60`.
+
+Pendant les 17 min de 7b2, on reste dans la pièce (règle 12). La batterie est
+chargée avant la séance.
 
 Captures versées dans `captures/`, une par scénario (l'outil refuse un fichier
 qui contient une clé) :
@@ -523,6 +576,8 @@ Captures de la sonde versées dans `captures/` :
 | 5 | test 2 : la carte répond-elle après chaque trame ? Avec quel délai ? | — | | | |
 | 6 | test 3 : y a-t-il des silences plus longs qu'une trame, où l'on pourrait injecter ? | — | | | |
 | 7 | test 4 : la carte émet-elle son état ou un paquet de voyants ? | — | | | |
+| 8 | test 5 : au repos sans appui (7b2, 7c1, 7c2), la carte répète-t-elle son état ? Avec quelle période ? | s | trames périodiques qui portent l'état (moteur, vitesse, ⏻, lampe), ou silence | | répété : au démarrage, le module du produit relira l'état sur `D` avant de publier. Silence : l'état ne se relit pas par `D` ; la parade (lecture d'état annexe) est à cadrer au sous-projet 2 |
+| 9 | test 6 : la fin de la marche prolongée laisse-t-elle une trame sur `D` (7b2) ? | — | | | oui : le module du produit lira la fin sur le bus ; non : il la verra à la répétition suivante de l'état (test 5), ou, sans répétition, par la lecture d'état annexe (arrêt du moteur ; spec du produit, §5.9) |
 
 ### Décision de l'étape 6
 
@@ -565,6 +620,7 @@ Règle de choix (§4 de la spec) :
 | silence minimal avant d'émettre (`silence_min_us`) | |
 | attente maximale (`attente_max_ms`) | |
 | délai minimal entre deux changements d'état du moteur (`delai_min_ms`, d'après l'étape −1, ligne 10) | |
+| séquence d'arrêt de l'étape 7 : signe qui confirme l'arrêt du moteur avant « marche » (trame d'état de la carte, ou constat de Majid) et attente maximale de ce signe | |
 | pour B : le mode relais ; pour C : le prototype PhotoMOS | |
 
 **Sortie :**
@@ -611,6 +667,18 @@ essai : « Essais réussis » si l'on entend le bip, voit l'effet (lumière ou
 moteur) et retrouve la trame sur le bus ; « Voyants qui suivent » si **le voyant
 du panneau change** comme il faut.
 
+**L'arrêt** est une séquence de deux injections : la vitesse active, puis
+« marche ». « Marche » ne part qu'après **la confirmation de l'arrêt du
+moteur**, par le signe que fixe l'avenant (trame d'état de la carte si elle en
+émet, sinon constat de Majid : voyant de vitesse éteint, ⏻ fixe, moteur
+silencieux), et au moins `delai_min_ms` après la première injection.
+**Jamais « marche » moteur tournant** : elle lancerait la marche prolongée
+(⏻ clignote). Un essai compte deux événements `injection`. Il est réussi si
+les deux sont `ok` et si la hotte finit éteinte : moteur arrêté, ⏻ éteint,
+sans clignotement, lampe inchangée. Si ⏻ clignote, c'est un échec : on revient
+à l'état éteint au panneau (vitesse active, puis « marche ») et on note la
+cause.
+
 | Action | Essais réussis | Voyants qui suivent | Total |
 |---|---|---|---|
 | touche lumière | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ____ / 20 |
@@ -618,7 +686,7 @@ du panneau change** comme il faut.
 | vitesse 2 | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ____ / 20 |
 | vitesse 3 | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ____ / 20 |
 | « marche » puis une vitesse | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ____ / 20 |
-| arrêt | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ____ / 20 |
+| arrêt : vitesse active, arrêt du moteur confirmé, puis « marche » (depuis V1, V2 et V3 à tour de rôle) | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ ☐☐☐☐☐ | ____ / 20 |
 
 Fichiers d'enregistrement des essais : ____.
 
@@ -642,6 +710,61 @@ Fichiers d'enregistrement des essais : ____.
 - [ ] `injection off` ; entre deux sessions, sonde et batterie retirées, `J1` fermé
   (règle 13).
 
+## Mesure M1 pour le produit : radio comparative, hotte débranchée (ajout du 28/09)
+
+Elle prépare le sous-projet 2 et ne conditionne aucune étape de la
+reconnaissance (spec §6, « Mesure M1 »). On la fait avant le dessin du boîtier
+et avant tout achat de carte.
+
+**Date :**
+
+**Conditions :**
+- [ ] hotte **débranchée pendant toute la séance** (débranchée à : ____), fiche à vue ; boîtier ouvert après 5 min ;
+- [ ] sonde (modèle : ____) seule, hors du boîtier de mesure, sur sa batterie vérifiée, dans un sachet non métallisé ;
+- [ ] point d'accès noté dans « Installation et instruments » ; personne ne passe entre lui et la hotte pendant les relevés.
+
+Une commande par position, 30 s après avoir posé la sonde et refermé :
+`python3 tools/hotte_udp.py enregistre hotte-sonde.local m1-<position> "json reseau 10000" --duree 180`.
+Médiane du RSSI d'un fichier :
+
+```
+python3 -c 'import json,sys,statistics as s
+v=[l["l"]["wifi"]["rssi_dbm"] for l in map(json.loads,open(sys.argv[1])) if l["l"].get("t")=="reseau" and (l["l"].get("wifi") or {}).get("rssi_dbm") is not None]
+print(len(v),"releves ; mediane",s.median(v),"dBm ; min",min(v),"; max",max(v)) if v else print("aucun releve")' logs/<fichier>.jsonl
+```
+
+Les fichiers restent dans `logs/` : seules les médianes vont dans ce journal.
+
+| # | Mesure | Calibre | Attendu | Relevé | Décision |
+|---|---|---|---|---|---|
+| 1 | P0 (`m1-p0`) : sous la hotte, sur un support isolant posé sur la plaque éteinte et froide, environ 10 cm sous le filtre, à l'aplomb du boîtier électronique, bord de l'antenne vers l'avant de la hotte | RSSI Wi-Fi, médiane sur 3 min | 15 relevés au moins | médiane ____ dBm (min ____, max ____) | |
+| 2 | P1a (`m1-p1a`) : dans le boîtier, à l'emplacement prévu du module (quart haut-droit), bord de l'antenne vers l'avant de la hotte ; couvercle fermé, filtre remis, aucun câble sortant | idem | | | aucun relevé : Wi-Fi perdu, la ligne 8 décide |
+| 3 | P1b (`m1-p1b`) : même endroit, bord de l'antenne vers le bas (vers le filtre) | idem | | | idem |
+| 4 | P0 de nouveau (`m1-p0bis`), comme à la ligne 1 | idem | à 3 dB au plus de la ligne 1 | | plus de 3 dB : série à refaire |
+| 5 | *facultatif :* P1, meilleure orientation, couvercle fermé, **filtre retiré** (`m1-p1-sansfiltre`) | idem | | | dit si le filtre est la principale barrière |
+| 6 | *facultatif, boîtier ouvert :* quart haut-droit photographié avec une règle en plastique, posée sans toucher la carte ni les zones interdites, dans deux directions (`docs/photos/m1-volume.jpg`) | photo | | | volume libre pour le dessin du boîtier ; évite une ouverture de plus |
+| 7 | `A` = ligne 1 − meilleure des lignes 2 et 3 | dB | | `A` = ____ dB ; orientation retenue : ____ | |
+| 8 | `R_T` : RSSI moyen du lien Thread vers le routeur de bordure, lu par la C6 du banc Matter en MED (`parent_rssi`), médiane sur 3 min, en P0 ; ou directement en P1 si la C6 du banc peut y être posée | dBm | | `R_T` = ____ dBm, en ☐ P0 ☐ P1 (date du banc : ____) | en attente tant que le banc Matter n'est pas prêt |
+| 9 | `M` = ligne 8 − `A` + 104 (mesure en P0), ou ligne 8 + 104 (mesure directe en P1) | dB | | `M` = ____ dB | tableau ci-dessous |
+
+| Marge `M` | Décision | ☐ |
+|---|---|---|
+| plus de 20 dB | SuperMini violette gardée ; routeur Thread par défaut | ☐ |
+| de 10 à 20 dB | SuperMini gardée, en MED ; essai de 48 h du lien avant de figer le boîtier | ☐ |
+| moins de 10 dB, ou Wi-Fi perdu en P1 sans mesure Thread directe | carte à antenne déportée (par exemple XIAO ESP32-C6, u.FL) vers une partie non métallique ; M1 refaite avec elle | ☐ |
+
+À moins de 3 dB d'un seuil : série refaite ; si l'écart demeure, la branche la
+plus prudente.
+
+**Fin de séance, hotte toujours débranchée :**
+- [ ] sonde, batterie et sachet retirés du boîtier et comptés ;
+- [ ] couvercle fermé, filtre remis, sans rien pincer ;
+- [ ] étape 2b refaite si l'adaptateur est posé (tableau des nouveaux passages) ;
+- [ ] sonde remise sur le boîtier de mesure dans le même sens, si elle en venait.
+
+**Sortie :**
+- [ ] `A` et `M` notées ; carte décidée (tableau ci-dessus).
+
 ## Critères de sortie du sous-projet
 
 - [ ] 1. **Protocole documenté** dans `docs/PROTOCOL.md` : couche physique
@@ -650,7 +773,7 @@ Fichiers d'enregistrement des essais : ____.
   chaque action, qui détient l'état et qui pilote les voyants ; **validé par la
   capture croisée de l'étape 5b**.
 - [ ] 2. **Injection prouvée** : lumière, chaque vitesse, « marche » puis vitesse,
-  arrêt, 20 fois sur 20 chacune, et les voyants du panneau suivent (avec C : la
-  touche prototypée).
+  arrêt (vitesse active, arrêt du moteur confirmé, puis « marche »), 20 fois sur
+  20 chacune, et les voyants du panneau suivent (avec C : la touche prototypée).
 - [ ] 3. **Architecture du produit choisie** et argumentée ci-dessus, ou constat
   argumenté qu'aucune ne respecte la contrainte des voyants.

@@ -6,6 +6,9 @@ sur Thread, avec un ESP32-C6.
 **Statut :** conception validée section par section avec Majid les 24 et
 25/09/2026. Révision 2, après une relecture adverse (sécurité 230 V,
 électronique et firmware, cohérence avec le protocole compagnon). Spec à relire.
+Ajouts du 28/09, approuvés par Majid : étape −1b, scénarios 7b et 7c de
+l'étape 5, tests 5 et 6 de l'étape 6, séquence d'arrêt de l'étape 7, mesure
+M1 (§6).
 
 **Documents liés :**
 - [BRIEF-RECHERCHE.md](BRIEF-RECHERCHE.md) : faits, niveaux de preuve et 57 sources.
@@ -51,7 +54,10 @@ toucher au secteur**.
    contre analyseur FX2).
 2. **Injection prouvée.** On injecte la touche lumière, chaque vitesse, la
    séquence « marche puis vitesse », puis l'arrêt, **20 fois sur 20 chacune**,
-   et **les voyants du panneau suivent**. Avec C, le critère porte sur la touche
+   et **les voyants du panneau suivent**. **L'arrêt est une séquence de deux
+   touches** : la vitesse active, puis « marche » une fois l'arrêt du moteur
+   confirmé (étape 7). « Marche » moteur tournant lancerait la marche
+   prolongée au lieu d'éteindre. Avec C, le critère porte sur la touche
    prototypée.
 3. **Architecture du produit choisie** (A, B ou C, §4) et argumentée dans
    `docs/RECONNAISSANCE.md`. À défaut, un constat argumenté qu'aucune ne respecte
@@ -59,10 +65,12 @@ toucher au secteur**.
 
 **Hors périmètre :**
 - Matter ;
-- la carte et le boîtier définitifs ;
+- la carte et le boîtier définitifs : la mesure M1 (§6) prépare seulement le
+  choix de la carte ;
 - l'alimentation de l'ESP par la hotte ;
 - la lecture d'état annexe (`CN1`, `CN2`, IC3) : sous-projet 2 si besoin ;
-- l'arrêt différé : on observe seulement s'il existe nativement ;
+- l'arrêt différé : on observe seulement la marche prolongée native (étapes −1
+  et −1b) et ses trames (étape 5, scénario 7b) ;
 - la bibliothèque commune et l'app.
 
 ## 2. Décisions de cadrage
@@ -173,6 +181,9 @@ fiche à garder sous les yeux, avec les procédures des étapes 1, 2b et 3a.
      `recadrages/c4_bottom.jpg`) : la moitié gauche de la carte (primaire) et le
      transformateur, toute la bande du bas (relais, `VH2` à `VH6`, « LAMP »,
      `AC-POWER`), le condensateur moteur.
+   - Mesure M1 (§6) : on pose en plus, dans le quart haut-droit du boîtier, la
+     sonde dans son sachet et sa batterie. On ne touche à rien d'autre. Rien
+     n'appuie sur un composant, et rien n'entre dans une zone interdite.
 4. **Aucune connexion ne se pose ni ne se retire sous tension :** connecteur,
    pince, résistance, cavalier, sonde, câble USB.
 5. **Câble de l'adaptateur :**
@@ -228,6 +239,8 @@ fiche à garder sous les yeux, avec les procédures des étapes 1, 2b et 3a.
 13. **Pas de cuisson tant que la sonde et sa batterie sont en place.** Entre deux
     sessions, on les retire. L'adaptateur, gainé, avec `J1` fermé, peut rester en
     place.
+    - M1 : **on ne rebranche jamais la hotte avec la sonde ou sa batterie
+      dans le boîtier électronique.**
 
 **Une lecture qui ne prouve rien.** Entre le secondaire flottant et la terre, un
 multimètre de 10 MΩ peut afficher à vide jusqu'à une centaine de volts
@@ -267,6 +280,30 @@ Relever :
     des relais : il fixera la valeur de l'étape 7 (3 s par défaut).
 
 **Sortie :** le tableau des comportements est rempli dans `RECONNAISSANCE.md`.
+
+### Étape −1b : marche prolongée (ajout du 28/09)
+
+- **État de la hotte :** en usage normal, fermée. L'adaptateur peut être en
+  place, `J1` fermé.
+- **Outils :** un téléphone qui filme le panneau, avec le son ; un chronomètre.
+
+Elle complète les points 3 et 4 de l'étape −1. **Départ de chaque essai :**
+hotte éteinte, puis « marche », V2, et, 10 s après, « marche » moteur tournant :
+la marche prolongée commence (⏻ clignote). Relever :
+
+11. **Sa fin**, lampe allumée avant le départ, sans rien toucher : au bout de
+    combien de temps ? Quel état final (moteur, ⏻, voyant de vitesse, lampe) ?
+    Un bip ?
+12. **Une touche 5 s après le début de la prolongation**, une par essai : la
+    vitesse active (vue le 27/09 : retour à l'état armé), « marche », puis une
+    autre vitesse (V3).
+
+Entre deux essais, on ramène la hotte à l'état éteint : vitesse active, moteur
+arrêté, puis « marche ».
+
+**Sortie :** les transitions de la marche prolongée sont notées dans
+`RECONNAISSANCE.md`. L'automate du sous-projet 2 les reprend, et l'étape 5 en
+capture les trames (scénario 7b).
 
 ### Étape 0 : photos, inventaire et cheminements
 
@@ -467,14 +504,29 @@ Cette étape n'a lieu que si `+` ≈ 5 V. **Il n'y a aucun secteur** : la sonde 
   - `tools/hotte_udp.py enregistre` écrit un fichier par scénario (§9) ;
   - capture en mode `tout`.
 
-Scénarios, 10 s chacun, dans cet ordre :
+Scénarios, 10 s chacun sauf 7b et 7c, dans cet ordre :
 1. veille ;
 2. marche ;
 3. lumière allumée ;
 4. lumière éteinte ;
 5. vitesses 1, 2 et 3 ;
-6. arrêt ;
+6. arrêt : la vitesse active, puis « marche » une fois le moteur arrêté
+   (séquence de l'étape 7) ;
 7. chaque bip entendu ;
+
+Ajouts du 28/09, entre les scénarios 7 et 8 (détail et commandes :
+`RECONNAISSANCE.md`, étape 5, lignes 7b et 7c) :
+- **7b. Marche prolongée.** Son début (« marche » moteur tournant, en V2). Sa
+  fin, dans un enregistrement de **17 min** en mode `changements`, lampe
+  allumée, sans aucun appui : heure de la fin, état final, bip, ⏻, trame.
+  Puis, dans trois prolongations, une touche 5 s après leur début : la vitesse
+  active, « marche », une autre vitesse. Les effets attendus sont ceux de
+  l'étape −1b.
+- **7c. Repos sans appui, 60 s**, moteur en V2 et lampe allumée, puis hotte
+  armée. La carte répète-t-elle son état sur `D` ? C'est ce qui dira si un
+  module qui redémarre peut retrouver l'état de la hotte (test 5 de
+  l'étape 6).
+
 8. panneau déconnecté. On retire sa fiche de l'embase de l'adaptateur **hotte
    débranchée**, puis on rebranche la hotte : on voit ainsi si la carte émet
    seule.
@@ -526,6 +578,17 @@ débordement (§8.2).
    2. La carte répond-elle après chaque trame ? Avec quel délai ?
    3. Y a-t-il des silences plus longs qu'une trame, où l'on pourrait injecter ?
    4. La carte émet-elle son état ou un paquet de voyants ?
+   5. **Au repos, sans appui** (scénarios 7b et 7c de l'étape 5), la carte
+      répète-t-elle son état sur `D` ? Avec quelle période ? Si oui, un module
+      qui redémarre relit l'état de la hotte en une période ; sinon, `D` ne le
+      lui rend pas.
+   6. **La fin de la marche prolongée** (scénario 7b) laisse-t-elle une trame
+      sur `D` ? Sinon, le module du produit la verra à la répétition suivante
+      de l'état (test 5), ou, sans répétition, par la lecture d'état annexe
+      (arrêt du moteur).
+
+   Les tests 5 et 6 ne changent pas la règle de choix du §4 : ils servent au
+   sous-projet 2.
 4. Appliquer la règle de choix du §4, **en croisant avec le résultat de l'étape 4**.
 
 **Sortie :**
@@ -537,6 +600,9 @@ débordement (§8.2).
   - la durée basse maximale par impulsion et la durée totale maximale par trame ;
   - le silence minimal avant d'émettre, et l'attente maximale ;
   - le délai minimal entre deux changements d'état du moteur (étape −1) ;
+  - pour la séquence d'arrêt de l'étape 7 : le signe qui confirme l'arrêt du
+    moteur avant « marche » (trame d'état de la carte, ou constat de Majid),
+    et l'attente maximale de ce signe ;
   - pour B, le mode relais ; pour C, le prototype PhotoMOS ;
 - **l'avenant est relu par Majid avant l'étape 7.**
 
@@ -559,7 +625,20 @@ batterie.
         voyant changer**, et retrouver la trame sur le bus ;
      2. chaque vitesse ;
      3. la séquence « marche » puis une vitesse ;
-     4. l'arrêt.
+     4. l'arrêt, depuis une vitesse (V1, V2 et V3 à tour de rôle) :
+        1. injecter la vitesse active : le moteur s'arrête, ⏻ reste fixe
+           (état armé, étape −1, ligne 4) ;
+        2. attendre la **confirmation de l'arrêt du moteur**, par le signe que
+           fixe l'avenant : la trame d'état de la carte si elle en émet,
+           sinon le constat de Majid (voyant de vitesse éteint, ⏻ fixe,
+           moteur silencieux). On attend aussi au moins le délai minimal ;
+        3. injecter « marche » : tout s'éteint, ⏻ compris. La lampe ne change
+           pas.
+
+        **Jamais « marche » avant la confirmation** : moteur tournant, elle
+        lance la marche prolongée (⏻ clignote). Sans confirmation dans
+        l'attente maximale de l'avenant, « marche » ne part pas et l'essai
+        est un échec.
      
      Le firmware impose le délai minimal entre deux changements d'état du
      moteur, et refuse sinon.
@@ -576,6 +655,86 @@ batterie.
   3. Mode relais transparent : le panneau doit marcher à travers la sonde.
   4. Puis mêmes injections et même critère.
 - **Si le choix est C :** on suit l'avenant (prototype PhotoMOS sur une touche).
+
+### Mesure M1 pour le produit : radio comparative, hotte débranchée (ajout du 28/09)
+
+Elle prépare le sous-projet 2 : elle décide de la carte et de son antenne.
+**Elle ne conditionne aucune étape de la reconnaissance.** On peut la faire à
+tout moment, mais avant le dessin du boîtier et avant tout achat de carte.
+Journal : `RECONNAISSANCE.md`, « Mesure M1 ».
+
+- **État de la hotte :** **débranchée pendant toute la séance**, fiche à vue.
+  On attend 5 min avant d'ouvrir le boîtier (règle 1).
+- **Matériel :**
+  - la sonde, du modèle prévu pour le produit (SuperMini violette, antenne
+    céramique ; sinon, on note le modèle). Elle est seule, hors du boîtier de
+    mesure, en Wi-Fi, sur sa batterie vérifiée (§12) ;
+  - un sachet plastique **non métallisé** (un sachet antistatique métallisé
+    ferait écran) ;
+  - un support isolant (un carton) ;
+  - le Mac, qui enregistre par le Wi-Fi.
+- **Principe :** on relève le RSSI Wi-Fi de la sonde, pour le même point
+  d'accès, juste sous la hotte, puis dans le boîtier électronique. L'écart est
+  l'atténuation de la hotte à 2,4 GHz, la bande de Thread.
+
+Positions, 3 min chacune, avec le RSSI publié toutes les 10 s
+(`json reseau 10000`) :
+1. **P0** : sous la hotte, sur le support isolant posé sur la plaque éteinte et
+   froide. La sonde est à environ 10 cm sous le filtre, à l'aplomb du boîtier
+   électronique ;
+2. **P1a et P1b** : dans le boîtier électronique, à l'emplacement prévu du
+   module (quart haut-droit), l'antenne dans deux orientations. Couvercle
+   fermé, filtre remis ;
+3. **P0 de nouveau.** Plus de 3 dB d'écart avec le premier P0 : la série est
+   à refaire (quelqu'un a bougé, ou le point d'accès a changé de canal).
+
+**Règles propres à M1 :**
+- dans le boîtier, la sonde reste dans son sachet : ni sa coque USB-C ni ses
+  broches ne touchent quoi que ce soit. Elle et sa batterie n'appuient sur
+  aucun composant et n'entrent pas dans les zones interdites (règle 3). Le
+  couvercle se ferme sans forcer ; sinon, on ne force pas, et M1 est à revoir ;
+- **aucun câble ne sort du boîtier** : il guiderait l'onde vers l'extérieur, et
+  la mesure serait trop optimiste ;
+- **on ne rebranche jamais la hotte avec la sonde ou sa batterie dans le
+  boîtier** (règle 13). À la fin, on retire et on compte la sonde, la batterie
+  et le sachet, on ferme le couvercle et on remet le filtre. Puis on refait
+  l'étape 2b si l'adaptateur est posé (règle 7).
+
+**Calcul :**
+- **atténuation** `A` = médiane en P0 − meilleure médiane en P1. Le boîtier
+  imprimé reproduira l'orientation retenue. Si la sonde perd le Wi-Fi en P1,
+  `A` ne se mesure pas ainsi : c'est la mesure Thread directe en P1 (point
+  suivant) qui décide. Sans elle, on retient la branche « moins de 10 dB » ;
+- **marge Thread estimée** `M = R_T − A + 104`, en dB :
+  - `R_T` est le RSSI moyen du lien Thread vers le routeur de bordure, en P0.
+    Il est lu par la C6 du banc Matter du sous-projet 2 (`parent_rssi`, comme
+    dans benq ; la C6 est en MED pendant la mesure) ;
+  - −104 dBm est la sensibilité du C6 en 802.15.4 (fiche Espressif, 1 % de
+    trames perdues) ;
+- **si la C6 du banc Matter peut être posée elle-même en P1** (sur batterie, en
+  MED comme en P0, ses diagnostics radio lus par le canal compagnon),
+  `M = R_T(P1) + 104`, mesurée directement. Cette mesure fait foi, et `A` sert
+  alors de contrôle.
+
+| Marge `M` | Décision |
+|---|---|
+| plus de 20 dB | SuperMini violette gardée ; routeur Thread par défaut |
+| de 10 à 20 dB | SuperMini gardée, en MED ; essai de 48 h du lien avant de figer le boîtier |
+| moins de 10 dB | carte à antenne déportée (par exemple XIAO ESP32-C6, u.FL) vers une partie non métallique ; M1 refaite avec elle |
+
+À moins de 3 dB d'un seuil, on refait la série. Si l'écart demeure, on retient
+la branche la plus prudente.
+
+**Limites.**
+- Le point d'accès Wi-Fi n'est pas le routeur de bordure, et la direction
+  diffère. Or l'atténuation d'une caisse d'acier dépend de la direction, à
+  cause de ses ouvertures. C'est pourquoi `R_T` vient d'une mesure Thread.
+- `M` est la marge dans le sens routeur vers module. Si le produit réduit sa
+  puissance d'émission (alimentation par `CN3 +`), la marge dans l'autre sens
+  baisse d'autant. On en tient compte au plan du matériel.
+- La qualité de lien que rapporte OpenThread n'est pas une marge : sur le C6,
+  elle est calculée contre une sensibilité fixe de −120 dBm, et non contre les
+  −104 dBm de la fiche (spec du produit, §6.1). Seul `M` décide.
 
 ## 7. Matériel d'interface
 
@@ -1039,6 +1198,10 @@ pour le banc.
 | câble de sortie abîmé ou pincé | règle 5, et contrôle 2b après chaque ouverture |
 | anomalie pendant une étape sous tension | règle 12 : on débranche, et on ne rebranche qu'après avoir compris |
 | garantie | l'adaptateur est réversible ; la hotte redevient d'origine sans trace |
+| « marche » injectée moteur tournant : marche prolongée au lieu de l'arrêt | séquence d'arrêt de l'étape 7 : « marche » seulement après la confirmation de l'arrêt du moteur |
+| la fin de la marche prolongée ne laisse aucune trame, ou la carte ne répète pas son état au repos | tests 5 et 6 de l'étape 6 ; au sous-projet 2 : lecture d'état annexe si besoin, jamais de minuterie qui devine la fin (spec du produit, §5.9) |
+| objet oublié dans le boîtier électronique après M1 | inventaire compté avant de refermer ; case de la fiche avant chaque mise sous tension |
+| Wi-Fi perdu dans le boîtier pendant M1 | mesure Thread directe en P1 par la C6 du banc Matter ; sans elle, branche « moins de 10 dB » |
 
 ## 14. Et après
 
@@ -1049,4 +1212,7 @@ reprend avec le brainstorming, à partir de :
   démarrage) ;
 - l'essai d'alimentation par `CN3 +` ;
 - le choix de la carte C6 ;
-- la lecture d'état annexe, si le retour d'état l'exige.
+- la lecture d'état annexe, si le retour d'état l'exige ;
+- les transitions et les trames de la marche prolongée (étapes −1b et 5), et
+  l'état répété au repos (tests 5 et 6 de l'étape 6) ;
+- la mesure M1 (carte et antenne).

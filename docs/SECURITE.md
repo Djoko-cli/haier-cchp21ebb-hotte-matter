@@ -33,6 +33,9 @@ anomalies : [RECONNAISSANCE.md](RECONNAISSANCE.md).
      [photos/6.jpg](photos/6.jpg), [recadrages/c4_bottom.jpg](photos/recadrages/c4_bottom.jpg)) :
      la moitié gauche de la carte (primaire) et le transformateur ; toute la bande
      du bas (relais, `VH2` à `VH6`, « LAMP », `AC-POWER`) ; le condensateur moteur.
+   - Mesure M1 (spec §6) : on pose en plus, dans le quart haut-droit, la sonde
+     dans son sachet et sa batterie. Rien d'autre n'est touché. Rien n'appuie
+     sur un composant, et rien n'entre dans une zone interdite.
 4. **Aucune connexion ne se pose ni ne se retire sous tension :** connecteur,
    pince, résistance, cavalier, sonde, câble USB.
 5. **Câble de l'adaptateur :**
@@ -84,6 +87,8 @@ anomalies : [RECONNAISSANCE.md](RECONNAISSANCE.md).
 13. **Pas de cuisson tant que la sonde et sa batterie sont en place.** On les
     retire entre deux sessions. L'adaptateur, gainé, avec `J1` fermé, peut rester
     en place.
+    - M1 : **jamais la hotte branchée avec la sonde ou sa batterie dans le
+      boîtier électronique.**
 
 > **Une lecture qui ne prouve rien.** Entre le secondaire flottant et la terre,
 > un multimètre de 10 MΩ peut afficher à vide jusqu'à une centaine de volts
@@ -109,6 +114,8 @@ anomalies : [RECONNAISSANCE.md](RECONNAISSANCE.md).
 - [ ] Mac ou analyseur relié : Mac sur batterie, sans aucun autre câble, sur une
       surface isolante (règle 8).
 - [ ] Étape 7 : Majid devant la hotte, à portée de la fiche (règle 11).
+- [ ] Après M1 : rien d'oublié dans le boîtier électronique (ni sonde, ni
+      batterie, ni sachet).
 
 ## Banc de validation : aucune liaison avec la hotte
 

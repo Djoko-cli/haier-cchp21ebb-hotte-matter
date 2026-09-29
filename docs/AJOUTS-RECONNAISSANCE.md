@@ -1,12 +1,16 @@
 # Ajouts à la reconnaissance (a) à (d) et correction F1, prêts à insérer
 
+**Versé le 29/09/2026** dans SPEC-RECONNAISSANCE.md, RECONNAISSANCE.md et
+SECURITE.md : ce sont eux qui font foi désormais. F1 était déjà appliqué dans
+WIRING.md ; D4 est retiré par l'amendement.
+
 28/09/2026, revu le 28/09 au soir. Ajouts approuvés par Majid : (a) marche
 prolongée, (b) arrêt de l'étape 7, (c) repos de 60 s, (d) mesure sans risque.
 **L'amendement de Majid du 28/09 au soir réduit (d) à la mesure radio
 comparative M1** : le relevé de température en cuisson (l'ancienne M2) et
 l'achat du thermomètre sont retirés. S'y ajoute une correction factuelle liée,
 confirmée par Majid le 29/09 : le repérage de la SuperMini violette dans WIRING.md
-(F1). Aucun fichier du dépôt n'a été modifié.
+(F1).
 
 ## 0. Mode d'emploi
 
