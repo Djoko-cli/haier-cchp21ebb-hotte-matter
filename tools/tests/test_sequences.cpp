@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "banc_hotte.h"
+#include "hotte_map.h"
 #include "verif.h"
 
 using namespace hotte;
@@ -557,6 +558,39 @@ static void testProlongee() {
   }
 }
 
+// Ecritures d'EP1 plus espacees que le calme (un ordre chacune), alternant
+// V1 et V3 pendant 8 s : au plus un changement du moteur par delai_moteur_ms,
+// et la hotte finit sur la derniere ecriture.
+static void testRegroupementMoteur() {
+  BancHotte b(ModeEtat::Repete);
+  b.demarrer();
+  b.mener(Marche::Armee, Moteur::Arret);
+  RegroupementEp1 g;
+  const Params &pa = b.a.params();
+  std::vector<uint32_t> changements;
+  Moteur avant = b.p.hotte().moteur;
+  const uint32_t t0 = b.t;
+  uint8_t dernier = 0;
+  while (b.t - t0 < 20000) {
+    const uint32_t e = b.t - t0;
+    if (e < 8000 && e % 1000 == 0) {
+      dernier = e / 1000 % 2 ? 100 : 20;
+      g.ecrirePourcent(dernier, b.t);
+    }
+    CibleVentilo c;
+    if (g.pret(b.t, pa.lissageCalmeMs, pa.lissagePlafondMs, &c)) b.a.ordreVentilo(c, 0, Canal::Matter, b.t);
+    b.pas(10);
+    if (b.p.hotte().moteur != avant) {
+      changements.push_back(b.t);
+      avant = b.p.hotte().moteur;
+    }
+  }
+  VERIF(changements.size() >= 2);
+  for (size_t i = 1; i < changements.size(); i++) VERIF(changements[i] - changements[i - 1] >= pa.delaiMoteurMs);
+  VERIF(b.p.hotte().moteur == palier(dernier));
+  VERIF(b.violations == 0 && b.refusPilote == 0);
+}
+
 int main() {
   testMatrice();
   testCasImposes();
@@ -568,5 +602,6 @@ int main() {
   testSondeVitesse();
   testDemarrage();
   testProlongee();
+  testRegroupementMoteur();
   return bilan("test_sequences");
 }
