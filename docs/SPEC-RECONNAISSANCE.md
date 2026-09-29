@@ -691,7 +691,7 @@ que le pull-up de son côté.** L'avenant de l'étape 6 fixe donc :
 | injection, voie 1 | 7 | sortie à l'état bas dès la première instruction de `setup()` |
 | voie 2 (B) | 0 (écoute) et 1 (émission) | |
 | générateur du banc (§10) | 7, sur le second C6 | |
-| **à éviter** | 4, 5, 8 (WS2812), 9 (BOOT) et 15 (broches de démarrage du C6) ; 12 et 13 (USB) ; 16 et 17 (UART0 : journal de la ROM) ; 21 et 22 (trous intérieurs inaccessibles) | GPIO2 reste libre |
+| **à éviter** | 4, 5, 8 (WS2812), 9 (BOOT) et 15 (broches de démarrage du C6) ; 12 et 13 (USB) ; 16 et 17 (UART0 : journal de la ROM) ; 21, 22 et 23 (trous intérieurs) | GPIO2 reste libre |
 
 ### 7.6 Sonde dans le boîtier de mesure
 
