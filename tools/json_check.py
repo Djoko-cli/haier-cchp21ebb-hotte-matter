@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copie de benq-screenbar-halo-matter@c58a506 : tools/json_check.py (adapte : schemas du profil hotte, option --jsonl, continuite par source, taux de perte)
-"""Verifie des lignes machine de la sonde contre docs/PROTOCOLE-JSON.md (v1, profil hotte).
+"""Verifie des lignes machine de la sonde (docs/PROTOCOLE-JSON.md) ou du module
+produit (docs/PROTOCOLE-JSON-PRODUIT.md, option --profil produit) : v1, profil hotte.
 
 Entree :
   - une capture brute du port serie (octets tels quels : texte humain, logs,
@@ -30,6 +31,7 @@ Usage :
   python3 tools/json_check.py capture.log [autre.log ...]
   python3 tools/json_check.py --jsonl logs/2026-09-27-1403-krona.jsonl
   python3 tools/json_check.py --exemples docs/PROTOCOLE-JSON.md
+  python3 tools/json_check.py --profil produit --exemples docs/PROTOCOLE-JSON-PRODUIT.md
   options : --strict (avertissements comptes comme erreurs), -q (resume seul),
             --independantes (lignes sans suite : pas de controle de n)
 
@@ -337,8 +339,229 @@ SCHEMAS = {
     ),
 }
 
+# ---------------------------------------------------------------------------
+#  Profil du produit (sous-projet 2 : docs/PROTOCOLE-JSON-PRODUIT.md)
+# ---------------------------------------------------------------------------
+
+# Bornes des reglages de l'automate et de la surveillance (kChamps de
+# src/produit/hotte_etat.cpp et src/produit/surveillance.cpp ; test_json_check_produit le verifie).
+AUTOMATE_BORNES = {
+    "delai_moteur_ms": (1000, 60000),
+    "entre_appuis_ms": (100, 5000),
+    "confirmation_ms": (200, 5000),
+    "fraicheur_ms": (200, 120000),
+    "lissage_calme_ms": (300, 2000),
+    "lissage_plafond_ms": (1000, 10000),
+    "ordre_calme_ms": (50, 1000),
+    "sequence_max_ms": (5000, 60000),
+    "attente_etat_ms": (1000, 60000),
+    "prolongee_max_ms": (900000, 3600000),
+    "ignore_demarrage_ms": (0, 10000),
+    "sonde_vitesse": (0, 1),
+}
+SURVEILLANCE_BORNES = {
+    "temp_alerte_c": (20, 85),
+    "temp_hyst_c": (1, 10),
+    "alim_hotte_min_mv": (3000, 6000),
+    "alim_module_min_mv": (3000, 5000),
+    "alim_hyst_mv": (20, 500),
+    "alim_alertes": (0, 1),
+}
+MARCHE = Enum("eteinte", "armee", "prolongee", "inconnue")
+MOTEUR = Int(0, 3)
+CONFIANCE = Enum("confirme", "deduit", "presume", "inconnu")
+SOURCE = Enum("fil", "annexe", "deduit", "nvs")
+MODE_ETAT = Enum("repete", "changements", "appuis")
+CANAL = Enum("app", "matter")
+TEMP = Int(-40, 150)
+CAUSES_ECHEC = {"non_confirme", "sans_lecture", "collision", "garde", "pilote"}
+CAUSES_ABANDON = {"sans_lecture", "pilote", "duree"}
+ETAT_COURT = Obj({"marche": MARCHE, "moteur": MOTEUR, "lampe": Null(BOOL)})
+VOIE = Null(Obj({"mv": U32, "min_s_mv": U32, "min_mv": U32, "alerte": BOOL}))
+
+
+def _bloc(**champs):
+    return Obj(dict({"boot": BOOT, "up_s": U32}, **champs))
+
+
+SCHEMAS_PRODUIT = {
+    ("hello", "base"): Obj(
+        dict(
+            SCHEMAS[("hello", "base")].fields,
+            build=Enum("produit"),
+            reseau_build=Enum("thread"),
+        )
+    ),
+    ("hello", "identite"): Obj(
+        {
+            "boot": BOOT,
+            "mac": Null(Hex(6)),
+            "id": SCHEMAS[("hello", "identite")].fields["id"],
+            "appareil": Enum("hotte"),
+            "caps": Arr(Enum("hotte", "matter", "udp", "cle", "log", "trames_d", "alim", "thermique", "essai", "simule")),
+            "thermique": Obj({"temp_max_pose_c": Null(TEMP)}),
+        }
+    ),
+    ("config", None): Obj(
+        {
+            "automate": Obj({k: U32 for k in AUTOMATE_BORNES}),
+            "surveillance": Obj({k: U32 for k in SURVEILLANCE_BORNES}),
+            "ligne": Obj({"pilote": Enum("simule", "A", "B", "C"), "mode": MODE_ETAT, "annexe": BOOL}),
+            "simu": Null(
+                Obj(
+                    {
+                        "latence_ms": Int(0, 5000),
+                        "periode_ms": Int(100, 60000),
+                        "trame_ms": Int(10, 1000),
+                        "annexe_ms": Int(50, 5000),
+                        "prolongee_ms": Int(60000, 3600000),
+                        "fin": Enum("eteinte", "armee"),
+                        "inconnues": Enum("rien", "direct"),
+                        "refuse": BOOL,
+                        "hors_service": BOOL,
+                    }
+                )
+            ),
+        }
+    ),
+    ("etat", "hotte"): _bloc(
+        marche=MARCHE, moteur=MOTEUR, lampe=Null(BOOL), confiance=CONFIANCE, source=SOURCE, age_ms=Null(U32)
+    ),
+    ("etat", "automate"): _bloc(
+        mode=MODE_ETAT,
+        annexe=BOOL,
+        pilote=BOOL,
+        ventilo=Null(Obj({"cible": Enum("eteint", "v1", "v2", "v3"), "origine": CANAL})),
+        lampe=Null(Obj({"cible": BOOL, "origine": CANAL})),
+        appui=Null(Obj({"touche": Enum("marche", "lumiere", "v1", "v2", "v3"), "essai": Int(0, 1), "depuis_ms": U32})),
+        delai_moteur_ms=U32,
+        marche_autorisee=BOOL,
+    ),
+    ("etat", "matter"): _bloc(
+        demarre=BOOL,
+        mis_en_service=BOOL,
+        fabriques=U8,
+        abonnements=U32,
+        ignore_ms=U32,
+        maxint_s=Int(0, 3600),
+        role_demarrage=Enum("routeur", "med"),
+        tx_dbm=Null(Int(-128, 127)),
+        derniere=BOOL,
+        ecritures=U32,
+        reflets=U32,
+        verrou_occupe=U32,
+        ignores=U32,
+    ),
+    ("etat", "thermique"): _bloc(
+        temp_c=Null(TEMP),
+        temp_max_c=Null(TEMP),
+        temp_max_pose_c=Null(TEMP),
+        alerte=BOOL,
+        alertes=U32,
+        lectures_ratees=U32,
+        seuil_c=Int(20, 85),
+    ),
+    ("etat", "alim"): _bloc(hotte=VOIE, module=VOIE, alertes_actives=BOOL),
+    ("etat", "sys"): SCHEMAS[("etat", "sys")],
+    ("compteurs", "hotte"): Obj(
+        {
+            "appuis_panneau": U32,
+            "appuis_module": U32,
+            "reussies": U32,
+            "annulees": U32,
+            "remplacees": U32,
+            "abandons": U32,
+            "echecs": counters("non_confirme", "sans_lecture", "collision", "garde", "pilote", "duree"),
+            "nouveaux_essais": U32,
+            "transitions_inconnues": U32,
+            "anomalies": U32,
+            "marche_inconnue": U32,
+            "prolongee_perimee": U32,
+            "lignes_muettes": U32,
+            "actions_perdues": U32,
+        }
+    ),
+    ("compteurs", "alim"): counters("hotte_passages", "module_passages"),
+    ("compteurs", "radio"): Obj(
+        {
+            "role": Null(Enum("disabled", "detached", "child", "router", "leader")),
+            "tx_dbm": Opt(Null(Int(-128, 127))),
+            "sensibilite_dbm": Opt(Int(-128, 0)),
+            "lien": Opt(
+                Null(
+                    Obj(
+                        {
+                            "avec": Enum("parent", "routeur"),
+                            "rssi_moyen_dbm": Int(-128, 0),
+                            "lq_in": Int(0, 3),
+                            "lq_out": Int(0, 3),
+                        }
+                    )
+                )
+            ),
+            "tx_total": Opt(U32),
+            "tx_retry": Opt(U32),
+            "tx_echecs": Opt(U32),
+            "changements_parent": Opt(U32),
+            "changements_role": Opt(U32),
+        }
+    ),
+    ("hb", None): SCHEMAS[("hb", None)],
+    ("fin", None): SCHEMAS[("fin", None)],
+    ("reponse", None): Obj(dict(SCHEMAS[("reponse", None)].fields, suite=Opt(Enum("sequence")))),
+    ("log", None): Obj(
+        {
+            "src": Enum("produit", "matter", "hotte", "reseau", "simu"),
+            "niv": Enum("notice", "trace"),
+            "txt": Str(191),
+            "sautes": Opt(U32),
+        }
+    ),
+    # Transport UDP sur Thread : schema du bloc ip de la ScreenBar, plus rafale_tx.
+    ("reseau", "ip"): Obj(
+        {
+            "frais_ms": Null(U32),
+            "srp": Obj({"nom": Null(Str(63))}),
+            "adresses": Arr(Obj({"adr": Str(45), "type": Enum("omr", "ml_eid", "autre"), "pref": BOOL}), 4),
+            "udp": Obj(dict(SCHEMAS[("reseau", "ip")].fields["udp"].fields, rafale_tx=U32)),
+        }
+    ),
+    ("hotte", None): Obj({"avant": ETAT_COURT, "apres": ETAT_COURT, "origine": Enum("panneau", "module", "inconnue"),
+                          "source": SOURCE, "confiance": CONFIANCE}),
+    ("sequence", None): Obj(
+        {
+            "id": Null(Int(1, 999999999)),
+            "origine": CANAL,
+            "sujet": Enum("ventilo", "lampe"),
+            "issue": Enum("ok", "annulee", "echec", "abandon", "remplacee"),
+            "cause": Null(Enum(*(CAUSES_ECHEC | CAUSES_ABANDON))),
+            "duree_ms": U32,
+            "appuis": U8,
+        }
+    ),
+    ("alerte", None): Obj(
+        {
+            "sujet": Enum("temperature", "lecture_temperature", "alim_hotte", "alim_module"),
+            "etape": Enum("debut", "fin"),
+            "valeur": Null(Int(-40, 100000)),
+            "seuil": Null(Int(-40, 100000)),
+            "unite": Enum("c", "mv"),
+        }
+    ),
+    ("trame_d", None): Obj(
+        {
+            "t_ms": U32,
+            "origine": Enum("carte", "panneau", "module"),
+            "sens": Enum("vers_panneau", "vers_carte"),
+            "octets": Hex(1, 8),
+            "sautes": Opt(U32),
+        }
+    ),
+}
+PROFILS = {"sonde": SCHEMAS, "produit": SCHEMAS_PRODUIT}
+
 BLOCKED = {"hello", "etat", "compteurs", "reseau"}
-BLOCS = {t: {b for (tt, b) in SCHEMAS if tt == t} for t in BLOCKED}
+BLOCS = {p: {t: {b for (tt, b) in s if tt == t} for t in BLOCKED} for p, s in PROFILS.items()}
 
 # ---------------------------------------------------------------------------
 #  Verification
@@ -418,8 +641,11 @@ def find_floats(value, path, errs):
             find_floats(v, f"{path}[{i}]", errs)
 
 
-def coherence(t, obj, errs, warns):
+def coherence(t, obj, errs, warns, profil="sonde"):
     """Regles qui lient plusieurs champs."""
+    if profil == "produit":
+        coherence_produit(t, obj, errs, warns)
+        return
     if t == "reponse":
         code, ok, etape = obj.get("code"), obj.get("ok"), obj.get("etape")
         if code in OK_CODES and ok is not True:
@@ -481,7 +707,58 @@ def coherence(t, obj, errs, warns):
             warns.append(f"hello : fw {obj.get('fw')!r} different de fw_desc {obj.get('fw_desc')!r}")
 
 
-def check_line(raw):
+def coherence_produit(t, obj, errs, warns):
+    """Regles du profil du produit qui lient plusieurs champs."""
+    if t == "reponse":
+        code, ok, etape = obj.get("code"), obj.get("ok"), obj.get("etape")
+        if code in OK_CODES and ok is not True:
+            errs.append(f"reponse : code {code} avec ok {ok}")
+        if code in KO_CODES and ok is not False:
+            errs.append(f"reponse : code {code} avec ok {ok}")
+        if etape == "debut" and code != "en_cours":
+            errs.append(f"reponse : etape debut avec code {code}")
+        if etape == "fin" and "duree_ms" not in obj:
+            errs.append("reponse : etape fin sans duree_ms")
+        if (code == "accepte") != (obj.get("suite") == "sequence"):
+            errs.append(f"reponse : code {code} et suite {obj.get('suite')} (accepte va avec suite sequence)")
+        if ("bail_s" in obj) != ("up_s" in obj):
+            errs.append("reponse : bail_s et up_s vont ensemble")
+    elif t == "config":
+        for nom, bornes in (("automate", AUTOMATE_BORNES), ("surveillance", SURVEILLANCE_BORNES)):
+            bloc = obj.get(nom)
+            if not isinstance(bloc, dict):
+                continue
+            for k, (lo, hi) in bornes.items():
+                v = bloc.get(k)
+                if isinstance(v, int) and not isinstance(v, bool) and not lo <= v <= hi:
+                    errs.append(f"config : {nom}.{k} {v} hors bornes ({lo}..{hi})")
+        a = obj.get("automate")
+        if isinstance(a, dict) and isinstance(a.get("lissage_calme_ms"), int) and isinstance(a.get("lissage_plafond_ms"), int):
+            if a["lissage_calme_ms"] > a["lissage_plafond_ms"]:
+                errs.append("config : automate.lissage_calme_ms au-dela de lissage_plafond_ms")
+    elif t == "sequence":
+        issue, cause = obj.get("issue"), obj.get("cause")
+        if issue in ("ok", "annulee", "remplacee") and cause is not None:
+            errs.append(f"sequence : issue {issue} avec cause {cause}")
+        if issue == "echec" and cause not in CAUSES_ECHEC:
+            errs.append(f"sequence : echec avec cause {cause}")
+        if issue == "abandon" and cause not in CAUSES_ABANDON:
+            errs.append(f"sequence : abandon avec cause {cause}")
+    elif t == "alerte":
+        sujet, unite = obj.get("sujet"), obj.get("unite")
+        attendue = "c" if sujet in ("temperature", "lecture_temperature") else "mv"
+        if unite != attendue:
+            errs.append(f"alerte : {sujet} en {unite}, attendu {attendue}")
+    elif t == "trame_d":
+        o, sens = obj.get("origine"), obj.get("sens")
+        if (o == "carte") != (sens == "vers_panneau"):
+            errs.append(f"trame_d : origine {o} et sens {sens}")
+    elif t == "hello" and obj.get("bloc") == "base":
+        if obj.get("fw") != obj.get("fw_desc"):
+            warns.append(f"hello : fw {obj.get('fw')!r} different de fw_desc {obj.get('fw_desc')!r}")
+
+
+def check_line(raw, profil="sonde"):
     """raw : octets de RS (compris) a LF (exclu). Rend (objet ou None, erreurs, avertissements)."""
     errs, warns = [], []
     size = len(raw) + 1  # LF compris
@@ -531,21 +808,22 @@ def check_line(raw):
         return obj, errs, warns
     find_floats(obj, t, errs)
     bloc = obj.get("bloc")
+    blocs = BLOCS[profil]
     if t in BLOCKED:
         if len(keys) < 5 or keys[4] != "bloc":
             errs.append(f"{t} : bloc attendu en 5e champ")
-        if bloc not in BLOCS[t]:
-            errs.append(f"{t} : bloc {bloc!r} inconnu (attendu : {', '.join(sorted(BLOCS[t]))})")
+        if bloc not in blocs[t]:
+            errs.append(f"{t} : bloc {bloc!r} inconnu (attendu : {', '.join(sorted(blocs[t]))})")
             return obj, errs, warns
     elif "bloc" in obj:
         errs.append(f"{t} : pas de bloc pour ce type")
-    schema = SCHEMAS.get((t, bloc if t in BLOCKED else None))
+    schema = PROFILS[profil].get((t, bloc if t in BLOCKED else None))
     if schema is None:
         warns.append(f"type inconnu de la v1 : {t!r} (ignore par l'app)")
         return obj, errs, warns
     content = {k: v for k, v in obj.items() if k not in ("v", "t", "n", "ms", "bloc")}
     check(schema, content, f"{t}" + (f"/{bloc}" if bloc else ""), errs, warns)
-    coherence(t, obj, errs, warns)
+    coherence(t, obj, errs, warns, profil)
     return obj, errs, warns
 
 
@@ -605,8 +883,8 @@ def jsonl_record(line):
 
 
 class Report:
-    def __init__(self, strict, quiet, continuity=True):
-        self.strict, self.quiet, self.continuity = strict, quiet, continuity
+    def __init__(self, strict, quiet, continuity=True, profil="sonde"):
+        self.strict, self.quiet, self.continuity, self.profil = strict, quiet, continuity, profil
         self.lines = self.errors = self.warnings = self.text = self.broken = self.fragments = 0
         self.by_type = {}
         self.worst = (0, None)
@@ -632,7 +910,7 @@ class Report:
             self.after_broken = False
             return
         machine = line[i:]
-        obj, errs, warns = check_line(machine)
+        obj, errs, warns = check_line(machine, self.profil)
         self.lines += 1
         size = len(machine) + 1
         if size > self.worst[0]:
@@ -683,7 +961,7 @@ class Report:
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Verifie les lignes machine de la sonde (docs/PROTOCOLE-JSON.md).")
+    ap = argparse.ArgumentParser(description="Verifie les lignes machine de la sonde ou du produit (profil hotte).")
     ap.add_argument("captures", nargs="*", help="captures brutes du port serie, ou fichiers .jsonl")
     ap.add_argument("--exemples", metavar="MD", help="verifier les exemples <RS>{...} d'un document")
     ap.add_argument("--jsonl", action="store_true", help="captures au format .jsonl (implicite pour l'extension .jsonl)")
@@ -692,10 +970,12 @@ def main(argv=None):
     ap.add_argument(
         "--independantes", action="store_true", help="lignes independantes (exemples, tests) : pas de controle de n"
     )
+    ap.add_argument("--profil", choices=sorted(PROFILS), default="sonde",
+                    help="sonde (docs/PROTOCOLE-JSON.md, defaut) ou produit (docs/PROTOCOLE-JSON-PRODUIT.md)")
     args = ap.parse_args(argv)
     if not args.captures and not args.exemples:
         ap.error("donner au moins une capture, ou --exemples")
-    rep = Report(args.strict, args.quiet, not args.independantes)
+    rep = Report(args.strict, args.quiet, not args.independantes, args.profil)
     try:
         if args.exemples:
             continuity, rep.continuity = rep.continuity, False  # exemples independants
