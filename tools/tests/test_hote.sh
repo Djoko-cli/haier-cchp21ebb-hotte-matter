@@ -32,4 +32,6 @@ $CXXP src/produit/hotte_etat.cpp src/produit/hotte_map.cpp src/produit/pilote_si
 "$OUT/test_sequences"
 $CXXP src/produit/hotte_etat.cpp src/produit/hotte_map.cpp tools/tests/test_hotte_map.cpp -o "$OUT/test_hotte_map"
 "$OUT/test_hotte_map"
+$CXXP src/produit/surveillance.cpp tools/tests/test_surveillance.cpp -o "$OUT/test_surveillance"
+"$OUT/test_surveillance"
 echo "tests hote : OK"
