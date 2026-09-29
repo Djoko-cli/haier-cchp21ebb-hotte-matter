@@ -36,4 +36,7 @@ $CXXP src/produit/surveillance.cpp tools/tests/test_surveillance.cpp -o "$OUT/te
 "$OUT/test_surveillance"
 $CXXP src/produit/hotte_etat.cpp src/produit/surveillance.cpp src/produit/json_out_produit.cpp tools/tests/test_json_produit.cpp -o "$OUT/test_json_produit"
 "$OUT/test_json_produit" "$OUT/test_json_produit_lignes.txt"
+# Lignes realistes du produit et exemples de son protocole : conformes au profil produit.
+python3 tools/json_check.py --profil produit --strict --independantes -q "$OUT/test_json_produit_lignes.txt"
+python3 tools/json_check.py --profil produit --strict -q --exemples docs/PROTOCOLE-JSON-PRODUIT.md
 echo "tests hote : OK"
