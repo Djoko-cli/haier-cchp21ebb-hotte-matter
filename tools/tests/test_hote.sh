@@ -26,4 +26,6 @@ $CXX src/injection_regles.cpp src/json_out.cpp tools/tests/test_injection.cpp -o
 CXXP="$CXX -Isrc/produit"
 $CXXP src/produit/hotte_etat.cpp tools/tests/test_hotte_etat.cpp -o "$OUT/test_hotte_etat"
 "$OUT/test_hotte_etat"
+$CXXP src/produit/hotte_etat.cpp src/produit/pilote_simule.cpp tools/tests/test_pilote_simule.cpp -o "$OUT/test_pilote_simule"
+"$OUT/test_pilote_simule"
 echo "tests hote : OK"
