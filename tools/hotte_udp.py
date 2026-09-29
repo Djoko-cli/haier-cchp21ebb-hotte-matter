@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 # Copie de benq-screenbar-halo-matter@c58a506 : tools/halo_udp.py (adapte : cle dans ~/.config/hotte-sonde/cle, getaddrinfo AF_UNSPEC, sous-commande enregistre, confirmation tapee de 'injection on', resume du profil hotte ; sans trousseau ni 'refus')
-"""Client de banc du transport reseau de la sonde (docs/PROTOCOLE-JSON.md, section 9).
+"""Client de banc du transport reseau de la sonde (docs/PROTOCOLE-JSON.md, section 9)
+et du module produit (docs/PROTOCOLE-JSON-PRODUIT.md).
 
-Session H1 (UDP sur le Wi-Fi, port 5480) avec la cle posee par l'USB : suivre
-les lignes de la sonde, lui envoyer des commandes de la liste blanche, ou
-enregistrer une capture.
+Session H1 (UDP port 5480 : sur le Wi-Fi pour la sonde, sur Thread pour le
+produit) avec la cle posee par l'USB : suivre les lignes, envoyer des
+commandes de la liste blanche, ou enregistrer une capture.
+
+Appareil (--appareil sonde|produit) : il choisit le fichier de cle,
+~/.config/hotte-<appareil>/cle. Pour 'cle', il se lit dans hello.base.build
+par l'USB si --appareil manque ; pour 'session' et 'enregistre', sonde par
+defaut (la cle signe la poignee de main : elle se choisit avant).
 
   cle <port serie>
       Nouvelle cle partagee : 'json cle nouvelle <alea>' par l'USB (ouverture
       sure du C6 : DTR = RTS = 0 en un seul appel). La cle est rangee dans
-      ~/.config/hotte-sonde/cle (droits 0600 ; HOTTE_CLE=<fichier> pour un
-      autre), jamais affichee : seule son empreinte l'est. Toutes les sessions
+      ~/.config/hotte-<appareil>/cle (droits 0600 ; HOTTE_CLE=<fichier> pour
+      un autre), jamais affichee : seule son empreinte l'est. Toutes les sessions
       reseau tombent. Le port doit etre libre.
 
   session <hote> [commande ...] [--duree s] [--brut] [--port p]
@@ -28,7 +34,9 @@ enregistrer une capture.
       et un resume part dans <dossier>/live.log toutes les 5 s et a la fin
       ('tail -f logs/live.log'). Fin : --duree ecoulee, ou Ctrl-C.
 
-Hote : hotte-sonde.local (mDNS), ou l'adresse de la sonde (commande 'info').
+Hote : hotte-sonde.local (mDNS) ou l'adresse IPv4 de la sonde ; pour le
+produit, son nom SRP (<nom>.local, bloc reseau/ip) ou une adresse IPv6 OMR
+(le Mac garde sa route Thread avec l'assistant de benq, tools/macos/halo-routes).
 'injection on' (regle 11 : Majid devant la hotte, a portee de la fiche, le
 panneau en vue) ne part qu'apres une confirmation que Majid tape lui-meme,
 dans un terminal, avant l'ouverture de la session : la phrase exacte
@@ -39,6 +47,7 @@ Exemples :
   python3 tools/hotte_udp.py cle /dev/cu.usbmodem101
   python3 tools/hotte_udp.py session hotte-sonde.local --duree 30
   python3 tools/hotte_udp.py enregistre hotte-sonde.local krona-wifi "capture tout" "seuils 1 19000" --duree 660
+  python3 tools/hotte_udp.py --appareil produit session fd11:22::1a2b --duree 30 "hotte ventilo v2"
 """
 import argparse
 import datetime
@@ -61,9 +70,14 @@ PHRASE_INJECTION = "Majid devant la hotte"  # confirmation de 'injection on' (re
 DOSSIER = serie_enregistre.DOSSIER
 
 
-def chemin_cle():
-    """Fichier de la cle : HOTTE_CLE, sinon ~/.config/hotte-sonde/cle."""
-    return os.path.abspath(os.environ.get("HOTTE_CLE") or os.path.expanduser("~/.config/hotte-sonde/cle"))
+APPAREILS = ("sonde", "produit")
+
+
+def chemin_cle(appareil="sonde"):
+    """Fichier de la cle : HOTTE_CLE, sinon ~/.config/hotte-<appareil>/cle."""
+    if appareil not in APPAREILS:
+        raise SystemExit(f"appareil {appareil!r} : sonde ou produit")
+    return os.path.abspath(os.environ.get("HOTTE_CLE") or os.path.expanduser(f"~/.config/hotte-{appareil}/cle"))
 
 
 # ---------------------------------------------------------------------------
@@ -174,6 +188,26 @@ def demander_cle(lire, ecrire, alea, ident, delai_s=5.0, horloge=time.time):
                      "quand meme change de cle, 'json cle' par l'USB montre une autre empreinte : relancer 'cle'.")
 
 
+def lire_build(lire, ecrire, ident, delai_s=3.0, horloge=time.time):
+    """'id=<ident> json hello' sur un port deja ouvert ; rend hello.base.build
+    ('sonde', 'produit'), ou None sans reponse (firmware ancien, port muet)."""
+    decoupe = serie_enregistre.Decoupe()
+    ecrire(b"\x15\n")  # Ctrl-U : efface un reste de ligne
+    decoupe.feed(lire(0.2))
+    ecrire(f"id={ident} json hello\n".encode("ascii"))
+    build = None
+    limite = horloge() + delai_s
+    while horloge() < limite:
+        for genre, _, m in decoupe.feed(lire(0.2)):
+            if genre != "machine":
+                continue
+            if m.get("t") == "hello" and m.get("bloc") == "base" and m.get("build") in APPAREILS:
+                build = m["build"]
+            if m.get("t") == "reponse" and m.get("id") == ident and m.get("etape") == "fin":
+                return build
+    return build
+
+
 def ranger_cle(hex_key, chemin):
     """Ecriture atomique, 0600 (dossier 0700), sans suivre de lien symbolique."""
     d = os.path.dirname(chemin)
@@ -205,7 +239,9 @@ def lire_cle(chemin):
     return key
 
 
-def cmd_cle(port, chemin):
+def cmd_cle(port, chemin=None, appareil=None):
+    """Nouvelle cle par l'USB ; chemin nul : celui de l'appareil (--appareil,
+    ou hello.base.build lu sur le port)."""
     alea = os.urandom(32).hex().upper()
     try:
         fd = serie_enregistre.ouvrir_port(port)
@@ -213,7 +249,14 @@ def cmd_cle(port, chemin):
         raise SystemExit(f"{port} : {e.strerror} (port tenu par 'pio device monitor' ou serie_enregistre.py ?)")
     try:
         ident = 900000 + int.from_bytes(os.urandom(2), "big") % 90000
-        cle, empreinte, msg = demander_cle(serie_enregistre.lecteur(fd), serie_enregistre.ecrivain(fd), alea, ident)
+        lire, ecrire = serie_enregistre.lecteur(fd), serie_enregistre.ecrivain(fd)
+        if chemin is None:
+            if appareil is None:
+                appareil = lire_build(lire, ecrire, ident + 1)
+                if appareil is None:
+                    raise SystemExit("appareil inconnu (aucun hello.base.build) : preciser --appareil sonde|produit")
+            chemin = chemin_cle(appareil)
+        cle, empreinte, msg = demander_cle(lire, ecrire, alea, ident)
     except serie_enregistre.PortFerme as e:
         raise SystemExit(f"port ferme ({e}) : la sonde a-t-elle redemarre ?")
     finally:
@@ -234,7 +277,7 @@ def resoudre(hote, port):
     try:
         ai = socket.getaddrinfo(hote, port, socket.AF_UNSPEC, socket.SOCK_DGRAM)
     except socket.gaierror as e:
-        raise SystemExit(f"{hote} : {e} (nom mDNS hotte-sonde.local, ou adresse donnee par 'info')")
+        raise SystemExit(f"{hote} : {e} (hotte-sonde.local, nom SRP du produit, ou adresse donnee par 'info')")
     return ai[0][0], ai[0][4]
 
 
@@ -401,9 +444,12 @@ class Client:
 
 
 def resume(m):
-    """Une ligne lisible par message du profil hotte."""
+    """Une ligne lisible par message du profil hotte (sonde et produit)."""
     t, b = m.get("t"), m.get("bloc")
     tete = f"n={m.get('n')} {t}" + (f"/{b}" if b else "")
+    produit = resume_produit(t, b, m)
+    if produit is not None:
+        return tete + produit
     if t == "reponse":
         extra = f" id={m.get('id')} {m.get('etape')} {m.get('code')} « {m.get('cmd')} »"
         if m.get("msg"):
@@ -433,6 +479,40 @@ def resume(m):
     if t == "fin":
         return tete + f" cause {m.get('cause')}"
     return tete
+
+
+def _lampe(v):
+    return "?" if v is None else "on" if v else "off"
+
+
+def resume_produit(t, b, m):
+    """La fin de la ligne pour un message propre au produit ; None sinon."""
+    if t == "etat" and b == "hotte":
+        return (f" {m.get('marche')} moteur {m.get('moteur')} lampe {_lampe(m.get('lampe'))} "
+                f"({m.get('confiance')}, {m.get('source')}, lu il y a {m.get('age_ms')} ms)")
+    if t == "etat" and b == "thermique":
+        return (f" puce {m.get('temp_c')} C (max {m.get('temp_max_c')}, pose {m.get('temp_max_pose_c')}), "
+                f"seuil {m.get('seuil_c')} C{' ALERTE' if m.get('alerte') else ''}")
+    if t == "etat" and b == "alim":
+        voies = []
+        for k in ("hotte", "module"):
+            v = m.get(k)
+            voies.append(f"{k} ?" if not isinstance(v, dict) else
+                         f"{k} {v.get('mv')} mV (min {v.get('min_mv')}){' ALERTE' if v.get('alerte') else ''}")
+        return " " + ", ".join(voies)
+    if t == "hotte":
+        av, ap = m.get("avant") or {}, m.get("apres") or {}
+        return (f" {av.get('marche')}/{av.get('moteur')} -> {ap.get('marche')}/{ap.get('moteur')} "
+                f"lampe {_lampe(ap.get('lampe'))} ({m.get('origine')}, {m.get('source')})")
+    if t == "sequence":
+        cause = f", {m['cause']}" if m.get("cause") else ""
+        return (f" id={m.get('id')} {m.get('origine')} {m.get('sujet')} : {m.get('issue')}{cause} "
+                f"({m.get('appuis')} appuis, {m.get('duree_ms')} ms)")
+    if t == "alerte":
+        return f" {m.get('sujet')} {m.get('etape')} : {m.get('valeur')} {m.get('unite')} (seuil {m.get('seuil')})"
+    if t == "trame_d":
+        return f" {m.get('origine')} {m.get('octets')}"
+    return None
 
 
 def ouvrir_client(hote, port, commandes, key, afficher, demander):
@@ -536,12 +616,13 @@ def cmd_enregistre(hote, port, scenario, commandes, duree, dossier, key, affiche
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--appareil", choices=APPAREILS, help="sonde ou produit (fichier de cle ; cle : lu dans hello)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("cle", help="nouvelle cle par l'USB")
     a.add_argument("port", help="port serie du C6, ex. /dev/cu.usbmodem101")
     for nom in ("session", "enregistre"):
         a = sub.add_parser(nom, help="session H1" if nom == "session" else "session H1 enregistree en .jsonl")
-        a.add_argument("hote", help="hotte-sonde.local, ou l'adresse IPv4 de la sonde")
+        a.add_argument("hote", help="hotte-sonde.local, nom SRP du produit (<nom>.local), ou adresse IPv4/IPv6")
         if nom == "enregistre":
             a.add_argument("scenario", help="nom du scenario (nom du fichier)")
             a.add_argument("--dossier", default=DOSSIER, help="dossier des enregistrements (defaut : logs/ du depot)")
@@ -553,12 +634,13 @@ def main(argv=None):
             a.add_argument("--brut", action="store_true", help="JSON tel quel au lieu du resume")
     args = ap.parse_args(argv)
     if args.cmd == "cle":
-        cmd_cle(args.port, chemin_cle())
+        cmd_cle(args.port, chemin_cle(args.appareil) if os.environ.get("HOTTE_CLE") else None, args.appareil)
     elif args.cmd == "session":
-        cmd_session(args.hote, args.port, args.commandes, args.duree, args.brut, lire_cle(chemin_cle()))
+        cmd_session(args.hote, args.port, args.commandes, args.duree, args.brut,
+                    lire_cle(chemin_cle(args.appareil or "sonde")))
     else:
         cmd_enregistre(args.hote, args.port, args.scenario, args.commandes, args.duree, args.dossier,
-                       lire_cle(chemin_cle()))
+                       lire_cle(chemin_cle(args.appareil or "sonde")))
     return 0
 
 
