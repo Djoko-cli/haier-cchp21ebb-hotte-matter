@@ -39,4 +39,6 @@ $CXXP src/produit/hotte_etat.cpp src/produit/surveillance.cpp src/produit/json_o
 # Lignes realistes du produit et exemples de son protocole : conformes au profil produit.
 python3 tools/json_check.py --profil produit --strict --independantes -q "$OUT/test_json_produit_lignes.txt"
 python3 tools/json_check.py --profil produit --strict -q --exemples docs/PROTOCOLE-JSON-PRODUIT.md
+# Constantes du produit : les static_assert des codes d'appairage (spec 8.2, Q32).
+echo '#include "config_produit.h"' | $CXXP -fsyntax-only -x c++ -
 echo "tests hote : OK"
