@@ -1,5 +1,5 @@
 #!/bin/sh
-# Tests hote de la sonde (sans carte). A lancer depuis n'importe ou : sh tools/tests/test_hote.sh
+# Tests hote de la sonde et du produit (sans carte). A lancer depuis n'importe ou : sh tools/tests/test_hote.sh
 set -e
 cd "$(dirname "$0")/../.."
 OUT="${TMPDIR:-/tmp}/hotte-tests"
@@ -22,4 +22,8 @@ $CXX src/h1_proto.cpp tools/tests/test_h1.cpp -o "$OUT/test_h1"
 "$OUT/test_h1"
 $CXX src/injection_regles.cpp src/json_out.cpp tools/tests/test_injection.cpp -o "$OUT/test_injection"
 "$OUT/test_injection"
+# Produit (sous-projet 2) : modules purs de src/produit/.
+CXXP="$CXX -Isrc/produit"
+$CXXP src/produit/hotte_etat.cpp tools/tests/test_hotte_etat.cpp -o "$OUT/test_hotte_etat"
+"$OUT/test_hotte_etat"
 echo "tests hote : OK"
