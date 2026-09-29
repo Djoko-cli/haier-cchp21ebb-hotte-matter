@@ -124,9 +124,153 @@ static void testParams() {
   VERIF(!chargerParams(nullptr, 0, &lu));
 }
 
+// Vide l'automate ; rend le nombre d'actions du type demande, *derniere recoit la derniere.
+static int vider(Automate &a, uint32_t t, Action::Type type, Action *derniere = nullptr) {
+  int n = 0;
+  for (Action x = a.suivante(t); x.type != Action::Aucune; x = a.suivante(t))
+    if (x.type == type) {
+      n++;
+      if (derniere) *derniere = x;
+    }
+  return n;
+}
+
+static void testConfiance() {
+  {  // mise sous tension : eteinte, Deduit, publiee
+    Automate a;
+    a.configurerLigne(ModeEtat::Changements, false);
+    a.demarrer(Demarrage::MiseSousTension, nullptr, Moteur::Arret, 1000);
+    VERIF(a.etat().marche == Marche::Eteinte && a.etat().confiance == Confiance::Deduit && a.etat().lampeConnue);
+    VERIF(a.derniereVitesse() == Moteur::V2);
+    VERIF(vider(a, 1000, Action::Publier) == 1);
+    // Etat complet lu : Confirme. Sans evenement, il le reste des heures
+    // (mode changements) : un etat ne vieillit pas vers Inconnu.
+    a.surEtatLu(etat(Marche::Armee, Moteur::Arret), 2000);
+    VERIF(a.etat().confiance == Confiance::Confirme && a.diagnostic(2000).marcheAutorisee);
+    VERIF(vider(a, 2000, Action::Changement) == 1);
+    vider(a, 2000 + 3600000u, Action::Aucune);
+    VERIF(a.etat().confiance == Confiance::Confirme);
+    // Anomalie de reception : Presume, valeurs gardees, "marche" interdite.
+    a.surAnomalie(1, 3700000);
+    VERIF(a.etat().confiance == Confiance::Presume && a.etat().marche == Marche::Armee);
+    VERIF(!a.diagnostic(3700000).marcheAutorisee && a.diagnostic(3700000).c.anomalies == 1);
+  }
+  {  // mode repete : ligne muette au-dela de fraicheur_ms
+    Automate a;
+    a.configurerLigne(ModeEtat::Repete, false);
+    a.demarrer(Demarrage::MiseSousTension, nullptr, Moteur::V2, 0);
+    a.surEtatLu(etat(Marche::Eteinte, Moteur::Arret), 100);
+    vider(a, 100, Action::Aucune);
+    VERIF(a.etat().confiance == Confiance::Confirme);
+    VERIF(vider(a, 2099, Action::Evenement) == 0);
+    Action e;
+    VERIF(vider(a, 2100, Action::Evenement, &e) == 1 && e.evt == Evt::LigneMuette);
+    VERIF(a.etat().confiance == Confiance::Presume && a.diagnostic(2100).c.lignesMuettes == 1);
+    VERIF(vider(a, 5000, Action::Evenement) == 0);  // signalee une fois
+    a.surEtatLu(etat(Marche::Eteinte, Moteur::Arret), 5000);
+    VERIF(a.etat().confiance == Confiance::Confirme);
+  }
+  {  // autre cause : dernier etat publie relu en NVS, Presume ; sans NVS, Inconnu et rien de publie
+    Automate a;
+    a.configurerLigne(ModeEtat::Changements, false);
+    const Etat nvs = etat(Marche::Armee, Moteur::V3, true);
+    a.demarrer(Demarrage::Autre, &nvs, Moteur::V3, 0);
+    VERIF(a.etat().confiance == Confiance::Presume && a.etat().source == Source::Nvs);
+    VERIF(a.etat().moteur == Moteur::V3 && a.etat().lampe);
+    Action pub;
+    VERIF(vider(a, 0, Action::Publier, &pub) == 1 && pub.etat.moteur == Moteur::V3);
+    Automate b;
+    b.configurerLigne(ModeEtat::Changements, false);
+    b.demarrer(Demarrage::Autre, nullptr, Moteur::V2, 0);
+    VERIF(b.etat().confiance == Confiance::Inconnu && vider(b, 0, Action::Publier) == 0);
+  }
+  {  // lecture annexe : moteur et lampe lus, voyant marche deduit ou inconnu
+    Automate a;
+    a.configurerLigne(ModeEtat::AppuisSeuls, true);
+    a.demarrer(Demarrage::MiseSousTension, nullptr, Moteur::V2, 0);
+    Etat an;
+    an.marche = Marche::Inconnue;
+    an.moteur = Moteur::Arret;
+    an.lampe = false;
+    an.lampeConnue = true;
+    an.source = Source::Annexe;
+    a.surEtatLu(an, 100);
+    VERIF(a.etat().marche == Marche::Eteinte && a.etat().confiance == Confiance::Deduit);
+    VERIF(a.diagnostic(100).marcheAutorisee);
+    an.moteur = Moteur::V2;  // moteur en marche, voyant deduit eteint : incoherent
+    a.surEtatLu(an, 200);
+    VERIF(a.etat().marche == Marche::Inconnue && a.etat().moteur == Moteur::V2);
+  }
+  {  // appui du panneau sur la vitesse active en V1 : Deduit (ligne supposee, codee observee, Q30)
+    Automate a;
+    a.configurerLigne(ModeEtat::Changements, false);
+    a.demarrer(Demarrage::MiseSousTension, nullptr, Moteur::V2, 0);
+    a.surEtatLu(etat(Marche::Armee, Moteur::V1), 100);
+    vider(a, 100, Action::Aucune);
+    a.surAppui(Touche::V1, Origine::Panneau, 200);
+    VERIF(a.etat().moteur == Moteur::Arret && a.etat().confiance == Confiance::Deduit);
+    Action c;
+    VERIF(vider(a, 200, Action::Changement, &c) == 1 && c.origine == Origine::Panneau);
+    VERIF(a.diagnostic(200).c.appuisPanneau == 1);
+    // Transition inconnue (autre vitesse pendant la prolongation) : Presume.
+    a.surEtatLu(etat(Marche::Prolongee, Moteur::V2), 300);
+    a.surAppui(Touche::V3, Origine::Panneau, 400);
+    VERIF(a.etat().confiance == Confiance::Presume && a.diagnostic(400).c.transitionsInconnues == 1);
+  }
+}
+
+static void testTextesOrdres() {
+  VERIF_EGAL_STR(texte(CibleVentilo::Derniere), "derniere");
+  VERIF_EGAL_STR(texte(Issue::Remplacee), "remplacee");
+  VERIF_EGAL_STR(texte(Cause::NonConfirme), "non_confirme");
+  VERIF_EGAL_STR(texte(Cause::SansLecture), "sans_lecture");
+  VERIF_EGAL_STR(texte(Canal::App), "app");
+  VERIF_EGAL_STR(texte(Sujet::Lampe), "lampe");
+  VERIF_EGAL_STR(texte(Evt::ProlongeePerimee), "prolongee_perimee");
+}
+
+// Ordre egal a l'etat : publication, aucun appui. Pilote hors service : Echec
+// (cause pilote) si un appui etait en vol, puis attente et Abandon.
+static void testOrdresUnitaires() {
+  Automate a;
+  a.configurerLigne(ModeEtat::Changements, false);
+  a.demarrer(Demarrage::MiseSousTension, nullptr, Moteur::V2, 0);
+  a.surEtatLu(etat(Marche::Armee, Moteur::V2), 100);
+  vider(a, 100, Action::Aucune);
+  a.ordreVentilo(CibleVentilo::V2, 5, Canal::App, 200);
+  Action f;
+  int appuis = 0, publis = 0, fins = 0;
+  for (Action x = a.suivante(200); x.type != Action::Aucune; x = a.suivante(200)) {
+    appuis += x.type == Action::Appuyer;
+    publis += x.type == Action::Publier;
+    if (x.type == Action::FinSequence) {
+      fins++;
+      f = x;
+    }
+  }
+  VERIF(appuis == 0 && publis == 1 && fins == 1 && f.issue == Issue::Ok && f.idOrdre == 5 && f.appuis == 0);
+  // Un appui en vol, puis le pilote rend Erreur.
+  a.ordreLampe(true, 6, Canal::Matter, 5000);
+  Action x = a.suivante(5000);
+  VERIF(x.type == Action::Appuyer && x.touche == Touche::Lumiere);
+  a.surFinAppui(x.idAppui, ResultatAppui::Erreur, 5060);
+  VERIF(vider(a, 5060, Action::FinSequence, &f) == 1 && f.issue == Issue::Echec && f.cause == Cause::Pilote);
+  VERIF(!a.diagnostic(5060).piloteEnService);
+  a.ordreLampe(true, 7, Canal::Matter, 6000);
+  VERIF(vider(a, 6000, Action::Appuyer) == 0);
+  VERIF(vider(a, 10999, Action::FinSequence) == 0);
+  VERIF(vider(a, 11000, Action::FinSequence, &f) == 1 && f.issue == Issue::Abandon && f.cause == Cause::Pilote);
+  a.surPilote(true, 12000);
+  a.ordreLampe(true, 8, Canal::Matter, 12000);
+  VERIF(vider(a, 12000, Action::Appuyer) == 1);
+}
+
 int main() {
   testTable();
   testTextes();
   testParams();
+  testTextesOrdres();
+  testConfiance();
+  testOrdresUnitaires();
   return bilan("test_hotte_etat");
 }

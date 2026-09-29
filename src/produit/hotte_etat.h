@@ -96,4 +96,188 @@ Reglage reglerParam(Params *p, const char *nom, uint32_t v);  // *p inchange si 
 // valides (true) ; sinon *out recoit les valeurs par defaut, toutes.
 bool chargerParams(const void *octets, size_t n, Params *out);
 
+// ---------------------------------------------------------------------------
+//  Ordres, issues, actions
+// ---------------------------------------------------------------------------
+
+enum class CibleVentilo : uint8_t { Aucune, Eteint, V1, V2, V3, Derniere };
+enum class Issue : uint8_t { Ok, Annulee, Echec, Abandon, Remplacee };
+enum class Cause : uint8_t { Aucune, NonConfirme, SansLecture, Collision, Garde, Pilote, Duree };
+constexpr uint8_t kNbCauses = 7;
+enum class Canal : uint8_t { Matter, App };  // d'ou vient un ordre (evenement sequence)
+enum class Sujet : uint8_t { Ventilo, Lampe };
+enum class Evt : uint8_t { MarcheInconnue, ProlongeePerimee, LigneMuette, DeductionDementie, SondeVitesse };
+const char *texte(CibleVentilo c);  // aucune, eteint, v1, v2, v3, derniere
+const char *texte(Issue i);         // ok, annulee, echec, abandon, remplacee
+const char *texte(Cause c);         // aucune, non_confirme, sans_lecture, collision, garde, pilote, duree
+const char *texte(Canal c);         // matter, app
+const char *texte(Sujet s);         // ventilo, lampe
+const char *texte(Evt e);           // marche_inconnue, prolongee_perimee, ligne_muette, deduction_dementie, sonde_vitesse
+
+struct Action {
+  enum Type : uint8_t { Aucune, Appuyer, Publier, FinSequence, Changement, Evenement };
+  Type type = Aucune;
+  // Appuyer
+  Touche touche = Touche::Marche;
+  uint32_t idAppui = 0;
+  // Publier : etat a publier. Changement : etat apres le changement.
+  Etat etat;
+  // Changement
+  Etat avant;
+  Origine origine = Origine::Inconnue;
+  // FinSequence
+  Sujet sujet = Sujet::Ventilo;
+  uint32_t idOrdre = 0;
+  Canal canal = Canal::Matter;
+  Issue issue = Issue::Ok;
+  Cause cause = Cause::Aucune;
+  uint32_t dureeMs = 0;
+  uint8_t appuis = 0;
+  // Evenement
+  Evt evt = Evt::MarcheInconnue;
+};
+
+struct Compteurs {
+  uint32_t appuisPanneau = 0, appuisModule = 0;
+  uint32_t reussies = 0, annulees = 0, remplacees = 0, abandons = 0;
+  uint32_t echecs[kNbCauses] = {};  // par Cause ; [0] inutilise
+  uint32_t nouveauxEssais = 0, transitionsInconnues = 0, anomalies = 0;
+  uint32_t marcheInconnue = 0, prolongeePerimee = 0, lignesMuettes = 0, actionsPerdues = 0;
+};
+
+struct Diagnostic {
+  Compteurs c;
+  bool ventilo = false;  // ordre du ventilateur en cours
+  bool cibleEteint = false;
+  Moteur cibleMoteur = Moteur::Arret;
+  uint32_t idVentilo = 0;
+  Canal canalVentilo = Canal::Matter;
+  bool lampe = false;  // ordre de la lampe en cours
+  bool cibleLampe = false;
+  uint32_t idLampe = 0;
+  Canal canalLampe = Canal::Matter;
+  bool enVol = false;  // appui injecte en cours (jusqu'a son verdict)
+  Touche touche = Touche::Marche;
+  uint8_t essai = 0;
+  uint32_t volDepuisMs = 0;
+  uint32_t delaiMoteurResteMs = 0;
+  bool piloteEnService = true;
+  bool marcheAutorisee = false;  // arret du moteur lu depuis le dernier appui (regle 3)
+};
+
+// ---------------------------------------------------------------------------
+//  Automate
+// ---------------------------------------------------------------------------
+
+class Automate {
+ public:
+  explicit Automate(const Params &p = Params());
+  void configurer(const Params &p);  // p deja valide (paramsValides)
+  // Ce que porte la ligne, donne par le pilote (reel : l'avenant ; simule : 'simu mode').
+  void configurerLigne(ModeEtat mode, bool annexe);
+  // Etat initial (5.7). etatPublieNvs : dernier etat publie, relu en NVS
+  // (cause Autre seulement ; nullptr s'il n'y en a pas). derniereVitesse :
+  // NVS derniere_v (V1..V3 ; Arret : V2).
+  void demarrer(Demarrage cause, const Etat *etatPublieNvs, Moteur derniereVitesse, uint32_t nowMs);
+
+  // Entrees
+  void ordreVentilo(CibleVentilo c, uint32_t idOrdre, Canal canal, uint32_t nowMs);
+  void ordreLampe(bool allumee, uint32_t idOrdre, Canal canal, uint32_t nowMs);
+  void surEtatLu(const Etat &lu, uint32_t nowMs);          // fil (complet) ou lecture annexe (moteur, lampe)
+  void surAppui(Touche t, Origine o, uint32_t nowMs);      // appui vu sur le fil
+  void surFinAppui(uint32_t idAppui, ResultatAppui r, uint32_t nowMs);
+  void surAnomalie(uint16_t code, uint32_t nowMs);         // trame illisible, debordement, ligne tenue basse
+  void surPilote(bool enService, uint32_t nowMs);
+
+  // Sortie : une action par appel ; Action::Aucune quand il n'y a plus rien.
+  Action suivante(uint32_t nowMs);
+
+  const Etat &etat() const { return etat_; }
+  Moteur derniereVitesse() const { return derniere_; }
+  Diagnostic diagnostic(uint32_t nowMs) const;
+  const Params &params() const { return p_; }
+  ModeEtat mode() const { return mode_; }
+  bool annexe() const { return annexe_; }
+
+ private:
+  struct Ordre {
+    bool actif = false;
+    uint32_t id = 0;
+    Canal canal = Canal::Matter;
+    uint32_t recuMs = 0;
+    uint8_t appuis = 0;
+    uint32_t bloqueMs = 0;  // debut de l'attente d'un etat utilisable (0 : pas bloque)
+  };
+  struct Vol {
+    bool actif = false;
+    bool orphelin = false;  // son ordre est parti : l'appui ne sert plus qu'a lire l'etat
+    bool sonde = false;     // sonde de vitesse (regle 7)
+    Sujet sujet = Sujet::Ventilo;
+    Touche touche = Touche::Marche;
+    uint32_t id = 0;
+    Etat avant, attendu;
+    uint8_t essai = 0;
+    uint32_t debutMs = 0;
+    bool fini = false;
+    ResultatAppui res = ResultatAppui::Ok;
+    uint32_t finMs = 0;
+    bool echo = false;
+    bool anomalie = false;
+    uint32_t anomalieMs = 0;
+    bool filLu = false;  // dernier etat complet lu apres la fin de l'appui
+    Etat fil;
+    uint32_t filMs = 0;
+    bool annexeLue = false;  // derniere lecture annexe apres la fin de l'appui
+    Etat annexeEtat;
+    uint32_t annexeMs = 0;
+  };
+  struct Reprise {  // nouvel essai autorise pour ce sujet (regle 2)
+    bool actif = false;
+    Touche touche = Touche::Marche;
+  };
+  enum class Plan : uint8_t { Rien, Atteint, Presser, Attente, Bloque };
+  enum class Verdict : uint8_t { Attendre, Reussi, NonPris, Autre, Echec };
+
+  void pousser(const Action &a);
+  void pousserPublier();
+  void changer(const Etat &nouveau, Origine o, uint32_t nowMs);
+  void finOrdre(Sujet s, Issue i, Cause c, uint32_t nowMs);
+  void annulerTout(uint32_t nowMs);
+  void verifierTemps(uint32_t nowMs);
+  Verdict juger(uint32_t nowMs, Cause *cause) const;
+  void appliquerVerdict(Verdict v, Cause c, uint32_t nowMs);
+  Plan planVentilo(uint32_t nowMs, Touche *t, bool *sonde);
+  Plan planLampe(Touche *t) const;
+  bool delaiMoteurOk(uint32_t nowMs) const;
+  bool planifier(uint32_t nowMs, Action *out);
+  Action presser(Sujet s, Touche t, bool sonde, uint32_t nowMs);
+
+  Params p_;
+  ModeEtat mode_ = ModeEtat::Repete;
+  bool annexe_ = false;
+  Etat etat_;
+  Moteur derniere_ = Moteur::V2;
+  uint32_t demarrageMs_ = 0;
+  bool arretLu_ = false;  // regle 3 : dernier etat lu = moteur arrete, aucun appui depuis
+  Moteur moteurLu_ = Moteur::Arret;
+  uint32_t changementMoteurMs_ = 0;  // dernier changement du moteur, lu ou deduit, toutes origines
+  bool piloteOk_ = true;
+  Ordre ov_, ol_;
+  bool cibleEteint_ = false;
+  Moteur cibleMoteur_ = Moteur::Arret;
+  bool cibleLampe_ = false;
+  Vol vol_;
+  Reprise reprise_[2];
+  uint32_t idAppui_ = 0;
+  bool aEmis_ = false;
+  uint32_t dernierFinMs_ = 0;  // fin du dernier appui emis (entre_appuis_ms)
+  bool repriseImmediate_ = false;
+  bool aPublier_ = false;
+  bool muette_ = false;  // ligne muette deja signalee (mode repete)
+  Compteurs c_;
+  static constexpr uint8_t kFile = 16;
+  Action file_[kFile];
+  uint8_t tete_ = 0, nb_ = 0;
+};
+
 }  // namespace hotte
