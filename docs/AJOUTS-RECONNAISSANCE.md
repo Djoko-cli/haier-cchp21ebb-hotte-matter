@@ -47,7 +47,7 @@ confirmée par Majid le 29/09 : le repérage de la SuperMini violette dans WIRIN
 | D6 | JOURNAL | nouvelle section M1, après la ligne 643 |
 | D7 | FICHE | règles 3 (après la ligne 35) et 13 (après la ligne 86), liste avant mise sous tension (après la ligne 111) |
 | E1 à E3 | SPEC | statut (après la ligne 8), §13 (après la ligne 1041), §14 (après la ligne 1052) |
-| F1 | WIRING | §9, lignes 280 à 282 remplacées |
+| F1 | WIRING | **appliqué le 29/09**, sous une forme plus complète : nouveau §9 de WIRING.md |
 
 L'amendement du 28/09 au soir retire le bloc D4 (achat du thermomètre) et la
 partie M2 des blocs D1, D2, D5, D6 et D7, dont l'ajout au test du différentiel.
@@ -757,6 +757,8 @@ rangée d'une autre carte, d'après le brief du boîtier de la ScreenBar. Les ba
 changent pas (6 et 7) : seul le repérage est corrigé.
 
 ### F1. WIRING, §9 : repérage
+
+**Appliqué le 29/09 :** WIRING.md §9 a été réécrit en entier avec le brochage réel (bloc W5 du guide de fabrication), ce bloc n'est plus à verser.
 
 **Remplacer les lignes 280 à 282 :**
 

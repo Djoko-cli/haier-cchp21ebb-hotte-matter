@@ -214,7 +214,7 @@ Boîtier de mesure : sonde retirée des barrettes.
 |---|---|---|---|---|---|
 | 11 | `TP−` vers la broche `GND` des barrettes | 200 Ω | environ 0 Ω | | sinon on corrige avant la pose |
 | 12 | broche `3V3` vers la broche 6 des barrettes | 20 kΩ | environ 10 kΩ (collecteur de Q1) | | idem |
-| 13 | `TP_Dp` vers la broche 6 des barrettes | le plus élevé | plus de 100 kΩ dans les deux sens (règle 10) | | moins : liaison directe du bus vers une GPIO, on corrige avant la pose |
+| 13 | `TP_Dp` vers la broche 6 des barrettes, dans les deux sens | le plus élevé | OL dans un sens au moins (règle 10) | | valeur finie dans les deux sens : liaison du bus vers une GPIO, on corrige avant la pose |
 | 14 | collecteur de Q1 sur la broche 6 ; le 4,7k de base de Q2 sur la broche 7 | visuel | GPIO6 et GPIO7 non interverties | | sinon on corrige avant la pose |
 | 15 | brochage de Q1 et Q2 | visuel | conforme à la fiche du transistor (BC547 = C-B-E, 2N3904 = E-B-C) | | idem |
 | 16 | coque de l'USB-C isolée ; USB-C accessible | visuel | | | idem |

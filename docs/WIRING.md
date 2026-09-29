@@ -6,7 +6,8 @@ générateur du banc. Source : §7, §10 et §12 de
 [SPEC-RECONNAISSANCE.md](SPEC-RECONNAISSANCE.md), qui fait foi. Règles de
 sécurité : [SECURITE.md](SECURITE.md) (en particulier les règles 4, 5, 9 et 10,
 et le banc sans liaison avec la hotte). Les relevés vont dans
-[RECONNAISSANCE.md](RECONNAISSANCE.md).
+[RECONNAISSANCE.md](RECONNAISSANCE.md). Placement des pièces, ordre de soudure et
+contrôles trou par trou : [FABRICATION.md](FABRICATION.md).
 
 ## 1. Vue d'ensemble
 
@@ -100,14 +101,14 @@ et la fiche du panneau, et sort les quatre nœuds vers le câble de sortie.
   soudure sous gaine thermorétractable, hors de la hotte. Elle s'enfiche sur
   l'embase XH 4 broches du boîtier (§4), dans un seul sens.
 
-Couleurs proposées (les couleurs réelles sont notées dans `RECONNAISSANCE.md`) :
+Couleurs retenues (fil commandé le 27/09, noté dans `RECONNAISSANCE.md`) :
 
-| Fil | Nœud | Couleur proposée | Broche de la fiche XH 4 br. | Arrive sur |
+| Fil | Nœud | Couleur | Broche de la fiche XH 4 br. | Arrive sur |
 |---|---|---|---|---|
 | 1 | `−` | noir | 1 | `TP−` |
 | 2 | `+` | rouge | 2 | `TP+` |
 | 3 | `D_panneau` | blanc | 3 | `TP_Dp` |
-| 4 | `D_carte` | jaune (ou toute autre couleur distincte) | 4 | `TP_Dc` |
+| 4 | `D_carte` | marron | 4 | `TP_Dc` |
 
 ## 4. Boîtier de mesure
 
@@ -126,8 +127,11 @@ les pinces hotte débranchée ; sous tension, on n'y fait que lire les instrumen
   débranchée) : le 5 V de l'USB de la sonde alimente alors le panneau.
 - **Étage d'écoute, voie 1** (§5), et **étage d'injection, voie 1** (§6), monté à
   l'étape 7 seulement. Place réservée pour la voie 2 (§7), si B.
-- **La sonde**, ESP32-C6 SuperMini, sur deux barrettes femelles. Son `GND` est
-  relié à `TP−` : masse commune avec le `−` du bus, indispensable aux étages.
+- **La sonde**, ESP32-C6 SuperMini, sur deux barrettes femelles de 10 broches, à
+  6 trous l'une de l'autre : composants en haut, USB-C vers le haut de la
+  plaque, antenne au bord (brochage : §9 ; placement :
+  [FABRICATION.md](FABRICATION.md)). Son `GND` est relié à `TP−` : masse
+  commune avec le `−` du bus, indispensable aux étages.
 - **Batterie USB** pendant les captures (modèle vérifié, règle 9).
 - La coque de l'USB-C du SuperMini est reliée à `GND` : l'isoler de tout métal
   (gaine ou ruban). Le connecteur USB-C reste accessible, pour flasher hotte
@@ -244,6 +248,10 @@ fonctionnellement (étapes 5b et 7), et ne se chiffre qu'avec un oscilloscope.
 - **Voie 1** : sortie de l'étage d'écoute, le même nœud que GPIO6 (3,3 V), en direct.
 - **Voie 2** : `TP_Dp` à travers un diviseur à haute impédance choisi d'après `+` :
   47k/68k pour 5 V (5 V donne 2,96 V), 100k/33k pour 12 V (12 V donne 2,98 V).
+- **Sur le boîtier de mesure**, le diviseur s'enfiche sur des contacts tulipe
+  (on change de valeurs sans dessouder), et les trois points sont sur la
+  barrette `ANA` : `V2` (voie 2), `GND` au milieu, `V1` (voie 1)
+  ([FABRICATION.md](FABRICATION.md) §6.6).
 
 ```
   TP_Dp ── 47k (100k si + = 12 V) ──┬───────► voie 2 de l'analyseur
@@ -255,41 +263,68 @@ fonctionnellement (étapes 5b et 7), et ne se chiffre qu'avec un oscilloscope.
 
 ## 9. Brochage du C6 SuperMini
 
-| Broche | Reliée à | Remarque |
-|---|---|---|
-| GPIO6 | collecteur de Q1 (étage d'écoute) | entrée : RMT en réception, plus une interruption sur les deux fronts |
-| GPIO7 | 4,7k de base de Q2 (étage d'injection) | sortie à l'état bas dès la première instruction de `setup()` ; rien de branché avant l'étape 7 (au banc : critère 5) |
-| 3V3 | 10k de collecteur de Q1 | |
-| GND | `TP−` | masse commune avec le `−` du bus |
-| 5V | `J2` (ouvert), puis `TP+` | fermé seulement à l'étape 4 |
-| GPIO0, GPIO1 | voie 2, seulement si B | écoute sur GPIO0, émission sur GPIO1 |
+Les cartes du projet (sonde et générateur) sont des SuperMini **violettes**.
+Brochage relevé le 28/09 sur la photo de Majid, vue côté composants, USB-C à
+gauche, antenne céramique à droite :
+
+```
+  vue côté composants
+          5V   GND  3V3  20   19   18   15   14   9    8
+  USB-C                                                    antenne
+          TX   RX   0    1    2    3    4    5    6    7
+```
+
+- 10 pastilles par rangée ; les deux rangées sont à 6 trous l'une de l'autre
+  (15,24 mm). Carte d'environ 25,6 × 17,7 mm.
+- Trous intérieurs 12, 13, 21, 22, 23 et pastille BAT : inutilisés.
+- **GPIO6 et GPIO7 sont voisines**, au bout de la rangée du bas, côté antenne :
+  6 est l'avant-dernière pastille, 7 la dernière (le coin). Les intervertir est
+  facile et dangereux (§6).
+- Le module se pose toujours composants en haut : retourné, il présenterait ses
+  broches en miroir.
+
+| Broche | Pastille (vue ci-dessus) | Reliée à | Remarque |
+|---|---|---|---|
+| GPIO6 | rangée du bas, 9e | collecteur de Q1 (étage d'écoute) | entrée : RMT en réception, plus une interruption sur les deux fronts |
+| GPIO7 | rangée du bas, 10e (le coin) | 4,7k de base de Q2 (étage d'injection) | sortie à l'état bas dès la première instruction de `setup()` ; rien de branché avant l'étape 7 (au banc : critère 5) |
+| 3V3 | rangée du haut, 3e | 10k de collecteur de Q1 | |
+| GND | rangée du haut, 2e | `TP−` | masse commune avec le `−` du bus |
+| 5V | rangée du haut, 1re | `J2` (ouvert), puis `TP+` | fermé seulement à l'étape 4 |
+| GPIO0, GPIO1 | rangée du bas, 3e et 4e | voie 2, seulement si B | écoute sur GPIO0, émission sur GPIO1 |
 
 Sur le second C6 (générateur du banc, §10) : GPIO7 sur le 4,7k de base de Q3.
+Placement sur le boîtier de mesure et sur la breadboard du banc :
+[FABRICATION.md](FABRICATION.md).
 
 **Broches à éviter :**
 
 | GPIO | Pourquoi |
 |---|---|
 | 4, 5, 8, 9, 15 | broches de démarrage du C6 (8 : LED WS2812 ; 9 : bouton BOOT) |
-| 12, 13 | USB natif |
-| 16, 17 | UART0 : journal de la ROM au démarrage |
-| 21, 22 | trous intérieurs, inaccessibles |
+| 12, 13 | USB natif (trous intérieurs) |
+| 16, 17 | UART0 : journal de la ROM au démarrage (pastilles `TX` et `RX`) |
+| 21, 22, 23 | trous intérieurs, inutilisés |
 
 GPIO2 reste libre.
 
-**Repérage.** On repère chaque broche par sa sérigraphie. D'après le brief du
-boîtier de la ScreenBar (même carte), une rangée extérieure porte, dans l'ordre,
-`6 · 14 · 15 · 18 · 19 · 20 · 3V3 · GND · 5V`. GPIO7 se repère sur la sérigraphie.
+**Repérage.** On repère chaque broche par sa position (tableau ci-dessus), puis
+par sa sérigraphie ; le contrôle ci-dessous le confirme. Le brief du boîtier de
+la ScreenBar décrit une autre carte : sa rangée
+`6 · 14 · 15 · 18 · 19 · 20 · 3V3 · GND · 5V` ne vaut pas ici.
 
-**Contrôle électrique du module**, avant de le poser sur les barrettes : module
-seul sur l'USB du Mac, rien d'autre de branché, firmware `sonde` chargé. COM du
-multimètre sur `GND`, calibre 20 V continu.
+**Contrôle électrique du module**, juste après avoir soudé ses barrettes mâles,
+avant toute autre soudure du boîtier : module seul sur l'USB du Mac, rien
+d'autre de branché, firmware `sonde` chargé. COM du multimètre sur `GND`,
+calibre 20 V continu. Le plus sûr : module posé seul sur la breadboard vide,
+chaque broche lue dans un trou libre de sa colonne
+([FABRICATION.md](FABRICATION.md) §5.3).
 
 | Mesure | Attendu | Sinon |
 |---|---|---|
-| broche marquée 6 | environ 3,3 V (pull-up interne) | sérigraphie mal lue : ne rien souder |
-| broche marquée 7 | 0 V (sortie à l'état bas) | idem |
-| broche `5V` | noter la valeur : 5,0 V environ si VBUS est relié directement, 4,7 V environ s'il passe par une diode | |
+| broche `3V3` (3e de la rangée du haut) | environ 3,3 V | 0 V : COM n'est pas sur `GND`, ou le module ne démarre pas |
+| broche 6 (9e de la rangée du bas) | environ 3,3 V (pull-up interne) | brochage mal lu : ne rien souder |
+| broche 7 (10e de la rangée du bas, le coin) | 0 V (sortie à l'état bas) | idem |
+| broche `5V` (1re de la rangée du haut) | noter la valeur : 5,0 V environ si VBUS est relié directement, 4,7 V environ s'il passe par une diode | |
 
 ## 10. Générateur du banc
 
@@ -338,7 +373,10 @@ sur le boîtier ou sur la plaque d'essai.
 - **Collision (critère 5)** : l'étage d'injection de la sonde est monté au banc,
   son collecteur (470 Ω) aussi sur la LIGNE. Monté sur le boîtier de mesure, il
   en est retiré avant que le boîtier retourne sur la hotte (§6 : étape 7
-  seulement).
+  seulement). Sur le boîtier, le 4,7k de base et les 470 Ω s'enfichent sur des
+  contacts tulipe : les retirer suffit. `TP_Dp` vers la broche 7 lit alors
+  **OL** dans les deux sens ([FABRICATION.md](FABRICATION.md), contrôle c) du
+  boîtier).
 - **Retour sur la hotte** (boîtier de mesure seulement) : banc démonté, puis les
   contrôles du boîtier du §12 (lignes 11 à 17), puis la fiche XH 4 broches
   remise, hotte débranchée.
@@ -349,20 +387,24 @@ sur le boîtier ou sur la plaque d'essai.
 
 | Partie | Article | Quantité |
 |---|---|---|
-| Adaptateur | fiche 3 broches précâblée (XH, ou PH selon l'étape 0) | 1 |
-| Adaptateur | embase 3 broches (même série) | 1 |
+| Adaptateur | fiche XH 3 broches précâblée (le pas de `CN3` est du XH, étape 0) | 1 |
+| Adaptateur | embase XH 3 broches, droite (entrée par le dessus) | 1 |
 | Adaptateur | barrette mâle 2 broches 2,54 mm et cavalier (`J1`) | 1 |
-| Adaptateur | petite plaque à pastilles | 1 |
-| Câble de sortie | fil UL1007 ou UL1015, au moins 300 V, 4 couleurs | 4 × la longueur de l'étape 0 |
+| Adaptateur | coin de plaque à pastilles 5 × 7 cm, pastilles isolées : 8 × 7 trous, découpé | 1 |
+| Adaptateur | gaine thermorétractable d'environ 25 mm (2 × 4 cm), ruban Kapton, colle chaude, un collier | — |
+| Câble de sortie | fil UL1007 ou UL1015, au moins 300 V, 4 couleurs (noir, rouge, blanc, marron) | 4 × la longueur de l'étape 0 |
 | Câble de sortie | gaine VW-1, ou gaine thermorétractable de 3 à 6 mm (deux épaisseurs) | toute la longueur |
 | Câble de sortie | colliers | selon le cheminement |
 | Câble de sortie | fiche XH 4 broches précâblée (fils sertis), côté boîtier de mesure ; gaine thermorétractable pour les soudures | 1 |
-| Boîtier de mesure | plaque à pastilles | 1 |
+| Boîtier de mesure | plaque à pastilles 5 × 7 cm, 18 × 24 trous, pastilles isolées | 1 |
 | Boîtier de mesure | embase XH 4 broches (câble de sortie) | 1 |
 | Boîtier de mesure | picots (barrette mâle 2,54 mm) : `TP−`, `TP+`, `TP_Dp`, `TP_Dc` | 4 |
 | Boîtier de mesure | barrette mâle 2 broches et cavalier (`J2`) | 1 |
-| Boîtier de mesure | barrettes femelles 2,54 mm pour le SuperMini | 2 |
+| Boîtier de mesure | barrettes femelles 10 broches 2,54 mm pour le SuperMini ; barrettes mâles 10 broches à souder sur le module | 2 + 2 |
 | Boîtier de mesure | ESP32-C6 SuperMini (sonde) | 1 |
+| Boîtier de mesure | barrette tulipe sécable 2,54 mm, 20 ou 40 contacts : supports de `R_be` et de R7, contacts de R3, R5 et R6 | 1 |
+| Boîtier de mesure | fil isolé rigide en 5 couleurs (rouge, vert, bleu, noir, orange), fil nu étamé, gaine thermorétractable fine, ruban Kapton | — |
+| Boîtier de mesure | entretoises et vis en nylon, feuille isolante | 4 |
 | Boîtier de mesure | batterie USB, modèle vérifié (30 min en Wi-Fi sans coupure) | 1 |
 | Étage d'écoute | Q1 : BC547 ou 2N3904 ; 100k × 2 (série et `R_be`) ; 10k (collecteur) | 1 de chaque |
 | Étage d'écoute | `R_be` de rechange : 47k (`+` = 5 V), 15k (`+` = 12 V) | 1 de chaque |
@@ -370,12 +412,13 @@ sur le boîtier ou sur la plaque d'essai.
 | Mesures | résistance 10 kΩ / 2 W (étape 3a) | 1 |
 | Mesures | 47k (étape 3c) ; 10k (pull-up optionnel de l'étape 4) | 1 de chaque |
 | Mesures | diviseur de l'analyseur : 47k et 68k (5 V), ou 100k et 33k (12 V) | 1 paire |
+| Mesures | barrette mâle 3 broches `ANA` (analyseur, étape 5b) | 1 |
 | Mesures | grippe-fils ; fils à pinces crocodile ; aiguille fine | 2 ; 2 ; 1 |
 | Mesures | analyseur logique FX2, 24 MHz, 8 voies, avec PulseView | 1 |
-| Banc | ESP32-C6 SuperMini (générateur) | 1 |
+| Banc | ESP32-C6 SuperMini (générateur) et ses 2 barrettes mâles 10 broches | 1 |
 | Banc | Q3 : BC547 ou 2N3904 ; 4,7k (base) ; 10k (base-émetteur) | 1 de chaque |
 | Banc | pull-up de ligne : 10k (variante 1) ; 4,7k et 1 nF (variante 2) | 1 de chaque |
-| Banc | plaque d'essai sans soudure, si la sonde n'y est pas sur le boîtier de mesure (§10) | 1 |
+| Banc | plaque d'essai sans soudure : générateur, et la sonde si elle n'est pas sur le boîtier de mesure (§10) | 1 |
 | Banc | étage d'écoute de la plaque d'essai : BC547 ou 2N3904 ; 100k × 2 (série et `R_be`) ; 10k (collecteur) | 1 de chaque |
 | Banc | fils Dupont, fil de masse | déjà là |
 
@@ -419,14 +462,15 @@ encore posé, fiche XH 4 br. du câble de sortie enfichée sur le boîtier de me
 | 9 | fiche XH 4 br. du câble de sortie : contacts dans l'ordre `−`, `+`, `D_panneau`, `D_carte` (broches 1 à 4), comme l'embase du boîtier (§4) | visuel | détrompeur : elle n'entre que dans un sens |
 | 10 | fiche XH 4 br. retirée de l'embase : `TP−` vers la broche « − » de la fiche qui ira sur `CN3`, puis `TP_Dp` vers la broche `D` de l'embase de l'adaptateur | le plus élevé | OL : le boîtier est bien détaché ; remettre la fiche ensuite |
 
-**Boîtier de mesure** : sonde retirée des barrettes.
+**Boîtier de mesure** : sonde retirée des barrettes. Trous à toucher et contrôles
+complémentaires : [FABRICATION.md](FABRICATION.md) §9.
 
 | # | Contrôle | Calibre | Attendu |
 |---|---|---|---|
 | 11 | `TP−` vers la broche `GND` des barrettes | 200 Ω | environ 0 Ω |
 | 12 | broche `3V3` vers la broche 6 des barrettes | 20 kΩ | environ 10 kΩ (collecteur de Q1) |
-| 13 | `TP_Dp` vers la broche 6 des barrettes | le plus élevé | plus de 100 kΩ dans les deux sens : aucune liaison directe du bus vers une GPIO (règle 10) |
-| 14 | collecteur de Q1 sur la broche 6 ; le 4,7k de base de Q2 sur la broche 7 | visuel | GPIO6 et GPIO7 non interverties |
+| 13 | `TP_Dp` vers la broche 6 des barrettes, dans les deux sens (cordons inversés) | le plus élevé | **OL dans un sens au moins** : la jonction base-collecteur de Q1 bloque. Dans l'autre sens, plus de 100 kΩ, ou un peu moins (vers 90 kΩ) avec le diviseur de l'étape 5b. Une valeur finie dans les deux sens : liaison du bus vers une GPIO (règle 10) |
+| 14 | collecteur de Q1 sur la broche 6 ; le 4,7k de base de Q2 sur la broche 7 (6 et 7 : les deux dernières pastilles de la rangée du bas, côté antenne, §9) | visuel | GPIO6 et GPIO7 non interverties |
 | 15 | brochage de Q1 et Q2 | visuel | conforme à la fiche du transistor (BC547 = C-B-E, 2N3904 = E-B-C) |
 | 16 | coque de l'USB-C isolée ; USB-C accessible | visuel | |
 | 17 | contrôle électrique du module (§9) | 20 V continu | broche 6 à environ 3,3 V, broche 7 à 0 V |

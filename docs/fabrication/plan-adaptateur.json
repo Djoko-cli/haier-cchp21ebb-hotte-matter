@@ -1,0 +1,221 @@
+{
+ "carte": "adaptateur",
+ "colonnes": 8,
+ "rangees": 7,
+ "composants": [
+  {
+   "ref": "CN3",
+   "type": "fils_cn3",
+   "broches": {
+    "-": "A1",
+    "D": "E1",
+    "+": "G1"
+   },
+   "note": "Les 3 fils de la fiche XH 3 br. precablee qui va sur CN3, tous en COLONNE 1, entres cote composants : noir (-) en A1, blanc (D = D_carte) en E1, rouge (+) en G1. C1 reste VIDE : le blanc de CN3 va en E1, jamais en C1. Fiche preparee EN PREMIER : contacts noir, blanc, rouge dans l'ordre de la fiche du panneau, detrompeur du meme cote (WIRING 2 ; controle 8, d'apres la photo de CN3 de l'etape 0). Elle sert de GABARIT pour orienter XH3 et pour le controle d) : lui laisser 6 cm de fil au moins (sinon, faire d) avec une seconde fiche XH 3 br. preparee a l'identique)."
+  },
+  {
+   "ref": "S",
+   "type": "sortie4",
+   "broches": {
+    "1": "A2",
+    "3": "C2",
+    "4": "E2",
+    "2": "G2"
+   },
+   "note": "Cable de sortie, tous en COLONNE 2 : fil 1 noir (-) en A2, fil 3 blanc (D_panneau) en C2, fil 4 marron (D_carte) en E2, fil 2 rouge (+) en G2. Souder d'abord les 3 fils de CN3 (colonne 1), puis les 4 du cable (colonne 2) : un faisceau a la fois."
+  },
+  {
+   "ref": "J1",
+   "type": "barrette2",
+   "broches": {
+    "2": "C4",
+    "1": "D4"
+   },
+   "note": "Barrette male 2 br. verticale au centre, cavalier FERME par defaut (C4 = D_panneau, D4 = D_carte). Ouvert seulement pour la mesure 2 de l'etape 2b et pour l'architecture B. Seul le cavalier sort de la gaine ; en service, un capuchon de ruban Kapton le couvre et le tient (vibrations du moteur)."
+  },
+  {
+   "ref": "XH3",
+   "type": "xh3",
+   "broches": {
+    "-": "B7",
+    "D": "C7",
+    "+": "D7"
+   },
+   "note": "Embase XH 3 br. DROITE (entree par le dessus), au bord droit ; elle recoit la fiche du panneau. SON SENS EST IMPOSE : tournee de 180 degres, elle accepterait quand meme la fiche du panneau, mais noir sur D7 (+) et rouge sur B7 (-) : panneau alimente a l'envers. Methode, AVANT de la souder : enficher la fiche de CN3 (le gabarit) dans XH3, hors de la plaque ; poser l'ensemble, pattes de XH3 dans B7, C7, D7, fil NOIR du cote de B7 (vers la rangee A) ; marquer au feutre le cote du verrou ; retirer la fiche et souder XH3, corps plaque. Controle d) avant toute pose. Son corps couvre en partie les colonnes 6 et 8 : rien n'y est soude. Embase coudee (entree laterale), un seul sens possible, bouche vers le bord droit : presenter le gabarit avant toute soudure ; noir en B7, suivre ce plan ; noir en D7, permuter les rangees A et G (noirs de CN3 et du cable en G1 et G2, rouges en A1 et A2, etiquettes - et + echangees) ; le controle d) tranche dans les deux cas."
+  }
+ ],
+ "liaisons": [
+  {
+   "de": "A1",
+   "a": "A2",
+   "face": "dessous",
+   "genre": "pont",
+   "note": "- : noir de CN3 et fil 1 noir du cable"
+  },
+  {
+   "de": "A2",
+   "a": "A7",
+   "face": "dessous",
+   "genre": "fil_nu",
+   "note": "rangee A : le - seul"
+  },
+  {
+   "de": "A7",
+   "a": "B7",
+   "face": "dessous",
+   "genre": "pont",
+   "note": "- sur l'embase"
+  },
+  {
+   "de": "C2",
+   "a": "C4",
+   "face": "dessous",
+   "genre": "fil_nu",
+   "note": "D_panneau : fil 3 blanc vers J1.2"
+  },
+  {
+   "de": "C4",
+   "a": "C7",
+   "face": "dessous",
+   "genre": "fil_nu",
+   "note": "J1.2 vers le D de l'embase (panneau)"
+  },
+  {
+   "de": "E1",
+   "a": "E2",
+   "face": "dessous",
+   "genre": "pont",
+   "note": "D_carte : blanc de CN3 et fil 4 marron"
+  },
+  {
+   "de": "E2",
+   "a": "E4",
+   "face": "dessous",
+   "genre": "fil_nu",
+   "note": "rangee E : D_carte seul"
+  },
+  {
+   "de": "E4",
+   "a": "D4",
+   "face": "dessous",
+   "genre": "pont",
+   "note": "D_carte monte sur J1.1"
+  },
+  {
+   "de": "G1",
+   "a": "G2",
+   "face": "dessous",
+   "genre": "pont",
+   "note": "+ : rouge de CN3 et fil 2 rouge"
+  },
+  {
+   "de": "G2",
+   "a": "G7",
+   "face": "dessous",
+   "genre": "fil_nu",
+   "note": "rangee G : le + seul"
+  },
+  {
+   "de": "G7",
+   "a": "D7",
+   "face": "dessous",
+   "genre": "fil_nu",
+   "note": "+ : le meme fil que la rangee G, plie en G7, monte la colonne 7 jusqu'au + de l'embase (D7) ; pas d'etain en F7 ni en E7"
+  }
+ ],
+ "zones": [
+  {
+   "nom": "DECOUPE",
+   "trous": "A1-G8",
+   "note": "un COIN d'une plaque 5 x 7 : bords gauche et haut d'usine (marges de 5,8 et 3,4 mm). Couper a travers les trous de la colonne 9 et de la rangee H (colonne 8 et rangee G intactes), limer les deux bords coupes, arrondir les coins, casser l'arete du bord gauche, ou passent les 7 fils. Piece d'environ 26 x 21 mm. Hauteurs : XH3 7 mm, J1 et son cavalier environ 8,5 mm, plus 1,6 mm de plaque et 1 mm de soudures : section d'environ 21 x 11 mm, d'ou une gaine de 25 mm."
+  },
+  {
+   "nom": "FILS",
+   "trous": "A1-G2",
+   "note": "colonne 1 : fiche CN3 (3 fils) ; colonne 2 : cable de sortie (4 fils). Deux fils BLANCS : celui de CN3 (D_carte) en E1, celui du cable (D_panneau) en C2 ; les reperer au feutre avant de souder."
+  },
+  {
+   "nom": "SEPARATION - / D_panneau",
+   "trous": "B1-B6",
+   "note": "rangee vide"
+  },
+  {
+   "nom": "SEPARATION D_panneau / D_carte",
+   "trous": "D1-D3",
+   "note": "rangee vide sauf J1.1 (D4) et le + de l'embase (D7)"
+  },
+  {
+   "nom": "SEPARATION D_carte / +",
+   "trous": "F1-F6",
+   "note": "rangee vide"
+  },
+  {
+   "nom": "GAINE",
+   "trous": "A1-G8",
+   "note": "Avant : controles a) a d) faits, pattes et bouts de fils coupes au ras cote soudures, ruban Kapton sur toute la face soudures, un cordon de colle chaude autour du pied de XH3 cote composants. Deux gaines thermo de 25 mm environ, 4 cm chacune, l'une sur l'autre (comme la regle 5 pour le cable), chacune depassant de 1 cm sur les fils. Une fois chaque gaine retreinte, decouper au cutter, lame appuyee sur le plastique : le dessus du cavalier de J1, et le tour du corps de XH3 au ras de la plaque (rien ne doit gener la fiche du panneau ni son verrou). Par ces fenetres ne se voient que du plastique."
+  },
+  {
+   "nom": "FENETRE J1",
+   "trous": "C4-D4",
+   "note": "seul le cavalier sort ; en service, capuchon de ruban Kapton (deux tours) qui le tient ; retire pour la mesure 2 de l'etape 2b, remis apres."
+  },
+  {
+   "nom": "FENETRE XH3",
+   "trous": "B7-D7",
+   "note": "bouche de XH3 hors de la gaine : la fiche du panneau s'enfiche et se retire gaine posee, hotte debranchee (etapes 2, 4 et 5, retour a l'origine). Scenario 8 de l'etape 5 (fiche du panneau retiree, hotte rebranchee) : bouche fermee par un ruban Kapton."
+  },
+  {
+   "nom": "ARRET DE TRACTION",
+   "trous": "A1-G2",
+   "note": "colle chaude sur les isolants au bord gauche, cote composants (jamais sur une soudure nue) ; les deux gaines prennent les 7 fils sur 1 cm, serrees par un collier sur le faisceau."
+  }
+ ],
+ "etiquettes": [
+  {
+   "trou": "B3",
+   "texte": "J1 (ferme)"
+  },
+  {
+   "trou": "C1",
+   "texte": "Dp = blanc cable"
+  },
+  {
+   "trou": "F1",
+   "texte": "Dc = blanc CN3 (E1)"
+  },
+  {
+   "trou": "A8",
+   "texte": "- (noir du panneau, B7)"
+  },
+  {
+   "trou": "E8",
+   "texte": "+ (rouge du panneau, D7)"
+  },
+  {
+   "trou": "B1",
+   "texte": "coin A1 juste au-dessus (a marquer sur les deux faces)"
+  }
+ ],
+ "controles": [
+  "Avant pose, hotte debranchee (WIRING 12, lignes 1 a 10 : cable enfiche sur le boitier, sans sonde, J2 ouvert, sauf ligne 10), plus :",
+  "a) J1 ouvert : TP_Dp vers TP_Dc (ou D de XH3 vers D de la fiche CN3) : OL. Puis J1 ferme : environ 0 ohm.",
+  "b) J1 ouvert : TP_Dc vers la broche D de la fiche CN3 : environ 0 ohm ; TP_Dp vers la broche D de XH3 : environ 0 ohm (sinon les deux fils blancs sont intervertis).",
+  "c) pas de court-circuit entre -, D et + de XH3 (a refaire apres chaque soudure retouchee). Cable debranche du boitier : OL partout. Cable enfiche : - / + et D / + : OL ; D / - : 100 a 200 kohm (etage d'ecoute), 55 a 80 kohm si R6 et R7 sont en place (5b), seulement jamais environ 0 si R5 est en place (etape 7).",
+  "d) SENS DE XH3, en boucle : fiche de CN3 enfichee dans le XH3 de l'adaptateur. Entre - et + (A2 et G2, ou TP- et TP+ si le cable est enfiche) : OL. Environ 0 ohm : XH3 est a l'envers : ARRET, ne pas poser. Retirer la fiche ensuite. Avec une seconde fiche preparee a l'identique : son fil noir vers A2 et son rouge vers G2, environ 0 ohm. Pas d'etape 2c sans ce controle.",
+  "e) a la pose, puis a chaque remise de la fiche du panneau (etapes 2, 4 et 5) : son fil NOIR du cote marque - (B7) ; elle entre sans forcer et s'enclenche."
+ ],
+ "ordre_de_soudure": [
+  "1. Preparer la fiche CN3 (voir sa note) : c'est le gabarit de XH3.",
+  "2. Decouper le coin de plaque (zone DECOUPE), limer, marquer le coin A1 sur les deux faces.",
+  "3. XH3 orientee au gabarit (voir sa note), cote du verrou marque, puis soudee ; puis J1. Corps plaques sur la plaque.",
+  "4. Les 3 fils de la fiche CN3 (colonne 1), puis les 4 fils du cable (colonne 2).",
+  "5. Ponts et fils nus cote soudures, rangee par rangee (A, C, E, G), puis le + en colonne 7 (de G7 a D7).",
+  "6. Controles a) a d), puis les lignes 1 a 10 de WIRING 12 avec le boitier : tout avant la gaine.",
+  "7. Gaine (zone GAINE), capuchon Kapton sur J1 ; reecrire - et + sur la gaine, aux deux bouts de XH3.",
+  "8. Pose (etape 2) : fiche CN3 sur CN3, fiche du panneau dans XH3 (controle e). Elle s'enfiche et se retire gaine posee, hotte debranchee. Pas d'etape 2c sans le controle d)."
+ ],
+ "achats": [
+  "embase XH 3 br. DROITE (entree par le dessus)",
+  "gaine thermo de 25 mm environ (2 x 4 cm), ruban Kapton, colle chaude, un collier"
+ ]
+}
