@@ -34,4 +34,6 @@ $CXXP src/produit/hotte_etat.cpp src/produit/hotte_map.cpp tools/tests/test_hott
 "$OUT/test_hotte_map"
 $CXXP src/produit/surveillance.cpp tools/tests/test_surveillance.cpp -o "$OUT/test_surveillance"
 "$OUT/test_surveillance"
+$CXXP src/produit/hotte_etat.cpp src/produit/surveillance.cpp src/produit/json_out_produit.cpp tools/tests/test_json_produit.cpp -o "$OUT/test_json_produit"
+"$OUT/test_json_produit" "$OUT/test_json_produit_lignes.txt"
 echo "tests hote : OK"
