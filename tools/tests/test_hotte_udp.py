@@ -347,5 +347,74 @@ class SessionUdp(unittest.TestCase):
         self.assertEqual(self.sonde.recues, ["json 1", "injection on", "json 0"])
 
 
+class Produit(unittest.TestCase):
+    """Cle d'apres l'appareil (build de hello), resume du profil produit."""
+
+    def test_chemin_par_appareil(self):
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("HOTTE_CLE", None)
+            self.assertTrue(hotte_udp.chemin_cle().endswith(os.path.join(".config", "hotte-sonde", "cle")))
+            self.assertTrue(hotte_udp.chemin_cle("produit").endswith(os.path.join(".config", "hotte-produit", "cle")))
+            with self.assertRaises(SystemExit):
+                hotte_udp.chemin_cle("screenbar")
+        with mock.patch.dict(os.environ, {"HOTTE_CLE": "/tmp/une-cle"}):
+            self.assertEqual(hotte_udp.chemin_cle("produit"), "/tmp/une-cle")
+
+    def usb_hello(self, build):
+        """Module simule sur l'USB : 'id=<n> json hello' -> hello.base (build), puis reponse fin."""
+        attente = [b"reste d'une ligne\n> "]  # le decoupage se cale sur le premier LF
+
+        def ecrire(octets):
+            for ligne in octets.split(b"\n")[:-1]:
+                if ligne.startswith(b"id=") and ligne.endswith(b"json hello"):
+                    ident = int(ligne.split(b" ")[0][3:])
+                    if build:
+                        attente.append(RS + compact({"v": 1, "t": "hello", "n": 1, "ms": 5, "bloc": "base",
+                                                     "build": build}) + b"\r\n")
+                    attente.append(RS + compact({"v": 1, "t": "reponse", "n": 2, "ms": 6, "id": ident, "etape": "fin",
+                                                 "cmd": "json hello", "ok": True, "code": "ok", "duree_ms": 1}) + b"\r\n")
+
+        def lire(_delai):
+            return attente.pop(0) if attente else b""
+
+        return lire, ecrire
+
+    def test_lire_build(self):
+        for build in ("produit", "sonde"):
+            lire, ecrire = self.usb_hello(build)
+            self.assertEqual(hotte_udp.lire_build(lire, ecrire, 900001), build)
+        lire, ecrire = self.usb_hello(None)  # firmware sans build : rien
+        self.assertIsNone(hotte_udp.lire_build(lire, ecrire, 900002))
+        t = [0.0]
+
+        def horloge():
+            t[0] += 0.5
+            return t[0]
+
+        self.assertIsNone(hotte_udp.lire_build(lambda _d: b"", lambda _o: None, 900003, horloge=horloge))
+
+    def test_resume_produit(self):
+        r = hotte_udp.resume({"v": 1, "t": "sequence", "n": 4, "ms": 1, "id": 17, "origine": "app", "sujet": "ventilo",
+                              "issue": "echec", "cause": "non_confirme", "duree_ms": 2400, "appuis": 2})
+        self.assertEqual(r, "n=4 sequence id=17 app ventilo : echec, non_confirme (2 appuis, 2400 ms)")
+        r = hotte_udp.resume({"v": 1, "t": "etat", "n": 5, "ms": 1, "bloc": "hotte", "boot": "3FA2C901", "up_s": 1,
+                              "marche": "armee", "moteur": 2, "lampe": None, "confiance": "confirme", "source": "fil",
+                              "age_ms": 120})
+        self.assertEqual(r, "n=5 etat/hotte armee moteur 2 lampe ? (confirme, fil, lu il y a 120 ms)")
+        r = hotte_udp.resume({"v": 1, "t": "alerte", "n": 6, "ms": 1, "sujet": "temperature", "etape": "debut",
+                              "valeur": 71, "seuil": 70, "unite": "c"})
+        self.assertEqual(r, "n=6 alerte temperature debut : 71 c (seuil 70)")
+        r = hotte_udp.resume({"v": 1, "t": "hotte", "n": 7, "ms": 1,
+                              "avant": {"marche": "armee", "moteur": 0, "lampe": False},
+                              "apres": {"marche": "armee", "moteur": 2, "lampe": True},
+                              "origine": "panneau", "source": "fil", "confiance": "confirme"})
+        self.assertEqual(r, "n=7 hotte armee/0 -> armee/2 lampe on (panneau, fil)")
+        self.assertIn("puce 45 C", hotte_udp.resume({"v": 1, "t": "etat", "n": 8, "ms": 1, "bloc": "thermique",
+                                                      "temp_c": 45, "temp_max_c": 46, "temp_max_pose_c": 61,
+                                                      "alerte": False, "seuil_c": 70}))
+        # Un message de la sonde garde son resume.
+        self.assertEqual(hotte_udp.resume({"v": 1, "t": "fin", "n": 9, "ms": 1, "cause": "bail"}), "n=9 fin cause bail")
+
+
 if __name__ == "__main__":
     unittest.main()
