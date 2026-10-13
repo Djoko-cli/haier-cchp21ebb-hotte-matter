@@ -526,7 +526,7 @@ def ouvrir_client(hote, port, commandes, key, afficher, demander):
     except OSError as e:
         s.close()
         raise SystemExit(f"{adresse[0]} : {e.strerror}")
-    afficher(f"sonde {adresse[0]} port {adresse[1]}, cle {kid_of(key)}")
+    afficher(f"appareil {adresse[0]} port {adresse[1]}, cle {kid_of(key)}")
     c = Client(s, key, afficher)
     c.a_faire = list(commandes)
     if not c.ouvrir():

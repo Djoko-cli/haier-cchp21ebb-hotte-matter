@@ -304,7 +304,7 @@ class SessionUdp(unittest.TestCase):
         sortie = []
         stats = hotte_udp.cmd_session("127.0.0.1", self.sonde.port, ["capture tout"], 2.0, False, PSK, sortie.append)
         texte = "\n".join(sortie)
-        self.assertIn(f"sonde 127.0.0.1 port {self.sonde.port}, cle {KID}", texte)
+        self.assertIn(f"appareil 127.0.0.1 port {self.sonde.port}, cle {KID}", texte)
         self.assertIn("session 1234ABCD ouverte", texte)
         self.assertIn(">> id=1 json 1", texte)
         self.assertIn("n=0 hb", texte)
