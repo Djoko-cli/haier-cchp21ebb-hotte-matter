@@ -51,7 +51,7 @@ de la pile : Q7 à Q14, Q22, Q36, Q42.
 | `simu auto <s>` | endurance : un appui du panneau toutes les s secondes (B11) |
 | `matter journal` | écritures brutes de Maison, avec leur heure (B1, B2) |
 | `matter derniere 0\|1` | coupe ou remet la substitution de On (B2) |
-| `matter med 0\|1`, `matter tx <8..20>` | rôle Thread (au démarrage suivant), puissance (B12) |
+| `matter role 0\|1\|2`, `matter tx <8..20>` | rôle Thread au démarrage suivant (0 éligible routeur, 1 MED, 2 FED, le défaut), puissance (B12) |
 | `alim`, `alim arret`, `alim reprise` | tensions et température ; ADC arrêté ou repris (B15) |
 | `hotte regle temp_alerte_c <c>` | seuil d'alerte de la puce (B15) |
 | `json 1`, `json log 1` | mode machine, messages `log` |
@@ -166,11 +166,12 @@ correction est notée.
 ### B12. Puissance d'émission et rôle
 
 - **Méthode :** `json compteurs 10000` dans une session ; `matter tx 20`, puis
-  relecture après l'attache et après un changement de rôle ; `matter med 1`,
-  `reboot`, puis `matter med 0`, `reboot` : rôle réel, qualité de lien,
-  compteurs MAC ; sensibilité rapportée.
+  relecture après l'attache et après un changement de rôle ; `matter role 1`
+  (MED), `reboot`, `matter role 0` (éligible routeur), `reboot`, puis
+  `matter role 2` (FED), `reboot` : rôle réel, qualité de lien, compteurs MAC ;
+  sensibilité rapportée.
 - **Relevés :** puissance par défaut de la pile : ______ dBm ; tenue après
-  l'attache : ☐ ; rôle réel en `med 0` : ______ ; sensibilité : ______ dBm
+  l'attache : ☐ ; rôle réel en `role 0` : ______ ; en `role 2` : ______ ; sensibilité : ______ dBm
   (−120 attendus) ; lien : ______ (Q13, Q14).
 
 ### B13. Taille de l'image et tas

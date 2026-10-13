@@ -4,7 +4,7 @@
 //  l'automate et de la surveillance (bornes appliquees au chargement),
 //  derniere vitesse, dernier etat publie, maximum de temperature depuis la
 //  pose, essai de 24 h, et, dans le build simule, la hotte simulee. Les
-//  reglages Matter (med, tx_dbm, maxint, derniere) sont dans matter_hotte.cpp,
+//  reglages Matter (role, tx_dbm, maxint, derniere) sont dans matter_hotte.cpp,
 //  la cle H1 dans net_udp_thread.cpp. Tache loop seulement.
 // ===========================================================================
 #include "hotte_etat.h"

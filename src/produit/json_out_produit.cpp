@@ -401,7 +401,7 @@ void etatMatter(Writer &w, const MatterEtat &m) {
   w.u32("abonnements", m.abonnements);
   w.u32("ignore_ms", m.ignoreResteMs);
   w.u32("maxint_s", m.maxintS);
-  w.str("role_demarrage", m.med ? "med" : "routeur");
+  w.str("role_demarrage", m.role == 1 ? "med" : m.role == 2 ? "fed" : "routeur");
   if (m.txConnu) w.i32("tx_dbm", m.txDbm);
   else w.null("tx_dbm");
   w.boolean("derniere", m.derniere);

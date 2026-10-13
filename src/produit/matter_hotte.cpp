@@ -26,8 +26,8 @@
 
 using namespace chip::app::Clusters;
 
-#ifndef MATTER_THREAD_MED
-#define MATTER_THREAD_MED 0
+#ifndef MATTER_THREAD_ROLE
+#define MATTER_THREAD_ROLE 2
 #endif
 #ifndef HALO_WRAP_THREAD_DEVTYPE
 #define HALO_WRAP_THREAD_DEVTYPE 0
@@ -172,19 +172,24 @@ static void journal(const char *fmt, ...) {
 
 // --- Reglages (NVS produit) --------------------------------------------------
 
-static const char *const kNvsMed = "med";
+static const char *const kNvsRole = "role";
 static const char *const kNvsTx = "tx_dbm";
 static const char *const kNvsMaxInt = "maxint";
 static const char *const kNvsDerniere = "derniere";
-static uint8_t sMedProchain = MATTER_THREAD_MED ? 1 : 0;  // prochain demarrage
-static uint8_t sMedDemarrage = MATTER_THREAD_MED ? 1 : 0;  // ce demarrage
+// Role Thread : 0 eligible routeur, 1 MED, 2 FED (enfant a l'ecoute, jamais routeur).
+static_assert(MATTER_THREAD_ROLE <= 2, "MATTER_THREAD_ROLE : 0 routeur, 1 MED, 2 FED");
+static uint8_t sRoleProchain = MATTER_THREAD_ROLE;   // prochain demarrage
+static uint8_t sRoleDemarrage = MATTER_THREAD_ROLE;  // ce demarrage
 static bool sTxPose = false;  // tx_dbm present en NVS
 static int8_t sTxDbm = 20;
 
 static void chargerReglages() {
   Preferences p;
   if (!p.begin(kNvsProduit, false)) return;
-  if (p.isKey(kNvsMed)) sMedProchain = p.getUChar(kNvsMed, sMedProchain) ? 1 : 0;
+  if (p.isKey(kNvsRole)) {
+    const uint8_t v = p.getUChar(kNvsRole, sRoleProchain);
+    if (v <= 2) sRoleProchain = v;
+  }
   if (p.isKey(kNvsTx)) {
     const int8_t v = p.getChar(kNvsTx, 20);
     if (v >= 8 && v <= 20) {
@@ -198,7 +203,7 @@ static void chargerReglages() {
   }
   if (p.isKey(kNvsDerniere)) sSubstitution = p.getUChar(kNvsDerniere, 1) != 0;
   p.end();
-  sMedDemarrage = sMedProchain;
+  sRoleDemarrage = sRoleProchain;
 }
 
 template <class F>
@@ -210,10 +215,12 @@ static bool ecrireNvs(F ecrire) {
   return ok;
 }
 
-bool matterReglerMed(uint32_t v, bool *saved) {
-  if (v > 1) return false;
-  sMedProchain = (uint8_t)v;
-  *saved = ecrireNvs([&](Preferences &p) { return p.putUChar(kNvsMed, (uint8_t)v) == 1; });
+static const char *nomRole(uint8_t r) { return r == 1 ? "MED" : r == 2 ? "FED" : "routeur"; }
+
+bool matterReglerRole(uint32_t v, bool *saved) {
+  if (v > 2) return false;
+  sRoleProchain = (uint8_t)v;
+  *saved = ecrireNvs([&](Preferences &p) { return p.putUChar(kNvsRole, (uint8_t)v) == 1; });
   return true;
 }
 
@@ -250,7 +257,8 @@ bool matterReglerDerniere(bool on, bool *saved) {
 
 // --- Type Thread des l'init (benq, section b) ---------------------------------
 //  esp_matter::start demande le role routeur (_SetThreadDeviceType) ;
-//  l'enveloppe le remplace par MED quand 'matter med 1' est pose. Editeur de
+//  l'enveloppe le remplace par MED ('matter role 1') ou FED ('matter role 2',
+//  le defaut : enfant toujours a l'ecoute, jamais routeur). Editeur de
 //  liens : -Wl,--wrap=<symbole> et HALO_WRAP_THREAD_DEVTYPE vont ensemble.
 #if HALO_WRAP_THREAD_DEVTYPE
 using ThreadDeviceType = chip::DeviceLayer::ConnectivityManager::ThreadDeviceType;
@@ -261,8 +269,10 @@ __real__ZN4chip11DeviceLayer8Internal40GenericThreadStackManagerImpl_OpenThreadI
 extern "C" CHIP_ERROR
 __wrap__ZN4chip11DeviceLayer8Internal40GenericThreadStackManagerImpl_OpenThreadINS0_22ThreadStackManagerImplEE20_SetThreadDeviceTypeENS0_19ConnectivityManager16ThreadDeviceTypeE(
     void *self, ThreadDeviceType type) {
-  if (sMedDemarrage && type == chip::DeviceLayer::ConnectivityManager::kThreadDeviceType_Router)
-    type = chip::DeviceLayer::ConnectivityManager::kThreadDeviceType_MinimalEndDevice;
+  if (type == chip::DeviceLayer::ConnectivityManager::kThreadDeviceType_Router) {
+    if (sRoleDemarrage == 1) type = chip::DeviceLayer::ConnectivityManager::kThreadDeviceType_MinimalEndDevice;
+    if (sRoleDemarrage == 2) type = chip::DeviceLayer::ConnectivityManager::kThreadDeviceType_FullEndDevice;
+  }
   return __real__ZN4chip11DeviceLayer8Internal40GenericThreadStackManagerImpl_OpenThreadINS0_22ThreadStackManagerImplEE20_SetThreadDeviceTypeENS0_19ConnectivityManager16ThreadDeviceTypeE(
       self, type);
 }
@@ -530,7 +540,7 @@ void matterHotteEtat(jsonp::MatterEtat *m, uint32_t now) {
   const uint32_t fin = sBootMs + sIgnoreMs;
   m->ignoreResteMs = sGardeDemarrage && (int32_t)(fin - now) > 0 ? fin - now : 0;
   m->maxintS = sMaxIntCap;
-  m->med = sMedProchain;
+  m->role = sRoleProchain;
   m->txConnu = false;
   if (sDemarre && esp_openthread_lock_acquire(0)) {
     int8_t dbm = 0;
@@ -628,8 +638,8 @@ void matterHotteStatut(Print &out) {
     out.printf("  code manuel     : %s\n", Matter.getManualPairingCode().c_str());
     out.printf("  QR              : %s\n", Matter.getOnboardingQRCodeUrl().c_str());
   }
-  out.printf("  role            : %s au prochain demarrage (%s a celui-ci)\n", sMedProchain ? "MED" : "routeur",
-             sMedDemarrage ? "MED" : "routeur");
+  out.printf("  role            : %s au prochain demarrage (%s a celui-ci)\n", nomRole(sRoleProchain),
+             nomRole(sRoleDemarrage));
   out.printf("  tx              : %s\n", sTxPose ? String(String(sTxDbm) + " dBm (NVS)").c_str() : "valeur de la pile");
   out.printf("  maxint          : %u s%s\n", (unsigned)sMaxIntCap, sMaxIntCap ? "" : " (celui du controleur)");
   out.printf("  derniere        : substitution de On %s\n", sSubstitution ? "active" : "coupee (banc B2)");

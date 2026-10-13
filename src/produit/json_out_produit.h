@@ -145,7 +145,7 @@ struct MatterEtat {
   uint16_t abonnements = 0;
   uint32_t ignoreResteMs = 0;  // fenetre d'ignorance du demarrage restante
   uint16_t maxintS = 0;        // plafond des abonnements (0 : celui du controleur)
-  uint8_t med = 0;             // role au prochain demarrage : 0 routeur, 1 MED
+  uint8_t role = 0;            // role au prochain demarrage : 0 routeur, 1 MED, 2 FED
   bool txConnu = false;
   int8_t txDbm = 0;            // puissance d'emission en vigueur
   bool derniere = true;        // substitution de On par la derniere vitesse (3.3, regle 3)

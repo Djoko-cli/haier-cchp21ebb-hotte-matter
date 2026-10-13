@@ -210,6 +210,14 @@ static void testBlocs() {
              "\"fabriques\":1,\"abonnements\":2,\"ignore_ms\":0,\"maxint_s\":20,\"role_demarrage\":\"routeur\","
              "\"tx_dbm\":20,\"derniere\":true,\"ecritures\":0,\"reflets\":0,\"verrou_occupe\":0,\"ignores\":0}",
              "bloc matter");
+  // Role FED (le defaut du produit) : 'fed' ; MED : 'med'.
+  for (const auto &cas : {std::make_pair(2, "fed"), std::make_pair(1, "med")}) {
+    m.role = (uint8_t)cas.first;
+    blocEtat("matter", 17);
+    etatMatter(gW, m);
+    VERIF(finish(gW).find(std::string("\"role_demarrage\":\"") + cas.second + "\"") != std::string::npos);
+  }
+  m.role = 0;
   RadioCompteurs r;
   r.connu = true;
   r.role = "router";
@@ -331,7 +339,7 @@ static void testDistance() {
   const char *interdites[] = {
       "json",          "json cle nouvelle", "json cle efface", "json 1 bail 0", "json periode 1000",
       "hotte",         "hotte regle confirmation_ms 900",    "hotte ventilo",   "simu appui v1",
-      "matter",        "matter med 1",      "matter maxint 20", "matter derniere 0", "matter tx 7",
+      "matter",        "matter role 2",     "matter maxint 20", "matter derniere 0", "matter tx 7",
       "matter tx 21",  "matter tx",         "essai alim on",    "decommission",     "reboot maintenant",
       "injecte durees 750 750", "injection on", "capture on", "seuils 1", "wifi reseau mdp",
       "help",          "info",              "radio rafale 10",

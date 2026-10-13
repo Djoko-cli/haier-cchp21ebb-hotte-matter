@@ -150,7 +150,7 @@ l'avenant de l'étape 6.
 | `hotte regle <nom> <valeur>` | `ok`, `usage` ou `refuse` | non |
 | `reboot` | `ok`, puis redémarrage 500 ms plus tard (les valeurs NVS en attente d'abord) | **oui** (Q27) |
 | `matter tx 8..20` | `ok` | **oui**, 8 à 20 dBm (Q39) |
-| `matter med\|maxint\|derniere <v>`, `essai alim on\|off`, `simu ...`, `json cle ...`, `decommission` | `ok`, `usage` ou `refuse` | non |
+| `matter role\|maxint\|derniere <v>`, `essai alim on\|off`, `simu ...`, `json cle ...`, `decommission` | `ok`, `usage` ou `refuse` | non |
 | `radio rafale <1..30 s>` | `ok` ; datagrammes pleins non authentifiés vers la session, hors plafond de débit, dans la réserve de tampons | **seulement si `essai alim on` a été posé par l'USB** (effacé seul après 72 h) |
 | famille `json` | comme la ScreenBar | liste de la ScreenBar, plus `json trames` |
 

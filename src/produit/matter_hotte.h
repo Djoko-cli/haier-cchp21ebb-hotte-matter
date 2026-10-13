@@ -39,7 +39,7 @@ void matterHotteRadio(jsonp::RadioCompteurs *out);
 void matterHotteJournal(Print &out);
 
 // Reglages (NVS produit), USB seulement ; au prochain demarrage sauf tx et derniere.
-bool matterReglerMed(uint32_t v, bool *saved);     // 0 routeur (defaut), 1 MED des l'init
+bool matterReglerRole(uint32_t v, bool *saved);    // 0 routeur, 1 MED, 2 FED (defaut), des l'init suivant
 bool matterReglerTx(uint32_t dbm, bool *saved);    // 8..20, applique tout de suite
 bool matterReglerMaxint(uint32_t s, bool *saved);  // 0, ou 10..3600
 bool matterReglerDerniere(bool on, bool *saved);   // substitution de On (banc B2)

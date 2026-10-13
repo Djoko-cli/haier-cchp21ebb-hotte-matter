@@ -178,7 +178,7 @@ lignes qu'il change sont marquées « (amendement) ».
 | Code commun | repris de benq et de la sonde au besoin ; extraction au sous-projet 3 |
 | Compagnon | profil « hotte » : UDP sur Thread (H1, port 5480, nom SRP) comme la ScreenBar, et USB ; état, commandes vitesse et lumière, diagnostics ; **pas d'injection brute** ; valeur de `build` distincte de la sonde ; clé H1 posée par l'USB avant le montage |
 | Identité | fabricant `Djoko-CLI`, série `HOTTE-<MAC>`, discriminateur et code d'appairage distincts de la ScreenBar, VID/PID de test 0xFFF1/0x8000 ; étiquette QR et code manuel derrière le filtre ; remise à zéro par l'USB seulement ; aucun voyant ajouté |
-| Réseau Thread | routeur par défaut (éligible routeur, §6.1), MED en repli si la radio est juste ; puissance d'émission réglable |
+| Réseau Thread | **FED par défaut** (révision du 14/10/2026 : enfant toujours à l'écoute, jamais routeur) ; éligible routeur ou MED par `matter role` ; puissance d'émission réglable |
 | Carte | SuperMini violette, sous condition d'une mesure radio (§6.1) ; une SuperMini libre est réservée au module (amendement) |
 | Raccordement | traversée XH (fiche sur `CN3`, embase pour la fiche du panneau) ; rien de soudé sur la carte de la hotte ; montage réversible |
 | Alimentation | `+` de `CN3` → Schottky en série (**1N5819**, achetée) → fusible réarmable (**RXEF025 ou RXEF050**, achetés, choisi à l'essai de 24 h : amendement) → 470 µF (**16 V, 105 °C, 8×12**, acheté) → broche `5V` ; émission réduite si la marge est juste ; repli : rail 12 V permanent et abaisseur dédié, jamais `12V_LED` ; jamais d'USB branché sur le module raccordé à `CN3` |
@@ -750,7 +750,7 @@ ou l'app, les états intermédiaires (par exemple « armée » entre V2 et
 
 | Clé | Rôle | Défaut |
 |---|---|---|
-| `med` | rôle Thread : 0 éligible routeur (le nœud s'attache en enfant, puis devient routeur si la partition en manque), 1 MED dès l'init (enveloppe `_SetThreadDeviceType` de benq) | 0, par `-DMATTER_THREAD_MED=0` quand la NVS est vide (§4.7) |
+| `role` | rôle Thread : 0 éligible routeur (le nœud s'attache en enfant, puis devient routeur si la partition en manque), 1 MED, 2 FED (enfant toujours à l'écoute, données réseau complètes, jamais routeur), dès l'init suivant (enveloppe `_SetThreadDeviceType` de benq) | 2 (FED), par `-DMATTER_THREAD_ROLE=2` quand la NVS est vide (§4.7, révision du 14/10/2026) |
 | `tx_dbm` | puissance d'émission 802.15.4, appliquée au démarrage par `otPlatRadioSetTransmitPower`, sous le verrou OpenThread ; relue par `otPlatRadioGetTransmitPower` | absente : valeur de la pile (NV, Q13) ; posée avant le montage à la valeur retenue à l'essai de 24 h ; bornes 8..20 ; procédure du §6.1 |
 | `maxint` | plafond de l'intervalle maximal des abonnements | 20 s |
 | `derniere_v` | dernière vitesse (1..3) | 2 ; écrite quand le palier change et diffère, 10 s après le dernier changement |
@@ -791,11 +791,12 @@ Les quatre lignes du rôle Thread. Chez benq, les deux dernières vont ensemble
 défaut quand la NVS est vide vient de `-DMATTER_THREAD_MED`
 (`matter_bridge.cpp`, l. 598-599), que l'environnement `esp32c6thread` met à 1,
 soit MED (l. 147). Copié tel quel, le produit démarrerait en MED, contre la
-décision « routeur par défaut ». D'où :
+décision « routeur par défaut ». D'où (révision du 14/10/2026 : le réglage devient
+`MATTER_THREAD_ROLE`, 0 routeur, 1 MED, 2 FED, et le défaut passe au FED) :
 
 ```
     -DMATTER_NET_THREAD=1
-    -DMATTER_THREAD_MED=0
+    -DMATTER_THREAD_ROLE=2
     -DHALO_WRAP_THREAD_DEVTYPE=1      ; ou son nouveau nom
     -Wl,--wrap=_ZN4chip11DeviceLayer8Internal40GenericThreadStackManagerImpl_OpenThreadINS0_22ThreadStackManagerImplEE20_SetThreadDeviceTypeENS0_19ConnectivityManager16ThreadDeviceTypeE
 ```
@@ -1130,6 +1131,12 @@ comparative M1, faite hotte débranchée (§9.3) :
   qu'OpenThread prend comme plancher de bruit (`SubMac::GetNoiseFloor`). La
   qualité 3 (plus de 20 dB au-dessus de ce plancher) est donc atteinte dès
   −100 dBm, à 4 dB du seuil de réception. À relire au banc (B12, Q14).
+- **Révision du 14/10/2026 : FED par défaut.** Choix de l'utilisateur au banc
+  Matter : la hotte, débranchée de temps en temps et placée dans une carcasse
+  métallique, ne doit pas porter le maillage. Le FED (`matter role 2`) reste un
+  enfant toujours à l'écoute, sans la latence d'un nœud endormi. Les mesures
+  « avec le parent » valent donc par défaut. Éligible routeur et MED restent
+  disponibles (`matter role 0` et `1`) ; B12 compare les trois.
 - **« Routeur » veut dire éligible routeur :** le nœud s'attache d'abord en
   enfant, puis devient routeur si la partition compte moins de 16 routeurs, ce
   qui est le cas d'une maison ordinaire. Un routeur n'a pas de parent :

@@ -331,7 +331,7 @@ static void afficherSimu() {
 //  matter <reglage>, essai, radio rafale
 // ---------------------------------------------------------------------------
 
-static const char kUsageMatter[] = "usage : matter [med 0|1 | tx 8..20 | maxint 0|10..3600 | derniere 0|1 | journal]";
+static const char kUsageMatter[] = "usage : matter [role 0|1|2 | tx 8..20 | maxint 0|10..3600 | derniere 0|1 | journal]";
 
 static Resultat faireMatter(char *args) {
   char *valeur = splitWord(args);
@@ -341,8 +341,8 @@ static Resultat faireMatter(char *args) {
   if (*reste || !lireU32(valeur, &v)) return {false, "usage", kUsageMatter};
   bool ok = false;
   const char *apres = nullptr;
-  if (!strcmp(args, "med")) {
-    ok = matterReglerMed(v, &saved);
+  if (!strcmp(args, "role")) {
+    ok = matterReglerRole(v, &saved);
     apres = "role applique au prochain demarrage ('reboot')";
   } else if (!strcmp(args, "tx")) {
     ok = matterReglerTx(v, &saved);
@@ -488,7 +488,7 @@ static const Commande kCommandes[] = {
 #if PILOTE_SIMULE
   {"simu", cmdSimu, "simu [reglage | appui | coupure | panne | apres_demarrage] : hotte simulee"},
 #endif
-  {"matter", cmdMatter, "matter [med 0|1 | tx 8..20 | maxint s | derniere 0|1 | journal]"},
+  {"matter", cmdMatter, "matter [role 0|1|2 | tx 8..20 | maxint s | derniere 0|1 | journal]"},
   {"alim", cmdAlim, "alim [arret | reprise] : tensions et temperature de la puce"},
   {"thermique", cmdThermique, "thermique raz : maximum depuis la pose remis a zero"},
   {"essai", cmdEssai, "essai alim on|off : essai de 24 h (radio rafale permise a distance)"},
