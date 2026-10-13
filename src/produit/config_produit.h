@@ -31,12 +31,15 @@ constexpr uint16_t kPortUdp = 5480;             // UDP sur Thread, comme la Scre
 #define MATTER_HW_VERSION_STRING "C6 SuperMini + pilote " PILOTE_LIGNE_TEXTE
 
 // --- Codes d'appairage (8.2) -------------------------------------------------
-// Tires au hasard le 29/09/2026 (module secrets de Python), distincts de ceux
-// de la ScreenBar (0xF00, 20202021). Publics, comme les siens : ils ne servent
-// que pendant la fenetre de mise en service. JAMAIS changes apres la premiere
-// mise en service.
-constexpr uint16_t kDiscriminateur = 0x123;
-constexpr uint32_t kCodeAppairage = 11223344;
+// Tires au hasard par tools/codes_appairage.py dans codes_appairage.h, fichier
+// LOCAL ignore par git : jamais de code d'appairage dans le depot (regle
+// d'anonymat du 12/10/2026). Distincts de ceux de la ScreenBar (0xF00,
+// 20202021). JAMAIS changes apres la premiere mise en service.
+#if __has_include("codes_appairage.h")
+#include "codes_appairage.h"
+#else
+#error "codes_appairage.h absent : lancer python3 tools/codes_appairage.py (fichier local, ignore par git)"
+#endif
 
 // Regle de la pile (chip::PayloadContents::IsValidSetupPIN, esp_matter 1.5.1,
 // lue dans libespressif__esp_matter.a le 29/09) : 1..99999998, sauf 11111111

@@ -1621,10 +1621,15 @@ même carte : `build` les distingue.
   des valeurs interdites par Matter (00000000, 11111111 à 99999999, 12345678,
   87654321 : liste citée de mémoire, NV, Q32).
 - Posés par `Matter.setSetupDiscriminator()` et `Matter.setSetupPasscode()`
-  **avant** `Matter.begin()`, dans `config_produit.h`.
-- **Jamais changés après la première mise en service.** Ils sont publics dans le
-  dépôt, comme ceux de la ScreenBar : ils ne servent que pendant la fenêtre de
-  mise en service, nœud non mis en service, à portée de BLE.
+  **avant** `Matter.begin()`, depuis `config_produit.h`.
+- **Jamais changés après la première mise en service.**
+- **Hors du dépôt** (révision du 13/10/2026, règle d'anonymat : jamais de code
+  d'appairage dans un fichier commité). `tools/codes_appairage.py` les tire une
+  fois dans `src/produit/codes_appairage.h`, fichier local ignoré par git, et
+  ajoute le code à la liste de la garde (`garde.local.txt`). Sans ce fichier, la
+  compilation s'arrête sur un `#error`. Les tests hôte prennent un en-tête
+  factice (`tools/tests/factices/`). Les premiers codes, publiés avant cette
+  révision, sont abandonnés : le nœud n'avait jamais été mis en service.
 - Deux nœuds 0xFFF1/0x8000 dans la même maison : cohabitation vérifiée au banc
   (NV, Q12).
 

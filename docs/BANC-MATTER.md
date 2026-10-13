@@ -11,7 +11,11 @@ de la pile : Q7 à Q14, Q22, Q36, Q42.
 - **Carte :** la SuperMini libre réservée au module (Q23, tranchée le 29/09).
   **Jamais** la ScreenBar (`MAC-SCREENBAR`) ni la sonde de maillage Thread
   de benq (`MAC-SONDE-BENQ`) : on relève la MAC par `info` avant tout
-  flash, et l'on s'arrête si c'est l'une d'elles.
+  flash, et l'on s'arrête si c'est l'une d'elles. Leurs vraies MAC sont dans
+  `garde.local.txt` (local, ignoré par git), jamais dans le dépôt.
+- Les codes d'appairage sont tirés une fois par `python3 tools/codes_appairage.py`
+  dans `src/produit/codes_appairage.h`, fichier local ignoré par git (sans lui,
+  la compilation s'arrête). Jamais changés ensuite, jamais commités.
 - Le port série s'ouvre sans redémarrer le C6 : `pio device monitor` ou
   `tools/serie_enregistre.py` (DTR = RTS = 0 en un seul appel). Jamais un
   script pyserial qui pose DTR ou RTS avant l'ouverture.
@@ -27,7 +31,7 @@ de la pile : Q7 à Q14, Q22, Q36, Q42.
 |---|---|---|---|
 | P1 | versions relevées : iOS de l'iPhone, tvOS ou HomePod des routeurs de bordure, macOS | réglages des appareils | ☐ |
 | P2 | MAC de la carte relevée par `info` (firmware quelconque), différente de `MAC-SCREENBAR` et `MAC-SONDE-BENQ` | `pio device monitor`, puis `info` | ☐ |
-| P3 | effacement complet, puis premier flash | `~/.platformio/penv/bin/pio run -e produit -t erase` puis `-t upload` | ☐ |
+| P3 | codes d'appairage tirés (une seule fois), effacement complet, puis premier flash | `python3 tools/codes_appairage.py`, puis `~/.platformio/penv/bin/pio run -e produit -t erase` puis `-t upload` | ☐ |
 | P4 | démarrage lu : version, pilote `simule`, codes d'appairage | `info`, `matter` | ☐ |
 | P5 | clé H1 posée par l'USB, rangée dans `~/.config/hotte-produit/cle` | `python3 tools/hotte_udp.py cle <port>` (port libre) | ☐ |
 | P6 | route Thread du Mac | assistant de benq, `tools/macos/halo-routes` (commit `c58a506`) | ☐ |

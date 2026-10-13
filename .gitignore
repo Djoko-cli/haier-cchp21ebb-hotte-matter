@@ -5,3 +5,7 @@ logs/
 __pycache__/
 # Journaux de pio device monitor (log2file) : ils peuvent contenir une session complete.
 platformio-device-monitor-*.log
+# Anonymat : vrais identifiants (garde) et codes d'appairage, locaux seulement.
+garde.local.txt
+src/produit/codes_appairage.h
+.superpowers/
