@@ -16,13 +16,13 @@ Toute la suite du banc part de cette carte. Rien n'est relié à la hotte.
 **Fichiers :**
 - Modifier : `docs/BANC-MATTER.md`
 
-- [ ] **Étape 1 : Relever les versions (P1)**
+- [x] **Étape 1 : Relever les versions (P1)**
 
 L'utilisateur relève la version d'iOS de son iPhone, de tvOS ou des HomePod qui
 servent de routeurs de bordure, et de macOS. Les noter dans la ligne P1 de
 `docs/BANC-MATTER.md`.
 
-- [ ] **Étape 2 : Identifier la carte (P2)**
+- [x] **Étape 2 : Identifier la carte (P2)**
 
 L'utilisateur branche la SuperMini libre sur l'USB du Mac. Trouver son port
 (`ls /dev/cu.usbmodem*`), puis lire sa MAC sans rien écrire :
@@ -35,7 +35,7 @@ L'utilisateur branche la SuperMini libre sur l'USB du Mac. Trouver son port
 (sonde de maillage de benq)** : ce n'est pas la bonne carte. Noter la MAC en
 P2.
 
-- [ ] **Étape 3 : Effacer et flasher (P3)**
+- [x] **Étape 3 : Effacer et flasher (P3)**
 
 ```bash
 ~/.platformio/penv/bin/pio run -e produit -t erase --upload-port <port>
@@ -45,7 +45,7 @@ P2.
 Attendu : `SUCCESS` deux fois. Le premier flash d'une image Thread se fait
 toujours après un effacement (spec 6.8).
 
-- [ ] **Étape 4 : Lire le démarrage (P4)**
+- [x] **Étape 4 : Lire le démarrage (P4)**
 
 ```bash
 ~/.platformio/penv/bin/pio device monitor -p <port> -b 115200
@@ -56,7 +56,7 @@ Taper `info`, puis `matter`, `hotte`, `simu`. Attendu : `firmware 0.1.0-<commit>
 le code manuel et le QR, la hotte simulée `eteinte`, la confiance `confirme`
 dès la première répétition. Fermer le moniteur (Ctrl-C).
 
-- [ ] **Étape 5 : Poser la clé H1 (P5)**
+- [x] **Étape 5 : Poser la clé H1 (P5)**
 
 Le port libre :
 
@@ -68,7 +68,7 @@ Attendu : `cle rangee dans ~/.config/hotte-produit/cle (empreinte XXXXXXXX)` :
 l'appareil a été lu dans `hello` (`build` = `produit`). La clé n'est jamais
 affichée.
 
-- [ ] **Étape 6 : Garder la route Thread du Mac (P6)**
+- [x] **Étape 6 : Garder la route Thread du Mac (P6)**
 
 L'utilisateur vérifie que l'assistant de route de benq est installé :
 `sudo launchctl print system/fr.djoko.halo.routes` (commande tapée par l'utilisateur :
@@ -76,14 +76,14 @@ un agent ne lance jamais `sudo`). Sinon, l'utilisateur l'installe :
 `sudo sh ~/Documents/Dev/esp32/benq/tools/macos/halo-routes/installer.sh`
 (voir son `README.fr.md`).
 
-- [ ] **Étape 7 : Mettre en service dans Maison (P7)**
+- [x] **Étape 7 : Mettre en service dans Maison (P7)**
 
 L'utilisateur, dans Maison : « Ajouter un accessoire », le code manuel donné par
 `matter` (ou le QR), avertissement « non certifié » accepté. Puis :
 accessoires **séparés**, noms « Hotte » et « Éclairage hotte », pièce
 « Cuisine » (spec 3.5). Un agent ne tape jamais ce code.
 
-- [ ] **Étape 8 : Joindre le nœud par Thread (P8)**
+- [x] **Étape 8 : Joindre le nœud par Thread (P8)**
 
 Par l'USB (moniteur ouvert) : `json etat`, puis relever dans la ligne
 `reseau` `ip` le nom SRP (`srp.nom`) et l'adresse `omr`. Fermer le moniteur,

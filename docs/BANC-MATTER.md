@@ -29,14 +29,28 @@ de la pile : Q7 à Q14, Q22, Q36, Q42.
 
 | # | Étape | Commande | Fait |
 |---|---|---|---|
-| P1 | versions relevées : iOS de l'iPhone, tvOS ou HomePod des routeurs de bordure, macOS | réglages des appareils | ☐ |
-| P2 | MAC de la carte relevée par `info` (firmware quelconque), différente de `MAC-SCREENBAR` et `MAC-SONDE-BENQ` | `pio device monitor`, puis `info` | ☐ |
-| P3 | codes d'appairage tirés (une seule fois), effacement complet, puis premier flash | `python3 tools/codes_appairage.py`, puis `~/.platformio/penv/bin/pio run -e produit -t erase` puis `-t upload` | ☐ |
-| P4 | démarrage lu : version, pilote `simule`, codes d'appairage | `info`, `matter` | ☐ |
-| P5 | clé H1 posée par l'USB, rangée dans `~/.config/hotte-produit/cle` | `python3 tools/hotte_udp.py cle <port>` (port libre) | ☐ |
-| P6 | route Thread du Mac | assistant de benq, `tools/macos/halo-routes` (commit `c58a506`) | ☐ |
-| P7 | mise en service dans Maison par l'utilisateur (code manuel ou QR de `matter`), avertissement « non certifié » accepté ; accessoires séparés, noms « Hotte » et « Éclairage hotte », pièce « Cuisine » | Maison | ☐ |
-| P8 | nom SRP et adresse OMR relevés ; session UDP ouverte | `json etat` par l'USB (bloc `reseau` `ip`), puis `python3 tools/hotte_udp.py --appareil produit session <nom SRP ou IPv6> --duree 30` | ☐ |
+| P1 | versions relevées : iOS de l'iPhone, tvOS ou HomePod des routeurs de bordure, macOS (14/10 : iOS 27.0.1, HomePod 27.0, pas d'Apple TV, macOS 27.0.1) | réglages des appareils | ☑ 14/10 |
+| P2 | MAC de la carte relevée par `info` (firmware quelconque), différente de `MAC-SCREENBAR` et `MAC-SONDE-BENQ` | `pio device monitor`, puis `info` | ☑ 14/10 |
+| P3 | codes d'appairage tirés (une seule fois), effacement complet, puis premier flash | `python3 tools/codes_appairage.py`, puis `~/.platformio/penv/bin/pio run -e produit -t erase` puis `-t upload` | ☑ 14/10 |
+| P4 | démarrage lu : version, pilote `simule`, codes d'appairage | `info`, `matter` | ☑ 14/10 |
+| P5 | clé H1 posée par l'USB, rangée dans `~/.config/hotte-produit/cle` | `python3 tools/hotte_udp.py cle <port>` (port libre) | ☑ 14/10 |
+| P6 | route Thread du Mac | assistant de benq, `tools/macos/halo-routes` (commit `c58a506`) | ☑ 14/10 |
+| P7 | mise en service dans Maison par l'utilisateur (code manuel ou QR de `matter`), avertissement « non certifié » accepté ; accessoires séparés, noms « Hotte » et « Éclairage hotte », pièce « Cuisine » | Maison | ☑ 14/10 |
+| P8 | nom SRP et adresse OMR relevés ; session UDP ouverte | `json etat` par l'USB (bloc `reseau` `ip`), puis `python3 tools/hotte_udp.py --appareil produit session <nom SRP ou IPv6> --duree 30` | ☑ 14/10 |
+
+**Déroulé du 14/10/2026 :**
+- **Carte :** le générateur du banc 0 (choix de l'utilisateur), libre puisque
+  le banc 16 attend une pièce ; ni la ScreenBar ni la sonde de maillage de benq.
+  **Avant le banc 16 :** `decommission`, effacement, puis reflash en
+  `generateur`.
+- **Rôle :** passé au FED par défaut avant la mise en service (`matter role`,
+  spec §6.1, révision du 14/10).
+- **Premier ajout dans Maison raté** (« ne répond pas », nœud resté non mis en
+  service) ; le second, après `reboot` et suppression de l'accessoire fantôme,
+  a réussi : mis en service, 2 abonnements actifs.
+- **Session UDP par Thread :** ouverte (adresse OMR, nom SRP présent ; ni l'un
+  ni l'autre ne sont notés ici). Puce à 59 °C au repos sur le banc (max 64 °C,
+  seuil 70 °C) : à suivre en B15.
 
 ## 3. Commandes utiles (USB)
 
