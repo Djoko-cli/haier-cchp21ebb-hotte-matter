@@ -26,6 +26,10 @@ void matterHottePoll(hotte::Automate &a, uint32_t now);
 // Etat a publier (Action::Publier de l'automate) : reflete au prochain tour
 // ou la boite est vide et le verrou de la pile libre.
 void matterHottePublier(const hotte::Etat &e);
+// Republie le dernier etat publie, meme inchange : apres chaque sequence, les
+// controleurs voient toujours le palier reel (0, 33, 66 ou 100 %), jamais la
+// valeur intermediaire d'un geste (banc Matter, B1, 14/10/2026).
+void matterHotteRealigner();
 // Derniere vitesse de l'automate : copie atomique lue par la tache CHIP pour
 // la substitution de On (3.3, regle 3).
 void matterHotteDerniere(hotte::Moteur m);

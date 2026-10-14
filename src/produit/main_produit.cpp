@@ -179,6 +179,9 @@ static void actions(uint32_t now) {
         texte("[hotte] sequence %s : %s%s%s (%u appuis, %lu ms)", hotte::texte(a.sujet), hotte::texte(a.issue),
               a.cause == hotte::Cause::Aucune ? "" : ", ", a.cause == hotte::Cause::Aucune ? "" : hotte::texte(a.cause),
               (unsigned)a.appuis, (unsigned long)a.dureeMs);
+        // Determinisme (B1) : apres toute sequence, sauf remplacee (la suivante
+        // republiera), les controleurs revoient le palier reel, meme inchange.
+        if (a.issue != hotte::Issue::Remplacee) matterHotteRealigner();
         break;
       case hotte::Action::Changement:
         jsonHotte(a.avant, a.etat, a.origine);

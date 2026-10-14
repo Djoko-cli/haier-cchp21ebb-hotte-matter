@@ -29,6 +29,12 @@ using namespace chip::app::Clusters;
 #ifndef MATTER_THREAD_ROLE
 #define MATTER_THREAD_ROLE 2
 #endif
+// Essai B14 (banc Matter) : FanControl avec MultiSpeed, SpeedMax = 3. La pile
+// tient la correspondance vitesse <-> pourcentage (1 <-> 33, 2 <-> 66,
+// 3 <-> 100) : le noeud recoit toujours des pourcentages.
+#ifndef HOTTE_MULTISPEED
+#define HOTTE_MULTISPEED 0
+#endif
 #ifndef HALO_WRAP_THREAD_DEVTYPE
 #define HALO_WRAP_THREAD_DEVTYPE 0
 #endif
@@ -48,14 +54,16 @@ static volatile uint8_t sModeDerniere = hotte::kFanMedium;  // FanMode de la der
 static volatile bool sSubstitution = true;                  // 'matter derniere 0|1'
 static volatile uint16_t sMaxIntCap = 20;                   // plafond des abonnements neufs (s)
 
-// Journal des ecritures brutes (banc Matter, B2) : rempli sous sBoiteMux.
+// Journal des ecritures brutes (banc Matter, B2) : rempli sous sBoiteMux. Il
+// note aussi nos reflets (B1, 14/10/2026) : delai entre la derniere ecriture
+// d'un controleur et la republication du palier reel.
 struct Brute {
   uint32_t ms;
   uint32_t attr;
   uint8_t valeur;
-  bool nulle, substituee;
+  bool nulle, substituee, reflet;
 };
-static constexpr uint8_t kJournal = 16;
+static constexpr uint8_t kJournal = 64;  // divise 256 (sJournalN tourne modulo 256)
 static Brute sJournal[kJournal];
 static uint8_t sJournalN = 0;  // ecritures depuis le demarrage, modulo 256 (place = n % kJournal)
 
@@ -63,13 +71,14 @@ static uint8_t sJournalN = 0;  // ecritures depuis le demarrage, modulo 256 (pla
 // les ordres des controleurs arrivent dans la tache CHIP.
 static inline bool ownEcho() { return xTaskGetCurrentTaskHandle() == sLoopTask; }
 
-static void noterBrute(uint32_t attr, uint8_t v, bool nulle, bool substituee) {
+static void noterBrute(uint32_t attr, uint8_t v, bool nulle, bool substituee, bool reflet = false) {
   Brute &b = sJournal[sJournalN % kJournal];
   b.ms = millis();
   b.attr = attr;
   b.valeur = v;
   b.nulle = nulle;
   b.substituee = substituee;
+  b.reflet = reflet;
   sJournalN++;
 }
 
@@ -363,6 +372,20 @@ void matterHotteBegin(const hotte::Etat &etatInitial, hotte::Moteur derniereVite
     jsonTexteUsb("!! selectNetwork(THREAD) refuse : le noeud resterait en Wi-Fi");
   const hotte::Reflet r = hotte::reflet(etatInitial);
   sFan.begin(r.pourcent, (MatterFan::FanMode_t)r.fanMode, MatterFan::FAN_MODE_SEQ_OFF_LOW_MED_HIGH);
+#if HOTTE_MULTISPEED
+  {
+    using namespace esp_matter;
+    endpoint_t *ep = endpoint::get(node::get(), sFan.getEndPointId());
+    cluster_t *fc = ep ? cluster::get(ep, FanControl::Id) : nullptr;
+    cluster::fan_control::feature::multi_speed::config_t ms;
+    ms.speed_max = 3;
+    const uint8_t s = (uint8_t)(r.pourcent == 0 ? 0 : r.pourcent <= 33 ? 1 : r.pourcent <= 66 ? 2 : 3);
+    ms.speed_setting = s;
+    ms.speed_current = s;
+    if (!fc || cluster::fan_control::feature::multi_speed::add(fc, &ms) != ESP_OK)
+      jsonTexteUsb("!! MultiSpeed refuse : le ventilateur reste en pourcentage seul");
+  }
+#endif
   sLampe.begin(r.lampe);
   sLampe.onChangeOnOff(onLampe);
   sFan.onIdentify(onIdentify);
@@ -388,6 +411,8 @@ void matterHotteBegin(const hotte::Etat &etatInitial, hotte::Moteur derniereVite
   sRefletBase = etatInitial.confiance == hotte::Confiance::Inconnu;
   sAPublier = true;
 }
+
+void matterHotteRealigner() { sAPublier = true; }
 
 void matterHottePublier(const hotte::Etat &e) {
   if (e.confiance == hotte::Confiance::Inconnu) return;  // rien de nouveau n'est publie (5.1)
@@ -421,8 +446,14 @@ static void aligner(MatterEndPoint &ep, uint32_t cl, uint32_t attr, uint8_t voul
     return;
   if (((int)v.type & ~ESP_MATTER_VAL_NULLABLE_BASE) == ESP_MATTER_VAL_TYPE_BOOLEAN) v.val.b = voulu != 0;
   else v.val.u8 = voulu;
-  if (ep.updateAttributeVal(cl, attr, &v)) sStats.ecritures++;
-  else sStats.echecs++;
+  if (ep.updateAttributeVal(cl, attr, &v)) {
+    sStats.ecritures++;
+    portENTER_CRITICAL(&sBoiteMux);
+    noterBrute(attr, voulu, false, false, true);
+    portEXIT_CRITICAL(&sBoiteMux);
+  } else {
+    sStats.echecs++;
+  }
 }
 
 // Sous le verrou de la pile, sans attendre : occupe, nouvel essai au tour
@@ -619,14 +650,15 @@ void matterHotteJournal(Print &out) {
   for (uint8_t i = 0; i < kJournal; i++) copie[i] = sJournal[i];
   portEXIT_CRITICAL(&sBoiteMux);
   const uint8_t nb = n < kJournal ? n : kJournal;
-  out.printf("ecritures brutes (%u dernieres) :\n", nb);
+  out.printf("ecritures brutes et reflets (%u derniers) :\n", nb);
   for (uint8_t k = 0; k < nb; k++) {
     const Brute &b = copie[(uint8_t)(n - nb + k) % kJournal];
     const char *quoi = b.attr == FanControl::Attributes::FanMode::Id          ? "FanMode"
                        : b.attr == FanControl::Attributes::PercentSetting::Id ? "PercentSetting"
+                       : b.attr == FanControl::Attributes::PercentCurrent::Id ? "PercentCurrent"
                                                                                : "OnOff";
-    out.printf("  %8lu ms  %-14s %s%s\n", (unsigned long)b.ms, quoi, b.nulle ? "null" : String(b.valeur).c_str(),
-               b.substituee ? " (On -> derniere vitesse)" : "");
+    out.printf("  %8lu ms  %s %-14s %s%s\n", (unsigned long)b.ms, b.reflet ? "<- reflet" : "-> ecrit ", quoi,
+               b.nulle ? "null" : String(b.valeur).c_str(), b.substituee ? " (On -> derniere vitesse)" : "");
   }
 }
 
@@ -641,6 +673,7 @@ void matterHotteStatut(Print &out) {
   out.printf("  role            : %s au prochain demarrage (%s a celui-ci)\n", nomRole(sRoleProchain),
              nomRole(sRoleDemarrage));
   out.printf("  tx              : %s\n", sTxPose ? String(String(sTxDbm) + " dBm (NVS)").c_str() : "valeur de la pile");
+  out.printf("  vitesses        : %s\n", HOTTE_MULTISPEED ? "MultiSpeed, 3 crans (essai B14)" : "pourcentage seul");
   out.printf("  maxint          : %u s%s\n", (unsigned)sMaxIntCap, sMaxIntCap ? "" : " (celui du controleur)");
   out.printf("  derniere        : substitution de On %s\n", sSubstitution ? "active" : "coupee (banc B2)");
   out.printf("  abonnements     : %lu actifs, %lu demandes, %lu plafonnes\n",
