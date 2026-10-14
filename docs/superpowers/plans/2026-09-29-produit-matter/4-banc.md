@@ -97,7 +97,7 @@ Attendu : `hello`, `config`, puis `etat/hotte`, `etat/thermique`, ... toutes
 les 2 s. Cocher P1 à P8 dans `docs/BANC-MATTER.md` ; y noter le nom SRP (pas
 d'adresse IP de la maison).
 
-- [ ] **Étape 9 : Committer**
+- [x] **Étape 9 : Committer**
 
 ```bash
 git add docs/BANC-MATTER.md

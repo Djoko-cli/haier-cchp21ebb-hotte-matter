@@ -84,6 +84,29 @@ correction est notée.
   d'un même geste : ______ ms (min) à ______ ms (max).
 - **Décide :** `lissage_calme_ms` (plus long que l'écart d'un geste) et
   `lissage_plafond_ms` (Q8).
+- **Résultats du 14/10/2026** (iOS 27.0.1, firmware FED, vidéos d'écran
+  gardées par l'utilisateur, hors dépôt) :
+  - **Curseur continu**, en pourcentage. Maison n'écrit que `PercentSetting`
+    (plus `FanMode 0` à 0 %).
+  - **Geste lent :** une écriture toutes les 250 ms environ, écart de 216 ms
+    (min) à 422 ms (max). **Geste rapide :** deux écritures, au toucher et à
+    la fin, à environ 200 ms ; une pause du doigt peut en ajouter une.
+  - **Avec `lissage_plafond_ms` = 3000,** un geste lent de plus de 3 s est
+    exécuté en plusieurs fois (11 séquences pour un geste), et chaque reflet
+    fait sauter le curseur sous le doigt. **Avec 10000,** une séquence par
+    geste. `lissage_calme_ms` = 700 convient (plus long que 422 ms).
+  - **Reflet après chaque séquence,** même sans changement d'état (ajouté le
+    14/10) : avant, un geste resté dans le palier courant (88 vers 90 %, en V3)
+    laissait la valeur du doigt publiée. Mesuré dans `matter journal` : le
+    nœud republie 0,7 s après la dernière écriture (même palier) ou 0,9 s
+    (changement de palier) ; Maison affiche le palier environ 2 s après le
+    geste.
+  - **Limite de Maison, acceptée par l'utilisateur :** dans le même palier,
+    Maison garde la valeur du doigt affichée (75 % au lieu de 100 %), alors
+    que le nœud publie bien 100 %. Ni un délai de reflet de 1,5 s, ni un
+    rapport forcé à valeur inchangée n'y changent rien : Maison ne redessine
+    le curseur que sur un vrai changement de valeur dans le nœud.
+  - **Proposé pour le bilan :** `lissage_plafond_ms` = 10000 par défaut.
 
 ### B2. Bouton de la tuile
 
@@ -196,6 +219,14 @@ correction est notée.
 ### B14. MultiSpeed (facultatif)
 
 Seulement s'il coûte presque rien : noté pour une version suivante.
+
+- **Essai du 14/10/2026,** à la demande de l'utilisateur (trois vitesses,
+  donc trois crans ?) : option de compilation `-DHOTTE_MULTISPEED=1`
+  (`SpeedMax` = 3, environ 20 lignes ; la pile tient la correspondance
+  vitesse et pourcentage), accessoire retiré puis rajouté dans Maison.
+- **Résultat :** Maison garde un curseur continu et n'écrit toujours que
+  `PercentSetting`. Aucun effet visible. Gardé pendant le banc pour B5
+  (Siri se sert-il de la vitesse ?), décision au bilan ; défaut : désactivé.
 
 ### B15. Alerte de température ; capteur et ADC
 
