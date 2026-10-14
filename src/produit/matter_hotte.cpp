@@ -59,6 +59,7 @@ static volatile uint16_t sMaxIntCap = 20;                   // plafond des abonn
 // d'un controleur et la republication du palier reel.
 struct Brute {
   uint32_t ms;
+  uint32_t cl;  // cluster : OnOff et FanMode ont tous deux l'attribut 0
   uint32_t attr;
   uint8_t valeur;
   bool nulle, substituee, reflet;
@@ -71,9 +72,10 @@ static uint8_t sJournalN = 0;  // ecritures depuis le demarrage, modulo 256 (pla
 // les ordres des controleurs arrivent dans la tache CHIP.
 static inline bool ownEcho() { return xTaskGetCurrentTaskHandle() == sLoopTask; }
 
-static void noterBrute(uint32_t attr, uint8_t v, bool nulle, bool substituee, bool reflet = false) {
+static void noterBrute(uint32_t cl, uint32_t attr, uint8_t v, bool nulle, bool substituee, bool reflet = false) {
   Brute &b = sJournal[sJournalN % kJournal];
   b.ms = millis();
+  b.cl = cl;
   b.attr = attr;
   b.valeur = v;
   b.nulle = nulle;
@@ -101,7 +103,7 @@ class MatterFanHotte : public MatterFan {
         uint8_t m = val->val.u8;
         const bool subst = m == hotte::kFanOn && sSubstitution;
         portENTER_CRITICAL(&sBoiteMux);
-        noterBrute(attribute_id, m, false, subst);
+        noterBrute(FanControl::Id, attribute_id, m, false, subst);
         sEp1.ecrireMode(m, now);  // la valeur brute, On compris
         portEXIT_CRITICAL(&sBoiteMux);
         if (subst) {
@@ -115,7 +117,7 @@ class MatterFanHotte : public MatterFan {
         const bool nulle = val->type == ESP_MATTER_VAL_TYPE_NULLABLE_UINT8 &&
                            chip::app::NumericAttributeTraits<uint8_t>::IsNullValue(val->val.u8);
         portENTER_CRITICAL(&sBoiteMux);
-        noterBrute(attribute_id, val->val.u8, nulle, false);
+        noterBrute(FanControl::Id, attribute_id, val->val.u8, nulle, false);
         if (!nulle && val->val.u8 <= 100) sEp1.ecrirePourcent(val->val.u8, now);
         portEXIT_CRITICAL(&sBoiteMux);
         if (!nulle && val->val.u8 <= 100) currentPercent = val->val.u8;
@@ -139,7 +141,7 @@ static bool onLampe(bool on) {
   if (ownEcho()) return true;
   const uint32_t now = millis();
   portENTER_CRITICAL(&sBoiteMux);
-  noterBrute(OnOff::Attributes::OnOff::Id, on, false, false);
+  noterBrute(OnOff::Id, OnOff::Attributes::OnOff::Id, on, false, false);
   sEp2.ecrire(on, now);
   portEXIT_CRITICAL(&sBoiteMux);
   return true;
@@ -449,7 +451,7 @@ static void aligner(MatterEndPoint &ep, uint32_t cl, uint32_t attr, uint8_t voul
   if (ep.updateAttributeVal(cl, attr, &v)) {
     sStats.ecritures++;
     portENTER_CRITICAL(&sBoiteMux);
-    noterBrute(attr, voulu, false, false, true);
+    noterBrute(cl, attr, voulu, false, false, true);
     portEXIT_CRITICAL(&sBoiteMux);
   } else {
     sStats.echecs++;
@@ -658,10 +660,11 @@ void matterHotteJournal(Print &out) {
   out.printf("ecritures brutes et reflets (%u derniers) :\n", nb);
   for (uint8_t k = 0; k < nb; k++) {
     const Brute &b = copie[(uint8_t)(n - nb + k) % kJournal];
-    const char *quoi = b.attr == FanControl::Attributes::FanMode::Id          ? "FanMode"
+    const char *quoi = b.cl == OnOff::Id                                      ? "OnOff"
+                       : b.attr == FanControl::Attributes::FanMode::Id          ? "FanMode"
                        : b.attr == FanControl::Attributes::PercentSetting::Id ? "PercentSetting"
                        : b.attr == FanControl::Attributes::PercentCurrent::Id ? "PercentCurrent"
-                                                                               : "OnOff";
+                                                                               : "?";
     out.printf("  %8lu ms  %s %-14s %s%s\n", (unsigned long)b.ms, b.reflet ? "<- reflet" : "-> ecrit ", quoi,
                b.nulle ? "null" : String(b.valeur).c_str(), b.substituee ? " (On -> derniere vitesse)" : "");
   }
