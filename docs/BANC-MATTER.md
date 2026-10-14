@@ -136,6 +136,19 @@ correction est notée.
     (aucun passage par V3) ; le nœud publie 33 % environ 1,5 s après.
     Maison affiche d'abord 100 % (son affichage provisoire), puis 33 %.
 
+### Anomalie trouvée pendant B2 : lecture périmée après un appui au panneau
+
+- **Constat (14/10/2026) :** après `simu appui v1` depuis V3, le nœud publiait
+  V1, puis V3, puis V1 en moins de 150 ms (« origine inconnue, fil »).
+- **Cause :** la carte réagit à l'appui avec un délai (150 ms simulés) ; une
+  trame d'état périodique partie entre-temps redit l'état d'avant l'appui et
+  défaisait la déduction. Le défaut vaut aussi pour la vraie hotte.
+- **Correction :** pendant `confirmation_ms` après un appui au panneau, une
+  lecture qui redit l'état d'avant l'appui est ignorée ; au-delà, ou si elle
+  diffère, elle s'applique (`Automate::surEtatLu`, test hôte
+  `testLecturePerimee`). Vérifié sur la carte : un seul reflet par appui, sur
+  5 appuis.
+
 ### B3. Maintien de l'état demandé
 
 - **Méthode :** `simu refuse 1`, puis ordre V2 de Maison depuis l'arrêt ; la
