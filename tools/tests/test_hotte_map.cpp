@@ -178,9 +178,41 @@ static void testEtatNvs() {
   VERIF(!depuisNvs(0, &r) && !depuisNvs(0xFFFF, &r) && !depuisNvs(0xA5C0, &r));
 }
 
+// Bouton de la tuile (banc B2, 14/10/2026) : Maison n'ecrit qu'un 100 % seul.
+static bool fenetreBouton(RegroupementEp1 &g, uint32_t t) {
+  CibleVentilo c = CibleVentilo::Aucune;
+  bool bouton = true;
+  VERIF(g.pret(t, 700, 3000, &c, nullptr, &bouton));
+  return bouton;
+}
+
+static void testBoutonTuile() {
+  RegroupementEp1 g;
+  g.ecrirePourcent(100, 0);
+  VERIF(fenetreBouton(g, 800));  // 100 % seul : le bouton
+  g.ecrirePourcent(100, 0);
+  g.ecrirePourcent(100, 200);
+  VERIF(fenetreBouton(g, 1000));  // 100 % repete, rien d'autre : le bouton
+  g.ecrirePourcent(3, 0);
+  g.ecrirePourcent(100, 200);
+  VERIF(!fenetreBouton(g, 1000));  // geste du curseur : commence par une petite valeur
+  g.ecrirePourcent(100, 0);
+  g.ecrirePourcent(96, 200);
+  VERIF(!fenetreBouton(g, 1000));
+  g.ecrireMode(kFanHigh, 0);
+  g.ecrirePourcent(100, 0);
+  VERIF(!fenetreBouton(g, 800));  // un mode dans la fenetre : pas le bouton
+  g.ecrirePourcent(66, 0);
+  VERIF(!fenetreBouton(g, 800));
+  CibleVentilo c = CibleVentilo::Aucune;
+  g.ecrirePourcent(100, 0);
+  VERIF(g.pret(800, 700, 3000, &c) && c == CibleVentilo::V3);  // la cible reste V3 : l'appelant decide
+}
+
 int main() {
   testCorrespondance();
   testRegroupementEp1();
+  testBoutonTuile();
   testRafales();
   testRegroupementEp2();
   testDemarrage();

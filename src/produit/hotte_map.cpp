@@ -71,6 +71,7 @@ void RegroupementEp1::noter(uint32_t nowMs) {
 void RegroupementEp1::ecrireMode(uint8_t m, uint32_t nowMs) {
   noter(nowMs);
   aMode_ = true;
+  autreQueCent_ = true;
   mode_ = m;
   seqMode_ = ++seq_;
 }
@@ -78,12 +79,13 @@ void RegroupementEp1::ecrireMode(uint8_t m, uint32_t nowMs) {
 void RegroupementEp1::ecrirePourcent(uint8_t p, uint32_t nowMs) {
   noter(nowMs);
   aPourcent_ = true;
+  if (p != 100) autreQueCent_ = true;
   pourcent_ = p;
   seqPourcent_ = ++seq_;
 }
 
 bool RegroupementEp1::pret(uint32_t nowMs, uint32_t calmeMs, uint32_t plafondMs, CibleVentilo *cible,
-                           uint32_t *premierMs) {
+                           uint32_t *premierMs, bool *bouton) {
   if (!ouvert_) return false;
   // Differences signees : une ecriture deposee apres le millis() de l'appelant.
   if ((int32_t)(nowMs - dernierMs_) < (int32_t)calmeMs && (int32_t)(nowMs - premierMs_) < (int32_t)plafondMs)
@@ -98,6 +100,7 @@ bool RegroupementEp1::pret(uint32_t nowMs, uint32_t calmeMs, uint32_t plafondMs,
   }
   *cible = c;
   if (premierMs) *premierMs = premierMs_;
+  if (bouton) *bouton = aPourcent_ && !autreQueCent_;
   *this = RegroupementEp1();
   return true;
 }

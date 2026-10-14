@@ -51,12 +51,16 @@ class RegroupementEp1 {
   void ecrirePourcent(uint8_t pourcent, uint32_t nowMs);
   bool ouvert() const { return ouvert_; }
   // Vrai a la fermeture, qui vide la fenetre : *cible (Aucune si rien
-  // d'utile : Auto, Smart), *premierMs (premiere ecriture de la fenetre).
-  bool pret(uint32_t nowMs, uint32_t calmeMs, uint32_t plafondMs, CibleVentilo *cible, uint32_t *premierMs = nullptr);
+  // d'utile : Auto, Smart), *premierMs (premiere ecriture de la fenetre),
+  // *bouton : la fenetre ne contenait que PercentSetting = 100, sans autre
+  // valeur ni FanMode. C'est ce qu'ecrit Maison au bouton de la tuile (banc
+  // B2, 14/10/2026) ; l'appelant en fait la derniere vitesse depuis l'arret.
+  bool pret(uint32_t nowMs, uint32_t calmeMs, uint32_t plafondMs, CibleVentilo *cible, uint32_t *premierMs = nullptr,
+            bool *bouton = nullptr);
 
  private:
   void noter(uint32_t nowMs);
-  bool ouvert_ = false, aMode_ = false, aPourcent_ = false;
+  bool ouvert_ = false, aMode_ = false, aPourcent_ = false, autreQueCent_ = false;
   uint8_t mode_ = 0, pourcent_ = 0;
   uint32_t seq_ = 0, seqMode_ = 0, seqPourcent_ = 0;
   uint32_t premierMs_ = 0, dernierMs_ = 0;

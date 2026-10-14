@@ -515,12 +515,17 @@ void matterHottePoll(hotte::Automate &a, uint32_t now) {
   const hotte::Params &p = a.params();
   sIgnoreMs = p.ignoreDemarrageMs;
   hotte::CibleVentilo cible = hotte::CibleVentilo::Aucune;
-  bool lampe = false, ep1 = false, ep2 = false;
+  bool lampe = false, ep1 = false, ep2 = false, bouton = false;
   uint32_t premier1 = 0, premier2 = 0;
   portENTER_CRITICAL(&sBoiteMux);
-  ep1 = sEp1.pret(now, p.lissageCalmeMs, p.lissagePlafondMs, &cible, &premier1);
+  ep1 = sEp1.pret(now, p.lissageCalmeMs, p.lissagePlafondMs, &cible, &premier1, &bouton);
   ep2 = sEp2.pret(now, p.ordreCalmeMs, p.lissagePlafondMs, &lampe, &premier2);
   portEXIT_CRITICAL(&sBoiteMux);
+  // Bouton de la tuile (banc B2, 14/10/2026, choix de l'utilisateur) : Maison
+  // rallume toujours par un 100 % seul. Depuis l'arret, il ramene la derniere
+  // vitesse ; moteur en marche, 100 % reste V3.
+  if (ep1 && bouton && cible == hotte::CibleVentilo::V3 && a.etat().moteur == hotte::Moteur::Arret)
+    cible = hotte::CibleVentilo::Derniere;
   if (ep1 || ep2) {
     sStats.fenetres++;
     const uint32_t premier = ep1 && ep2 ? ((int32_t)(premier1 - premier2) < 0 ? premier1 : premier2)
