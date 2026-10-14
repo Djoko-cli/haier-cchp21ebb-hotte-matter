@@ -117,6 +117,24 @@ correction est notée.
   `PercentSetting`) : ______ ; statut vu par Maison et sa réaction (erreur,
   état affiché) avec et sans substitution : ______ ; vitesse obtenue : ______.
 - **Décide :** « dernière vitesse » par la règle 3 ou 4 du §3.3 (Q7).
+- **Résultats du 14/10/2026 :**
+  - **Allumer** par la tuile : Maison écrit `PercentSetting 100`, **jamais
+    `FanMode On`**, que la hotte ait été en V3 ou en V1 avant l'arrêt. La
+    substitution de On (`matter derniere`) ne sert donc pas avec Maison ; la
+    série `matter derniere 0` est sans objet.
+  - **Éteindre :** `FanMode 0` et `PercentSetting 0` dans la même
+    milliseconde ; la hotte passe à éteinte.
+  - Aucune erreur affichée par Maison. Tuile dégroupée pour l'essai
+    (l'utilisateur la gardera groupée : voir B7).
+  - **Décision de l'utilisateur :** le bouton ramène la dernière vitesse
+    (spec §3.3, règle 4 révisée). Règle : moteur à l'arrêt **et** fenêtre ne
+    contenant que `PercentSetting 100` (aucune autre valeur, aucun FanMode).
+    Moteur en marche, 100 % reste V3 ; un geste du curseur commence toujours
+    par une petite valeur, donc reste lu tel quel. Limite : depuis l'arrêt, un
+    toucher unique en haut du curseur se lit aussi comme le bouton.
+  - **Vérifié :** depuis V1, éteindre puis rallumer mène directement en V1
+    (aucun passage par V3) ; le nœud publie 33 % environ 1,5 s après.
+    Maison affiche d'abord 100 % (son affichage provisoire), puis 33 %.
 
 ### B3. Maintien de l'état demandé
 

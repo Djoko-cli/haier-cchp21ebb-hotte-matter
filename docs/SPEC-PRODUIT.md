@@ -365,6 +365,14 @@ ne verrait jamais On, seulement High
 4. **Si Maison écrit `PercentSetting` = 100** au bouton de la tuile, rien ne
    distingue le bouton d'un curseur posé à 100 % : le bouton donne V3. Le
    constat, mesures en main, est présenté à l'utilisateur à la fin du banc Matter.
+   **Révision du 14/10/2026 (banc B2) :** c'est bien ce qu'écrit Maison, et
+   l'utilisateur veut la dernière vitesse. Moteur à l'arrêt, une fenêtre de
+   regroupement qui ne contient que `PercentSetting` = 100 (aucune autre
+   valeur, aucun `FanMode`) est lue comme le bouton : cible « dernière
+   vitesse » (`RegroupementEp1::pret`, sortie `bouton` ; `matterHottePoll`).
+   Moteur en marche, 100 % reste V3. Un geste du curseur commence toujours
+   par une petite valeur, donc reste lu tel quel ; depuis l'arrêt, un toucher
+   unique en haut du curseur se lit comme le bouton.
 
 ### 3.4 Arrêt différé : non exposé
 
