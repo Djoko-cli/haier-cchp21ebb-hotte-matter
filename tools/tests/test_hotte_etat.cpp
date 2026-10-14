@@ -265,8 +265,41 @@ static void testOrdresUnitaires() {
   VERIF(vider(a, 12000, Action::Appuyer) == 1);
 }
 
+// Lecture perimee apres un appui au panneau (banc Matter, 14/10/2026) : la carte
+// reagit avec un delai ; une trame d'etat partie entre-temps redit l'etat d'avant
+// l'appui. Elle ne doit pas defaire la deduction (V1, V3, V1 publie en 150 ms).
+static void testLecturePerimee() {
+  Automate a;
+  a.configurerLigne(ModeEtat::Repete, false);
+  a.demarrer(Demarrage::MiseSousTension, nullptr, Moteur::V2, 0);
+  a.surEtatLu(etat(Marche::Armee, Moteur::V3), 100);
+  vider(a, 100, Action::Aucune);
+  a.surAppui(Touche::V1, Origine::Panneau, 1000);
+  VERIF(a.etat().moteur == Moteur::V1);
+  VERIF(vider(a, 1000, Action::Changement) == 1);
+  a.surEtatLu(etat(Marche::Armee, Moteur::V3), 1100);  // trame partie avant la reaction de la carte
+  VERIF(a.etat().moteur == Moteur::V1);
+  VERIF(vider(a, 1100, Action::Changement) == 0 && vider(a, 1100, Action::Publier) == 0);
+  a.surEtatLu(etat(Marche::Armee, Moteur::V1), 1600);  // la carte a reagi : confirme
+  VERIF(a.etat().moteur == Moteur::V1 && a.etat().confiance == Confiance::Confirme);
+  vider(a, 1600, Action::Aucune);
+  // Une lecture differente de l'etat d'avant s'applique tout de suite.
+  a.surAppui(Touche::V2, Origine::Panneau, 3000);
+  a.surEtatLu(etat(Marche::Armee, Moteur::V3), 3100);
+  VERIF(a.etat().moteur == Moteur::V3);
+  vider(a, 3100, Action::Aucune);
+  // La carte n'a pas reagi : l'etat d'avant, encore lu apres la fenetre, l'emporte.
+  a.surAppui(Touche::V2, Origine::Panneau, 5000);
+  VERIF(a.etat().moteur == Moteur::V2);
+  a.surEtatLu(etat(Marche::Armee, Moteur::V3), 5500);
+  VERIF(a.etat().moteur == Moteur::V2);
+  a.surEtatLu(etat(Marche::Armee, Moteur::V3), 6000);  // confirmationMs ecoulee
+  VERIF(a.etat().moteur == Moteur::V3);
+}
+
 int main() {
   testTable();
+  testLecturePerimee();
   testTextes();
   testParams();
   testTextesOrdres();

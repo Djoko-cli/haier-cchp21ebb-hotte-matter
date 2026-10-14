@@ -261,6 +261,11 @@ class Automate {
   bool arretLu_ = false;  // regle 3 : dernier etat lu = moteur arrete, aucun appui depuis
   Moteur moteurLu_ = Moteur::Arret;
   uint32_t changementMoteurMs_ = 0;  // dernier changement du moteur, lu ou deduit, toutes origines
+  // Dernier appui au panneau : pendant confirmationMs, une lecture qui redit
+  // l'etat d'avant l'appui est perimee (la carte n'a pas encore reagi).
+  bool panneauRecent_ = false;
+  uint32_t panneauMs_ = 0;
+  Etat avantPanneau_;
   bool piloteOk_ = true;
   Ordre ov_, ol_;
   bool cibleEteint_ = false;

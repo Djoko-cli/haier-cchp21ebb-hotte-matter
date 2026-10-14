@@ -369,6 +369,16 @@ void Automate::ordreLampe(bool allumee, uint32_t idOrdre, Canal canal, uint32_t 
 }
 
 void Automate::surEtatLu(const Etat &lu, uint32_t nowMs) {
+  // Lecture perimee (banc Matter, 14/10/2026) : la carte reagit a un appui du
+  // panneau avec un delai ; une trame partie entre-temps redit l'etat d'avant.
+  // Elle ne defait pas la deduction tant que dure confirmationMs ; au-dela, ou
+  // si elle differe de l'etat d'avant, elle s'applique comme toute lecture.
+  if (panneauRecent_ && nowMs - panneauMs_ < p_.confirmationMs && accordFil(lu, avantPanneau_) &&
+      !accordFil(lu, etat_)) {
+    muette_ = false;
+    return;
+  }
+  panneauRecent_ = false;
   const bool sur = fiable(etat_.confiance);
   Etat n = etat_;
   n.moteur = lu.moteur;
@@ -434,6 +444,9 @@ void Automate::surAppui(Touche t, Origine o, uint32_t nowMs) {
     return;
   }
   c_.appuisPanneau++;
+  panneauRecent_ = true;
+  panneauMs_ = nowMs;
+  avantPanneau_ = etat_;
   Etat n = tr.apres;
   n.confiance = deduite(etat_.confiance, tr.observee);
   n.source = Source::Deduit;
