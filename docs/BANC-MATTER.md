@@ -192,6 +192,12 @@ correction est notée.
 - **Méthode :** regrouper les deux accessoires, ordres depuis la tuile, puis
   les séparer de nouveau.
 - **Relevés :** ce que fait un ordre de la tuile regroupée : ______.
+- **Résultats du 14/10/2026 :** un appui sur la tuile regroupée n'envoie
+  aucun ordre : il ouvre la fiche du groupe, qui montre le curseur du
+  ventilateur et l'interrupteur de la lumière. Le curseur y écrit comme dans
+  la fiche du ventilateur seul (10 % puis 70 % relevés : V1, V3).
+  **L'utilisateur garde le groupe** (son usage réel) et ne veut aucun bouton
+  supplémentaire : rien à changer côté nœud.
 
 ### B8. Deux nœuds 0xFFF1/0x8000
 
@@ -207,6 +213,22 @@ correction est notée.
 - **Relevés :** appui → Maison : ______ s (médiane), ______ s (max) ; Maison →
   nœud : ______ s.
 - **Décide :** le budget du §3.7, hors carte réelle (Q8).
+- **Méthode suivie le 14/10/2026 :** sans console dans le champ, une
+  horloge commune. L'utilisateur filme la fiche du groupe et bascule la
+  lumière ; l'écriture `OnOff` horodatée dans `matter journal` cale l'heure du
+  nœud sur la vidéo (un second basculement le vérifie, à 0,2 s près). Un
+  script fait ensuite 6 appuis panneau simulés ; la vidéo est dépouillée à
+  30 images par seconde (hauteur du curseur mesurée image par image).
+- **Résultats :**
+  - **appui → Maison :** 0,85 ; 0,72 ; **5,05** ; 0,70 ; 0,83 ; 0,70 s.
+    Médiane 0,77 s, max 5,05 s (V2 vers V3). Le nœud publie dans la
+    milliseconde qui suit l'appui : les 5 s se sont perdues entre le nœud et
+    l'affichage (radio Thread, routeur de bordure ou Maison). **À suivre en
+    B11** sur 100 appuis (critère C2 : 2 s au plus).
+  - **Maison → nœud :** le nœud republie le palier 0,7 s (même palier) à
+    0,9 s (changement) après la dernière écriture d'un geste, 1,5 s après le
+    bouton de la tuile (B1, B2) ; Maison affiche le palier environ 2 s après
+    le geste.
 
 ### B10. Redémarrage du nœud
 
@@ -246,6 +268,12 @@ correction est notée.
 
 - **Relevés :** image : 2 486 622 octets sur 3 145 728 (79,0 %, build du
   29/09) ; `heap` et `heap_min` après la mise en service : ______ (Q22).
+- **Résultats du 14/10/2026** (firmware FED et MultiSpeed, image de
+  2 487 666 octets, 79,1 %, 6 min après le démarrage, mis en service,
+  2 abonnements) : `heap` 150 928 octets, `heap_min` 114 504, plus
+  grand bloc 98 292 ; pile de la boucle 4 760 libres ; tour de boucle
+  maximal 28 ms ; aucune ligne JSON perdue. Marge confortable ; à relire
+  après l'endurance (B11).
 
 ### B14. MultiSpeed (facultatif)
 
