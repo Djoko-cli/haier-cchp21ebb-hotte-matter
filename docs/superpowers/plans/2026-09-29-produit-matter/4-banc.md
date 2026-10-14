@@ -121,21 +121,21 @@ regroupement d'EP1 (`lissage_calme_ms`, `lissage_plafond_ms`) et la règle
 **Fichiers :**
 - Modifier : `docs/BANC-MATTER.md`
 
-- [ ] **Étape 1 : Préparer**
+- [x] **Étape 1 : Préparer**
 
 **Avant de commencer :** l'utilisateur présent ; la carte du banc est la SuperMini
 libre dont la MAC a été relevée à la tâche 12 (jamais `MAC-SCREENBAR`, jamais
 `MAC-SONDE-BENQ`) ; aucune liaison avec la hotte ; le port série est libre (fermer
 `pio device monitor` avant tout outil qui l'ouvre).
 
-- [ ] **Étape 2 : B1 : rendu du ventilateur**
+- [x] **Étape 2 : B1 : rendu du ventilateur**
 
 Moniteur ouvert. Captures d'écran de la tuile et de la fiche du
 ventilateur, sur l'iPhone et sur le Mac. Un geste lent, puis rapide, sur le
 curseur ; `matter journal` juste après chaque geste. Noter : curseur continu
 ou crans, écart minimal et maximal entre deux écritures d'un même geste.
 
-- [ ] **Étape 3 : B2 : bouton de la tuile**
+- [x] **Étape 3 : B2 : bouton de la tuile**
 
 `simu appui marche` (hotte simulée armée). Bouton de la tuile 5 fois
 (substitution active par défaut) ; `matter journal`. Puis `simu appui v1`,
@@ -144,31 +144,31 @@ encore 5 fois. Puis `matter derniere 0`, et les deux séries de nouveau ;
 ordre, écart entre `FanMode` et `PercentSetting`), statut vu par Maison (erreur
 ou non), vitesse obtenue (`hotte`).
 
-- [ ] **Étape 4 : B7 : tuile regroupée**
+- [x] **Étape 4 : B7 : tuile regroupée**
 
 L'utilisateur regroupe les deux accessoires, donne des ordres depuis la tuile
 regroupée (allumer, éteindre), puis les sépare de nouveau. Noter ce que fait
 un ordre de la tuile regroupée.
 
-- [ ] **Étape 5 : B9 : latences**
+- [x] **Étape 5 : B9 : latences**
 
 Vidéo de l'écran de Maison avec la console dans le même champ. Dix fois
 `simu appui v2` puis `simu appui v2` (arrêt) : de la commande à l'affichage.
 Dix ordres depuis Maison : du toucher à `[hotte] sequence ventilo : ok` sur la
 console. Noter médiane et maximum.
 
-- [ ] **Étape 6 : B13 : tas**
+- [x] **Étape 6 : B13 : tas**
 
 `json 1` puis lire `etat/sys` (`heap`, `heap_min`) après la mise en
 service ; `json 0`. Noter à côté de la taille de l'image (tâche 10).
 
-- [ ] **Étape 7 : Consigner**
+- [x] **Étape 7 : Consigner**
 
 Remplir B1, B2, B7, B9 et B13 dans `docs/BANC-MATTER.md` : valeurs
 mesurées, captures décrites (pas d'image de l'écran avec des données de la
 maison).
 
-- [ ] **Étape 8 : Committer**
+- [x] **Étape 8 : Committer**
 
 ```bash
 git add docs/BANC-MATTER.md
