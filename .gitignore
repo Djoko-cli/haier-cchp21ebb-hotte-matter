@@ -9,3 +9,6 @@ platformio-device-monitor-*.log
 garde.local.txt
 src/produit/codes_appairage.h
 .superpowers/
+
+# Pages Archify (schemas locaux)
+.archify/
