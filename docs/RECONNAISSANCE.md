@@ -248,7 +248,7 @@ Boîtier de mesure : sonde retirée des barrettes.
 | 14 | collecteur de Q1 sur la broche 6 ; le 4,7k de base de Q2 sur la broche 7 | visuel | GPIO6 et GPIO7 non interverties | | sinon on corrige avant la pose |
 | 15 | brochage de Q1 et Q2 | visuel | conforme à la fiche du transistor (BC547 = C-B-E, 2N3904 = E-B-C) | | idem |
 | 16 | coque de l'USB-C isolée ; USB-C accessible | visuel | | | idem |
-| 17 | contrôle électrique du module (WIRING.md §9) | 20 V continu | broche 6 à environ 3,3 V, broche 7 à 0 V | | sérigraphie mal lue : ne rien souder |
+| 17 | contrôle électrique du module (WIRING.md §9) | 20 V continu | broche 6 à environ 3,3 V, broche 7 à 0 V | 03/11 : broche 6 à 3,3 V, broche 7 à 0 V ; `3V3` à 3,3 V, `5V` à 5 V ; pas de continuité `5V`-`GND` (module seul, firmware `sonde` 0.1.0-5d01e4a, pointes sur les soudures du module) | conforme : on peut souder |
 
 **Pose :**
 - [ ] 1. fiche de l'adaptateur sur `CN3`, fiche du panneau sur l'embase de l'adaptateur ;
