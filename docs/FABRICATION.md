@@ -134,6 +134,14 @@ l'option 5b ; contacts de `R5` (P7, P11) à l'étape 7.
   plan** (rangée A = 18, I = 10, L = 07, R = 01). Exemples : L6 → F07, K14 → N08,
   R24 → X01. Le A1 du plan est le coin opposé, en diagonale, à l'antenne du
   module.
+- **Côté soudures, les lettres imprimées sont en miroir.** Les deux faces portent
+  la même sérigraphie, mais un même trou n'a pas la même lettre des deux côtés :
+  A ↔ X, B ↔ W, C ↔ V, D ↔ U, E ↔ T, F ↔ S, G ↔ R, H ↔ Q, I ↔ P, J ↔ O,
+  K ↔ N, L ↔ M. Les chiffres, eux, ne changent pas. Exemples, constatés le 03/11
+  sur la plaque soudée : `X1` (A12 à A09 côté composants) se lit X12 à X09 côté
+  soudures ; `Q1` (M08 à M06) se lit L08 à L06 ; les barrettes du module
+  (colonnes R et X) se lisent G et A. Pour un pont ou un fil côté soudures,
+  toujours dire de quelle face vient le repère.
 - **Trous de la rangée J et barrettes `J1`, `J2`** : ici, « trou J1 » est un
   trou (rangée J, colonne 1). `J1` et `J2`, en police de code, sont les
   barrettes à cavalier.
