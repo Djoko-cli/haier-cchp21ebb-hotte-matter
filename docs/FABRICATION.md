@@ -126,6 +126,11 @@ l'option 5b ; contacts de `R5` (P7, P11) à l'étape 7.
   soudures, où les colonnes sont déjà inversées.
 - **Coin A1** : le marquer au feutre sur les deux faces avant de commencer.
   Côté soudures, il est en haut à droite.
+- **Ignorer les repères imprimés sur la plaque.** Sur la plaque du banc, les
+  lettres (A à X) courent le long du grand côté et les chiffres (1 à 18) le long
+  du petit : c'est l'inverse du plan, où les lettres (A à R) courent le long du
+  petit côté. Seul le coin A1 au feutre fait foi : c'est le coin opposé, en
+  diagonale, à celui de l'antenne du module (R24).
 - **Trous de la rangée J et barrettes `J1`, `J2`** : ici, « trou J1 » est un
   trou (rangée J, colonne 1). `J1` et `J2`, en police de code, sont les
   barrettes à cavalier.
