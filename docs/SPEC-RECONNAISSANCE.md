@@ -1175,6 +1175,7 @@ hotte haier/
 | connectique JST XH précâblée en 3 et 4 broches (fiches, embases, fils sertis), plus un assortiment PH 2,0 mm au cas où | ~10 € | tout de suite, ou après l'étape 0 |
 | fil UL1007 ou UL1015 d'au moins 300 V ; gaine VW-1 ou thermorétractable de 3 à 6 mm | ~10 € | tout de suite |
 | plaques à pastilles ; NPN BC547 ou 2N3904 (5 environ) ; résistances 100 k, 68 k, 47 k, 33 k, 15 k, 10 k, 4,7 k, 470 Ω, 220 Ω ; résistance 10 kΩ / 2 W ; condensateur céramique 1 nF (banc, variante 2 du §10) ; barrettes et cavaliers 2,54 mm (`J1`, `J2`) ; barrettes femelles pour la sonde ; colliers | ~10 à 15 € selon le stock | tout de suite |
+| ruban Kapton (polyimide), 10 à 20 mm de large : coque de l'USB-C de la sonde, face de l'adaptateur, capuchon du cavalier de `J1`, bouche de `XH3` (FABRICATION.md). Oublié de cette liste jusqu'au 03/11 | ~3 € | avant la pose de l'étape 2 |
 | grippe-fils (pinces à crochet) pour les cordons du multimètre ; 2 fils à pinces crocodile ; aiguille fine | ~10 € | avant l'étape 1 |
 | batterie USB : **vérifier le modèle** avant l'étape 5. Sonde en Wi-Fi alimentée 30 min sans coupure, modèle noté dans `RECONNAISSANCE.md` | déjà là ? | avant l'étape 5 |
 | *optionnel :* isolateur USB ADuM3160. Exclu à l'étape 5b, parce que limité au Full Speed | ~10 € | si le Mac sur batterie ne convient pas |
