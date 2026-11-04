@@ -272,11 +272,11 @@
 <text x="425.0" y="368.0" font-size="14.0" fill="#6a3d9a" text-anchor="middle" font-weight="bold">générateur</text>
 <text x="425.0" y="385.0" font-size="12.0" fill="#6a3d9a" text-anchor="middle">(2e SuperMini)</text>
 <rect x="243.5" y="265.5" width="13.0" height="13.0" rx="2.0" fill="#2b2b2b"/>
-<text x="250.0" y="293.0" font-size="11.0" fill="#f08c00" text-anchor="middle" font-weight="bold">5V</text>
+<text x="250.0" y="293.0" font-size="11.0" fill="#d62828" text-anchor="middle" font-weight="bold">5V</text>
 <rect x="277.5" y="265.5" width="13.0" height="13.0" rx="2.0" fill="#2b2b2b"/>
 <text x="284.0" y="293.0" font-size="11.0" fill="#1e1e1e" text-anchor="middle" font-weight="bold">GND</text>
 <rect x="311.5" y="265.5" width="13.0" height="13.0" rx="2.0" fill="#2b2b2b"/>
-<text x="318.0" y="293.0" font-size="11.0" fill="#1f66d1" text-anchor="middle" font-weight="bold">3V3</text>
+<text x="318.0" y="293.0" font-size="11.0" fill="#8f969d" text-anchor="middle" font-weight="bold">3V3</text>
 <rect x="345.5" y="265.5" width="13.0" height="13.0" rx="2.0" fill="#2b2b2b"/>
 <text x="352.0" y="293.0" font-size="11.0" fill="#8a8a8a" text-anchor="middle">20</text>
 <rect x="379.5" y="265.5" width="13.0" height="13.0" rx="2.0" fill="#2b2b2b"/>

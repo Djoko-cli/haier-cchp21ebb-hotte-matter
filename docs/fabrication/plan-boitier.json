@@ -268,7 +268,7 @@
    "a": "K4",
    "face": "dessous",
    "genre": "pont",
-   "note": "5V : J2.2 vers le bout du fil orange (K4), cote soudures"
+   "note": "5V : J2.2 vers le bout du fil rouge du 5V (K4), cote soudures"
   },
   {
    "de": "K4",
@@ -282,14 +282,14 @@
     "E24",
     "H24"
    ],
-   "note": "5V de la sonde : fil ORANGE, COTE COMPOSANTS (aucun fil nu de ce cote, aucun fer), fil rigide couche a plat : bout entre dans K4 par le dessus, colonne 3, rangee E, colonne 24, bout entre dans H24 par le dessus. Un manchon de gaine thermo (1,5 cm), enfile avant de souder le second bout, couvre le passage au-dessus de H3 (D_panneau). Controle aussitot : L4 vers I24 environ 0 ; I24 vers J24 OL."
+   "note": "5V de la sonde : fil ROUGE, COTE COMPOSANTS (aucun fil nu de ce cote, aucun fer), fil couche a plat, marque 5V au feutre : bout entre dans K4 par le dessus, colonne 3, rangee E, colonne 24, bout entre dans H24 par le dessus. Un manchon de gaine thermo (1,5 cm), enfile avant de souder le second bout, couvre le passage au-dessus de H3 (D_panneau). Controle aussitot : L4 vers I24 environ 0 ; I24 vers J24 OL."
   },
   {
    "de": "H24",
    "a": "I24",
    "face": "dessous",
    "genre": "pont",
-   "note": "bout du fil orange (H24) vers la broche 5V (I24), cote soudures ; ne pas deborder sur J24 (GND)"
+   "note": "bout du fil rouge du 5V (H24) vers la broche 5V (I24), cote soudures ; ne pas deborder sur J24 (GND)"
   },
   {
    "de": "J1",
@@ -352,7 +352,7 @@
     "J22",
     "J24"
    ],
-   "note": "- : fil NOIR du haut de l'epine (F9) a la broche GND (J24) : monte en E9, rangee E (deux rangees au-dessus de G14, ou le bleu est soude), puis colonne 22, sous le module. Pose APRES le bleu. Controle aussitot : TP- (M1) vers J24 environ 0."
+   "note": "- : fil NOIR du haut de l'epine (F9) a la broche GND (J24) : monte en E9, rangee E (deux rangees au-dessus de G14, ou le gris est soude), puis colonne 22, sous le module. Pose APRES le gris. Controle aussitot : TP- (M1) vers J24 environ 0."
   },
   {
    "de": "L11",
@@ -406,7 +406,7 @@
    "a": "K15",
    "face": "dessous",
    "genre": "pont",
-   "note": "depart du fil vert"
+   "note": "depart du fil marron"
   },
   {
    "de": "K15",
@@ -419,7 +419,7 @@
     "Q16",
     "Q18"
    ],
-   "note": "GPIO6 : fil VERT de K15 a la broche 6 (Q18), colonne 16 puis rangee Q. Q17 reste sans soudure. Controle aussitot : K15 vers Q18 environ 0 ; K15 vers R18 (broche 7) : OL."
+   "note": "GPIO6 : fil MARRON de K15 a la broche 6 (Q18), colonne 16 puis rangee Q. Q17 reste sans soudure. Controle aussitot : K15 vers Q18 environ 0 ; K15 vers R18 (broche 7) : OL."
   },
   {
    "de": "G14",
@@ -432,7 +432,7 @@
     "K21",
     "K24"
    ],
-   "note": "3V3 : fil BLEU de R2 (G14) a la broche 3V3 (K24), rangee G puis colonne 21, sous le module ; K18 et L18 (GPIO0/1) restent libres. Pose AVANT le noir. Controle aussitot : G14 vers K24 environ 0."
+   "note": "3V3 : fil GRIS de R2 (G14) a la broche 3V3 (K24), rangee G puis colonne 21, sous le module ; K18 et L18 (GPIO0/1) restent libres. Pose AVANT le noir. Controle aussitot : G14 vers K24 environ 0."
   },
   {
    "de": "L6",
@@ -510,7 +510,7 @@
    "a": "R18",
    "face": "dessous",
    "genre": "pont",
-   "note": "tulipe de R3 (R17) sur GPIO7 (R18, le coin), jamais Q18. Soude a la CONSTRUCTION (point 5 de l'ordre), apres le controle 17 et avant le fil vert : ensuite, plus de fer pres de Q18 et R18. Tulipes vides : GPIO7 n'est reliee a rien."
+   "note": "tulipe de R3 (R17) sur GPIO7 (R18, le coin), jamais Q18. Soude a la CONSTRUCTION (point 5 de l'ordre), apres le controle 17 et avant le fil marron : ensuite, plus de fer pres de Q18 et R18. Tulipes vides : GPIO7 n'est reliee a rien."
   },
   {
    "de": "J6",
@@ -587,7 +587,7 @@
   {
    "nom": "BUS",
    "trous": "A1-R7",
-   "note": "Tout le cuivre relie a la hotte (+, D_panneau, D_carte) reste dans les colonnes 1 a 7 ; le - (masse commune) longe le bord gauche puis le bord bas jusqu'a l'epine. Seuls R1, R5 et R6 (couchees) enjambent la frontiere. Le 5V de la sonde (J2.2, L4) en sort par le fil orange, cote composants, manchonne au-dessus de H3. Le noeud du bus le plus proche d'une GPIO est a 11 colonnes."
+   "note": "Tout le cuivre relie a la hotte (+, D_panneau, D_carte) reste dans les colonnes 1 a 7 ; le - (masse commune) longe le bord gauche puis le bord bas jusqu'a l'epine. Seuls R1, R5 et R6 (couchees) enjambent la frontiere. Le 5V de la sonde (J2.2, L4) en sort par le fil rouge du 5V, cote composants, manchonne au-dessus de H3. Le noeud du bus le plus proche d'une GPIO est a 11 colonnes."
   },
   {
    "nom": "EPINE DE MASSE",
@@ -597,12 +597,12 @@
   {
    "nom": "VOIE 2 (architecture B seulement)",
    "trous": "A5-D16",
-   "note": "RESERVEE, vide jusqu'a l'avenant de l'etape 6. Meme etage d'ecoute sur TP_Dc (D_carte arrive de C4 par la rangee C) vers GPIO0 (K18), emission vers GPIO1 (L18) ; K18 et L18 restent libres. Leurs fils croiseront l'orange (cote composants, rangee E) ou le noir (cote soudures, rangee E) : isolant contre isolant. En soudant la rangee D, ecarter le fil noir."
+   "note": "RESERVEE, vide jusqu'a l'avenant de l'etape 6. Meme etage d'ecoute sur TP_Dc (D_carte arrive de C4 par la rangee C) vers GPIO0 (K18), emission vers GPIO1 (L18) ; K18 et L18 restent libres. Leurs fils croiseront le rouge du 5V (cote composants, rangee E) ou le noir (cote soudures, rangee E) : isolant contre isolant. En soudant la rangee D, ecarter le fil noir."
   },
   {
    "nom": "FILS ISOLES",
    "trous": "E3-K24",
-   "note": "Poses EN DERNIER, un par un, apres toutes les pieces et tous les fils nus, dans cet ordre : rouge (+), vert (GPIO6), bleu (3V3), noir (GND), orange (5V). Cote soudures : rouge (zone bus), vert (colonne 16, rangee Q), bleu (rangee G, colonne 21), noir (rangee E, colonne 22). Cote composants : orange (colonne 3, rangee E, colonne 24). Aucun ne croise un autre fil isole sur la meme face. Bout denude de 3 mm, isolant jusqu'a la pastille, panne fine."
+   "note": "Poses EN DERNIER, un par un, apres toutes les pieces et tous les fils nus, dans cet ordre : rouge (+), marron (GPIO6), gris (3V3), noir (GND), rouge du 5V. Cote soudures : rouge (zone bus), marron (colonne 16, rangee Q), gris (rangee G, colonne 21), noir (rangee E, colonne 22). Cote composants : rouge du 5V (colonne 3, rangee E, colonne 24). Aucun ne croise un autre fil isole sur la meme face. Bout denude de 3 mm, isolant jusqu'a la pastille, panne fine."
   },
   {
    "nom": "ANALYSEUR (etape 5b)",
@@ -612,22 +612,22 @@
   {
    "nom": "ECOUTE voie 1",
    "trous": "K10-N15",
-   "note": "R1, Q1, support de R_be, R2, depart du fil vert (K15)"
+   "note": "R1, Q1, support de R_be, R2, depart du fil marron (K15)"
   },
   {
    "nom": "INJECTION (etape 7)",
    "trous": "O7-R17",
-   "note": "trous VIDES avant l'etape 7, sauf les deux tulipes de R3 (R13, R17) et le pont R17-R18, soudes a la construction, avant le fil vert (tulipes vides : GPIO7 n'est reliee a rien). R8 sans etain : le fil de masse y longe la pastille."
+   "note": "trous VIDES avant l'etape 7, sauf les deux tulipes de R3 (R13, R17) et le pont R17-R18, soudes a la construction, avant le fil marron (tulipes vides : GPIO7 n'est reliee a rien). R8 sans etain : le fil de masse y longe la pastille."
   },
   {
    "nom": "GARDE GPIO",
    "trous": "I17-Q17",
-   "note": "colonne 17 sans soudure (le fil vert passe seulement sur Q17, cote soudures)"
+   "note": "colonne 17 sans soudure (le fil marron passe seulement sur Q17, cote soudures)"
   },
   {
    "nom": "COULOIR USB-C",
    "trous": "A17-H24",
-   "note": "rien de haut cote composants : le cable USB-C arrive par le haut de la plaque ; seul le fil orange y passe, a plat"
+   "note": "rien de haut cote composants : le cable USB-C arrive par le haut de la plaque ; seul le fil rouge du 5V y passe, a plat"
   },
   {
    "nom": "SUPERMINI",
@@ -695,7 +695,7 @@
   },
   {
    "trou": "Q17",
-   "texte": "6 = Q18 (vert) ; 7 = R18 (coin)"
+   "texte": "6 = Q18 (marron) ; 7 = R18 (coin)"
   },
   {
    "trou": "Q8",
@@ -712,7 +712,7 @@
  ],
  "controles": [
   "Conditions, sauf mention : hotte debranchee, sonde retiree des barrettes, fiche XH 4 br. retiree, J2 ouvert, R_be enfichee. Des qu'un transistor est dans le chemin, mesurer dans les DEUX sens (cordons inverses) : une jonction bloque dans un sens, un pont d'etain ou une resistance dans aucun.",
-  "WIRING 12, avec les trous : 7 = TP+ (O4) vers la broche 5V (I24) : OL ; 11 = TP- (M1) vers GND (J24) : environ 0 ; 12 = 3V3 (K24) vers la broche 6 (Q18) : environ 10 kohm ; 13 = TP_Dp (H4) vers la broche 6 (Q18) : voir la ligne suivante ; 14 = fil vert sur Q18, pont de la tulipe R17 sur R18 (le coin) ; 15 = Q1, puis Q2, face plate du bon cote ; 16 = coque USB-C sous Kapton, USB-C libre ; 17 = module seul sur l'USB : broche 6 a 3,3 V environ, broche 7 a 0 V (WIRING 9).",
+  "WIRING 12, avec les trous : 7 = TP+ (O4) vers la broche 5V (I24) : OL ; 11 = TP- (M1) vers GND (J24) : environ 0 ; 12 = 3V3 (K24) vers la broche 6 (Q18) : environ 10 kohm ; 13 = TP_Dp (H4) vers la broche 6 (Q18) : voir la ligne suivante ; 14 = fil marron sur Q18, pont de la tulipe R17 sur R18 (le coin) ; 15 = Q1, puis Q2, face plate du bon cote ; 16 = coque USB-C sous Kapton, USB-C libre ; 17 = module seul sur l'USB : broche 6 a 3,3 V environ, broche 7 a 0 V (WIRING 9).",
   "13 (regle 10), dans les deux sens : OL dans un sens au moins (la jonction base-collecteur de Q1 bloque) ; dans l'autre, plus de 100 kohm avant 5b, parfois un peu moins (vers 90 kohm) une fois R6 et R7 en place. Une valeur finie dans les DEUX sens : ARRET (environ 100 kohm : C et B de Q1 pontes ; environ 40 kohm : V2 et V1 pontes ; environ 0 : liaison directe).",
   "a) broche 6 (Q18) vers broche 7 (R18), calibre le plus eleve, dans les deux sens : OL tant que R3 n'est pas enfichee ; R3 en place : OL dans un sens au moins, jamais une valeur finie dans les deux sens.",
   "b) J2 ouvert : TP+, TP_Dp et TP_Dc vers la broche 5V (I24) : OL.",
@@ -730,7 +730,7 @@
   "3. Module seul, AVANT toute liaison vers les barrettes : firmware sonde charge, module seul sur l'USB du Mac, COM sur GND (2e broche de la rangee 5V), calibre 20 V continu : controle 17 (broche 6, l'avant-derniere de la rangee TX a 7 : environ 3,3 V ; broche 7, la derniere, cote antenne : 0 V ; sinon, ne plus rien souder). Ruban Kapton sur la coque USB-C, bouche libre (16). Puis le detrompeur (broche TX coupee, femelle I18 bouchee), si retenu.",
   "4. Pieces, pattes pas encore coupees : support de R_be (M11-N11), R1 et R2 couchees, tulipes de R3 (R13, R17 : les enficher sur R3, poser l'ensemble, souder, retirer R3), Q1 (4 a 5 mm de pattes, face plate a gauche), picots (C4, H4, M1, O4), J2 (L4-M4), X1 (verrou vers le bord gauche). Aussitot X1 soudee, calibre 200 ohm : G1-H1, H1-I1, I1-J1 : OL. Controle 15 sur Q1. R8, K4, H24 et tous les autres trous des etapes 5b et 7 restent vides.",
   "5. Fils nus et ponts cote soudures, sur les pattes deja soudees (patte repliee sur la pastille voisine, ou fil etame) : - (J1, M1, R1, R7, R9 : en R8 le fil longe le bord de la pastille, sans etain, trou libre), epine (R9 a F9), D_panneau (H1-H4, soude a ses deux bouts seulement, puis H4-H6-J6-L6), D_carte (G1-C1-C4), + (O4-M4), barre de masse (N9-N11-N13), ponts de l'ecoute (L11-L12-L13, L11-M11, M13-N13, K13-K14-K15), pont R17-R18. Couper les pattes. Controles a) (OL), d) sur M11-N11, puis R_be 100k enfichee et e).",
-  "6. Fils isoles EN DERNIER, un par un, chacun controle aussitot au calibre 200 ohm : ROUGE I1-O4 (I1 vers O4 environ 0 ; TP+ vers TP_Dp et vers TP- : OL) ; VERT K15-Q18 (K15 vers Q18 environ 0 ; K15 vers R18 : OL) ; BLEU G14-K24 (G14 vers K24 environ 0) ; NOIR F9-J24 par la rangee E (TP- vers J24 environ 0) ; ORANGE cote composants, manchon enfile : bout dans K4 et pont L4-K4, bout dans H24 et pont H24-I24 (L4 vers I24 environ 0 ; I24 vers J24 : OL).",
+  "6. Fils isoles EN DERNIER, un par un, chacun controle aussitot au calibre 200 ohm : ROUGE I1-O4 (I1 vers O4 environ 0 ; TP+ vers TP_Dp et vers TP- : OL) ; MARRON K15-Q18 (K15 vers Q18 environ 0 ; K15 vers R18 : OL) ; GRIS G14-K24 (G14 vers K24 environ 0) ; NOIR F9-J24 par la rangee E (TP- vers J24 environ 0) ; ROUGE du 5V cote composants, manchon enfile : bout dans K4 et pont L4-K4, bout dans H24 et pont H24-I24 (L4 vers I24 environ 0 ; I24 vers J24 : OL).",
   "7. Controles complets : 7, 11, 12, 13 et 14 de WIRING 12, puis a), b), c), e) et f). Tous passent avant la premiere fiche XH 4 br. et avant le banc.",
   "8. Fixation (zone FIXATION) et etiquettes au feutre.",
   "9. Etape 5b : mesurer R6 et R7 (valeurs choisies d'apres +, etape 3b). Souder les tulipes de R6 (J7, J11), le support de R7 (H10-I10) et la barrette ANA (I11-I13), puis les ponts un a un, a la loupe (rien entre H11 et I11, ni entre I9 et I10). R7 retiree : d) sur H10-I10. R6 et R7 enfichees : e), 13, 7, 11, 12, a), b), f). Puis g) avant chaque branchement de l'analyseur.",
@@ -738,7 +738,7 @@
  ],
  "achats": [
   "barrette tulipe secable 1 rangee, 20 ou 40 contacts : il en faut 10, en 8 morceaux (paires M11-N11 et H10-I10 ; contacts seuls J7, J11, P7, P11, R13, R17), et une coupe perd souvent un contact",
-  "fil isole rigide de cablage en 5 couleurs (rouge, vert, bleu, noir, orange) ; un bout de gaine thermo fine (manchon de l'orange)",
+  "fil isole 22 AWG souple : rouge (+ et 5V), marron, gris, noir (jamais de fil Dupont : il ne prend pas l'etain) ; un bout de gaine thermo fine (manchon du rouge du 5V)",
   "ruban Kapton (coque USB-C)",
   "entretoises et vis en nylon, au diametre des trous de coin de la plaque ; feuille isolante pour la face soudures"
  ]

@@ -15,7 +15,7 @@ boitier de mesure detache de la hotte).
 Conventions du dessin (rappelees dans la legende de chaque figure) :
   - la face regardee est en trait plein ; ce qui est sur l'autre face est pale ;
   - pont de soudure : trait gris epais entre deux pastilles voisines ; fil nu : trait gris fin,
-    soude aux points ronds seulement ; fil isole : sa couleur (rouge, vert, bleu, noir, orange) ;
+    soude aux points ronds seulement ; fil isole : sa couleur (rouge, marron, gris, noir ; rouge du 5V cote composants) ;
   - etape 7 (etage d'injection) : pointille violet ; option 5b (analyseur) : pointille bleu-vert ;
   - BC547 : le trait jaune du contour est la face plate ;
   - marquages au feutre du plan : numerotes sur la vue cote composants, listes dans la legende.
@@ -43,11 +43,11 @@ C = {
     "plaque": "#f4ecd9", "plaque_bord": "#b49e70", "cuivre": "#e2b05e", "cuivre_bord": "#a6772c",
     "etain": "#c3c8cd", "etain_bord": "#6c737a", "nu_bord": "#4f565d",
     "rouge": "#d62828", "vert": "#1f9a3a", "bleu": "#1f66d1", "noir": "#1e1e1e", "orange": "#f08c00",
-    "blanc": "#ffffff", "marron": "#8b5a2b", "violet_module": "#6a3d9a",
+    "blanc": "#ffffff", "marron": "#8b5a2b", "gris_isole": "#8f969d", "violet_module": "#6a3d9a",
     "e7": "#8e44ad", "e5b": "#0b8584", "feutre": "#1a4fbf", "plat": "#f2a900",
 }
 COULEUR_FIL = {"rouge": C["rouge"], "vert": C["vert"], "bleu": C["bleu"], "noir": C["noir"],
-               "orange": C["orange"], "blanc": C["blanc"], "marron": C["marron"]}
+               "orange": C["orange"], "blanc": C["blanc"], "marron": C["marron"], "gris": C["gris_isole"]}
 NOM_PICOT = {"TPM": "TP" + MOINS, "TPP": "TP+", "TPDP": "TP_Dp", "TPDC": "TP_Dc"}
 COUL_PICOT = {"TPM": "noir", "TPP": "rouge", "TPDP": "blanc", "TPDC": "marron"}
 FILS_CN3 = {"-": "noir", "D": "blanc", "+": "rouge"}
@@ -108,10 +108,10 @@ def nom_ref(ref):
 def couleur_dans(note):
     """couleur d'un fil isole : le mot qui suit « fil », sinon la premiere couleur citee dans la note"""
     n = plat(note)
-    m = re.search(r"\bfil (rouge|vert|bleu|noir|orange)\b", n)
+    m = re.search(r"\bfil (rouge|vert|bleu|noir|orange|marron|gris)\b", n)
     if m:
         return m.group(1)
-    trouves = [(m.start(), mot) for mot in ("rouge", "vert", "bleu", "noir", "orange")
+    trouves = [(m.start(), mot) for mot in ("rouge", "vert", "bleu", "noir", "orange", "marron", "gris")
                for m in [re.search(r"\b" + mot + r"\b", n)] if m]
     return min(trouves)[1] if trouves else None
 
@@ -544,8 +544,8 @@ def corps_supermini(svg, vue, cp, pl, fantome=False):
 
 def role_broche(nom):
     return {
-        "6": (C["vert"], True), "7": (C["e7"], True), "GND": (C["noir"], True), "5V": (C["orange"], True),
-        "3V3": (C["bleu"], True), "0": ("#4a79b8", True), "1": ("#4a79b8", True),
+        "6": (C["marron"], True), "7": (C["e7"], True), "GND": (C["noir"], True), "5V": (C["rouge"], True),
+        "3V3": (C["gris_isole"], True), "0": ("#4a79b8", True), "1": ("#4a79b8", True),
     }.get(nom, ("#8a8a8a", False))
 
 
@@ -1050,10 +1050,10 @@ def dessine_legende(svg, vue, x, y, marques, x2):
               ("fil_nu", "fil nu étamé : soudé aux points ronds")]
     if carte == "boitier":
         items += [("isole:rouge", "fil isolé rouge : +  (côté soudures)"),
-                  ("isole:vert", "fil isolé vert : GPIO6  (côté soudures)"),
-                  ("isole:bleu", "fil isolé bleu : 3V3  (côté soudures)"),
+                  ("isole:marron", "fil isolé marron : GPIO6  (côté soudures)"),
+                  ("isole:gris", "fil isolé gris : 3V3  (côté soudures)"),
                   ("isole:noir", "fil isolé noir : GND  (côté soudures)"),
-                  ("isole:orange", "fil isolé orange : 5V  (CÔTÉ COMPOSANTS)"),
+                  ("isole:rouge", "fil isolé rouge : 5V  (CÔTÉ COMPOSANTS)"),
                   ("pale", "trait pâle : sur l'autre face"),
                   ("e7", "pointillé violet : étape 7 (plus tard)"),
                   ("e5b", "pointillé bleu-vert : option 5b (plus tard)"),
@@ -1099,7 +1099,7 @@ def dessine_legende(svg, vue, x, y, marques, x2):
             y += 15 * len(lignes) + 6
     if vue.miroir:
         if carte == "boitier":
-            lignes = ["Tout se soude de ce côté, sauf le fil orange (côté composants : pâle ici)."]
+            lignes = ["Tout se soude de ce côté, sauf le fil rouge du 5V (côté composants : pâle ici)."]
         else:
             lignes = ["Tous les ponts et fils nus sont de ce côté.",
                       "Les 7 fils arrivent côté composants (pâles ici)."]
@@ -1278,7 +1278,7 @@ def dessine_brochage(chemin):
     roles_haut = {"15": "15 : à éviter", "9": "9 (BOOT) : à éviter", "8": "8 (LED) : à éviter"}
     roles_bas = {"TX": "TX (16) : à éviter", "RX": "RX (17) : à éviter", "0": "0 : voie 2, écoute (B)",
                  "1": "1 : voie 2, émission (B)", "2": "2", "3": "3", "4": "4 : à éviter", "5": "5 : à éviter",
-                 "6": "6 : ÉCOUTE (fil vert)", "7": "7 : INJECTION (étape 7)"}
+                 "6": "6 : ÉCOUTE (fil marron)", "7": "7 : INJECTION (étape 7)"}
     for rang, noms in ((0, HAUT), (1, BAS)):
         for i, nom in enumerate(noms):
             X, Y = pad(i, rang)
@@ -1310,7 +1310,7 @@ def dessine_brochage(chemin):
         ("À retenir", True, C["texte"]),
         ("• GPIO6 et GPIO7 sont VOISINES, au bout de la rangée du bas, côté antenne : 6 est l'avant-dernière, "
          "7 la dernière (le coin).", True, C["rouge"]),
-        ("  Les intervertir est facile et dangereux (WIRING §6) : le fil vert va sur 6 ; le 4,7k de l'injection, "
+        ("  Les intervertir est facile et dangereux (WIRING §6) : le fil marron va sur 6 ; le 4,7k de l'injection, "
          "sur 7.", False, C["rouge"]),
         ("• Rangée du haut, depuis l'USB-C : 5V, GND, 3V3. Trous intérieurs 12, 13, 21, 22, 23 et pastille BAT : "
          "inutilisés.", False, C["texte"]),

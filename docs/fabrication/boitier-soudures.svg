@@ -965,7 +965,7 @@
 <text x="1132.3" y="801.1" font-size="12.5" fill="#1b1f23" text-anchor="start" font-weight="bold">Q</text>
 <text x="58.0" y="839.2" font-size="12.5" fill="#1b1f23" text-anchor="end" font-weight="bold">R</text>
 <text x="1132.3" y="839.2" font-size="12.5" fill="#1b1f23" text-anchor="start" font-weight="bold">R</text>
-<path d="M919.0 568.0 L957.1 568.0 L957.1 339.4 L157.0 339.4 L157.0 453.7" fill="none" stroke="#f9d199" stroke-width="7.50" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M919.0 568.0 L957.1 568.0 L957.1 339.4 L157.0 339.4 L157.0 453.7" fill="none" stroke="#efa9a9" stroke-width="7.50" stroke-linecap="round" stroke-linejoin="round"/>
 <polygon points="138.6,471.2 138.6,855.2 404.1,855.2 404.1,471.2" fill="none" stroke="#b9a3d3" stroke-width="1.60" stroke-linejoin="round" stroke-dasharray="6 4"/>
 <polygon points="203.8,454.8 203.8,564.2 338.8,564.2 338.8,454.8" fill="none" stroke="#c0c0c0" stroke-width="1.20" stroke-linejoin="round" stroke-dasharray="4 3"/>
 <polygon points="1076.4,565.8 1076.4,379.8 990.2,379.8 990.2,565.8" fill="none" stroke="#b7ab92" stroke-width="1.30" stroke-linejoin="round" stroke-dasharray="4 3"/>
@@ -1219,19 +1219,19 @@
 <circle cx="728.5" cy="377.5" r="9.00" fill="#c3c8cd" stroke="#6c737a" stroke-width="1.40"/>
 <circle cx="157.0" cy="529.9" r="9.00" fill="#c3c8cd" stroke="#6c737a" stroke-width="1.40"/>
 <path d="M499.9 568.0 L461.8 568.0 L461.8 796.6 L385.6 796.6" fill="none" stroke="#000000" stroke-width="15.90" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M499.9 568.0 L461.8 568.0 L461.8 796.6 L385.6 796.6" fill="none" stroke="#1f9a3a" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M499.9 568.0 L461.8 568.0 L461.8 796.6 L385.6 796.6" fill="none" stroke="#8b5a2b" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="499.9" cy="568.0" r="9.00" fill="#c3c8cd" stroke="#6c737a" stroke-width="1.40"/>
 <circle cx="385.6" cy="796.6" r="9.00" fill="#c3c8cd" stroke="#6c737a" stroke-width="1.40"/>
 <path d="M538.0 415.6 L271.3 415.6 L271.3 568.0 L157.0 568.0" fill="none" stroke="#000000" stroke-width="15.90" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M538.0 415.6 L271.3 415.6 L271.3 568.0 L157.0 568.0" fill="none" stroke="#1f66d1" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M538.0 415.6 L271.3 415.6 L271.3 568.0 L157.0 568.0" fill="none" stroke="#8f969d" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="538.0" cy="415.6" r="9.00" fill="#c3c8cd" stroke="#6c737a" stroke-width="1.40"/>
 <circle cx="157.0" cy="568.0" r="9.00" fill="#c3c8cd" stroke="#6c737a" stroke-width="1.40"/>
 <rect x="173.0" y="487.0" width="18.7" height="11.6" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
-<text x="175.0" y="495.8" font-size="10.5" fill="#f08c00" text-anchor="start" font-weight="bold">5V</text>
+<text x="175.0" y="495.8" font-size="10.5" fill="#d62828" text-anchor="start" font-weight="bold">5V</text>
 <rect x="115.0" y="525.1" width="26.0" height="11.6" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
 <text x="139.0" y="533.9" font-size="10.5" fill="#1e1e1e" text-anchor="end" font-weight="bold">GND</text>
 <rect x="115.0" y="563.2" width="26.0" height="11.6" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
-<text x="139.0" y="572.0" font-size="10.5" fill="#1f66d1" text-anchor="end" font-weight="bold">3V3</text>
+<text x="139.0" y="572.0" font-size="10.5" fill="#8f969d" text-anchor="end" font-weight="bold">3V3</text>
 <rect x="173.0" y="602.1" width="16.5" height="10.5" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
 <text x="175.0" y="610.1" font-size="9.5" fill="#8a8a8a" text-anchor="start">20</text>
 <rect x="173.0" y="640.2" width="16.5" height="10.5" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
@@ -1263,7 +1263,7 @@
 <rect x="359.3" y="754.5" width="10.3" height="10.5" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
 <text x="367.6" y="762.5" font-size="9.5" fill="#8a8a8a" text-anchor="end">5</text>
 <rect x="358.3" y="791.8" width="11.3" height="11.6" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
-<text x="367.6" y="800.6" font-size="10.5" fill="#1f9a3a" text-anchor="end" font-weight="bold">6</text>
+<text x="367.6" y="800.6" font-size="10.5" fill="#8b5a2b" text-anchor="end" font-weight="bold">6</text>
 <rect x="358.3" y="829.9" width="11.3" height="11.6" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
 <text x="367.6" y="838.7" font-size="10.5" fill="#8e44ad" text-anchor="end" font-weight="bold">7</text>
 <rect x="1061.2" y="411.0" width="42.0" height="10.5" rx="2.0" fill="#ffffff" fill-opacity="0.86"/>
@@ -1375,17 +1375,17 @@
 <path d="M24.0 1106.7 L52.0 1106.7" fill="none" stroke="#d62828" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="64.0" y="1111.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé rouge : +  (côté soudures)</text>
 <path d="M24.0 1131.7 L52.0 1131.7" fill="none" stroke="#000000" stroke-width="11.50" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M24.0 1131.7 L52.0 1131.7" fill="none" stroke="#1f9a3a" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="64.0" y="1136.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé vert : GPIO6  (côté soudures)</text>
+<path d="M24.0 1131.7 L52.0 1131.7" fill="none" stroke="#8b5a2b" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="64.0" y="1136.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé marron : GPIO6  (côté soudures)</text>
 <path d="M24.0 1156.7 L52.0 1156.7" fill="none" stroke="#000000" stroke-width="11.50" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M24.0 1156.7 L52.0 1156.7" fill="none" stroke="#1f66d1" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="64.0" y="1161.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé bleu : 3V3  (côté soudures)</text>
+<path d="M24.0 1156.7 L52.0 1156.7" fill="none" stroke="#8f969d" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="64.0" y="1161.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé gris : 3V3  (côté soudures)</text>
 <path d="M24.0 1181.7 L52.0 1181.7" fill="none" stroke="#8a8a8a" stroke-width="11.50" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M24.0 1181.7 L52.0 1181.7" fill="none" stroke="#1e1e1e" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="64.0" y="1186.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé noir : GND  (côté soudures)</text>
 <path d="M24.0 1206.7 L52.0 1206.7" fill="none" stroke="#000000" stroke-width="11.50" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M24.0 1206.7 L52.0 1206.7" fill="none" stroke="#f08c00" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="64.0" y="1211.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé orange : 5V  (CÔTÉ COMPOSANTS)</text>
+<path d="M24.0 1206.7 L52.0 1206.7" fill="none" stroke="#d62828" stroke-width="9.00" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="64.0" y="1211.2" font-size="12.5" fill="#1b1f23" text-anchor="start">fil isolé rouge : 5V  (CÔTÉ COMPOSANTS)</text>
 <path d="M24.0 1231.7 L52.0 1231.7" fill="none" stroke="#cacdcf" stroke-width="4.00" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="64.0" y="1236.2" font-size="12.5" fill="#1b1f23" text-anchor="start">trait pâle : sur l'autre face</text>
 <path d="M24.0 1256.7 L52.0 1256.7" fill="none" stroke="#8e44ad" stroke-width="4.00" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5"/>
@@ -1394,7 +1394,7 @@
 <text x="64.0" y="1286.2" font-size="12.5" fill="#1b1f23" text-anchor="start">pointillé bleu-vert : option 5b (plus tard)</text>
 <rect x="25.0" y="1297.7" width="26.0" height="18.0" rx="3.0" fill="#edf3fb" stroke="#5b84c4" stroke-width="1.30" stroke-dasharray="3 3"/>
 <text x="64.0" y="1311.2" font-size="12.5" fill="#1b1f23" text-anchor="start">zone réservée : trous vides</text>
-<text x="500.0" y="955.7" font-size="12.5" fill="#5f6670" text-anchor="start">Tout se soude de ce côté, sauf le fil orange (côté composants : pâle ici).</text>
+<text x="500.0" y="955.7" font-size="12.5" fill="#5f6670" text-anchor="start">Tout se soude de ce côté, sauf le fil rouge du 5V (côté composants : pâle ici).</text>
 <text x="500.0" y="974.7" font-size="12.5" fill="#5f6670" text-anchor="start">Point rond = on soude. Entre deux points, le fil nu passe</text>
 <text x="500.0" y="993.7" font-size="12.5" fill="#5f6670" text-anchor="start">sur les pastilles sans étain.</text>
 </svg>

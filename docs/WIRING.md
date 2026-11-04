@@ -403,7 +403,7 @@ sur le boîtier ou sur la plaque d'essai.
 | Boîtier de mesure | barrettes femelles 10 broches 2,54 mm pour le SuperMini ; barrettes mâles 10 broches à souder sur le module | 2 + 2 |
 | Boîtier de mesure | ESP32-C6 SuperMini (sonde) | 1 |
 | Boîtier de mesure | barrette tulipe sécable 2,54 mm, 20 ou 40 contacts : supports de `R_be` et de R7, contacts de R3, R5 et R6 | 1 |
-| Boîtier de mesure | fil isolé rigide en 5 couleurs (rouge, vert, bleu, noir, orange), fil nu étamé, gaine thermorétractable fine, ruban Kapton | — |
+| Boîtier de mesure | fil isolé 22 AWG souple en 4 couleurs (rouge, marron, gris, noir ; jamais de Dupont), fil nu étamé, gaine thermorétractable fine, ruban Kapton | — |
 | Boîtier de mesure | entretoises et vis en nylon, feuille isolante | 4 |
 | Boîtier de mesure | batterie USB, modèle vérifié (30 min en Wi-Fi sans coupure) | 1 |
 | Étage d'écoute | Q1 : BC547 ou 2N3904 ; 100k × 2 (série et `R_be`) ; 10k (collecteur) | 1 de chaque |

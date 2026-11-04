@@ -70,8 +70,8 @@ D'après [WIRING.md §11](WIRING.md#11-nomenclature) et les plans.
 | résistance 100k (`R_be`), plus 47k et 15k de rechange | `R_be` | 1 + 2 | sur support : on change sans dessouder |
 | résistance 10k | `R2` | 1 | |
 | barrette tulipe sécable, 20 ou 40 contacts | — | 1 | 10 contacts utiles, en 8 morceaux ; une coupe perd souvent un contact |
-| fil isolé rigide (fil de câblage) : rouge, vert, bleu, noir, orange | — | 10 cm de chaque | |
-| gaine thermorétractable fine | — | 1,5 cm | manchon du fil orange |
+| fil isolé 22 AWG souple : rouge, marron, gris, noir | — | 10 cm de chaque, 30 cm de rouge | rouge pour `+` et pour le 5V. Jamais de fil Dupont : souvent en aluminium cuivré, il ne prend pas l'étain (constaté le 04/11) |
+| gaine thermorétractable fine | — | 1,5 cm | manchon du fil rouge du 5V |
 | fil nu étamé, 0,5 à 0,6 mm | — | 40 cm | |
 | ruban Kapton | — | — | coque de l'USB-C |
 | entretoises et vis en nylon, au diamètre des trous de coin ; feuille isolante | — | 4 | fixation |
@@ -195,7 +195,7 @@ antenne céramique à droite :
 
 | Broche | Rôle |
 |---|---|
-| 6 | écoute (fil vert du boîtier) |
+| 6 | écoute (fil marron du boîtier) |
 | 7 | injection, étape 7 seulement (contact tulipe de `R3`) |
 | GND | `TP−` |
 | 5V | `J2`, ouvert |
@@ -289,7 +289,7 @@ La plaque est rangée en bandes, de gauche à droite :
   (colonnes 18 et 24). USB-C vers le haut, couloir A17 à H24 libre ; antenne au
   bord bas.
 - **GPIO7 est le coin (R18)**, relié au contact tulipe R17 de `R3`. **GPIO6
-  (Q18)** arrive par le fil vert. Le nœud du bus le plus proche d'une GPIO est
+  (Q18)** arrive par le fil marron. Le nœud du bus le plus proche d'une GPIO est
   à 11 colonnes.
 - **Zone réservée à la voie 2** (architecture B seulement) : A5 à D16, vide.
 
@@ -346,7 +346,7 @@ Sur les pattes déjà soudées : patte repliée sur la pastille voisine, ou fil 
 | rail `D_panneau` | H4 → H6 → J6 → L6 (colonne 6) | H6, J6, L6 | L6 : patte de `R1` ; J6 : point prévu pour `R6` (5b) |
 | `D_carte` | G1 → C1 → C4 (`TP_Dc`) | G1, C1, C4 | |
 | `+` | O4 (`TP+`) → M4 (`J2`) | O4, M4 | |
-| écoute | ponts L11-L12, L12-L13, L11-M11, K13-K14, K14-K15 | | patte L11 de `R1` repliée vers L12 et L13 ; K15 : départ du fil vert |
+| écoute | ponts L11-L12, L12-L13, L11-M11, K13-K14, K14-K15 | | patte L11 de `R1` repliée vers L12 et L13 ; K15 : départ du fil marron |
 | broche 7 | pont R17-R18 | | contact de `R3` sur le coin. **Jamais Q18** |
 
 Puis couper les pattes, et contrôler (§9.2) :
@@ -364,17 +364,17 @@ un autre sur la même face.
 | # | Couleur | Chemin | Face | Contrôle aussitôt |
 |---|---|---|---|---|
 | 1 | rouge (`+`) | I1 → I2 → O2 → O4 | soudures | I1 vers O4 : environ 0 ; `TP+` vers `TP_Dp`, puis vers `TP−` : **OL** |
-| 2 | vert (GPIO6) | K15 → K16 → Q16 → Q18 | soudures | K15 vers Q18 : environ 0 ; K15 vers R18 : **OL** |
-| 3 | bleu (3V3) | G14 → G21 → K21 → K24 | soudures | G14 vers K24 : environ 0 |
+| 2 | marron (GPIO6) | K15 → K16 → Q16 → Q18 | soudures | K15 vers Q18 : environ 0 ; K15 vers R18 : **OL** |
+| 3 | gris (3V3) | G14 → G21 → K21 → K24 | soudures | G14 vers K24 : environ 0 |
 | 4 | noir (GND) | F9 → E9 → E22 → trou J22 → trou J24 | soudures | `TP−` (M1) vers trou J24 : environ 0 |
-| 5 | orange (5V) | K4 → K3 → E3 → E24 → H24 | **composants** | L4 vers I24 : environ 0 ; I24 vers trou J24 : **OL** |
+| 5 | rouge (5V) | K4 → K3 → E3 → E24 → H24 | **composants** | L4 vers I24 : environ 0 ; I24 vers trou J24 : **OL** |
 
 - **Rouge** : en I1, il se soude sur la patte de `X1`, entre H1 (`D_panneau`) et
   le trou J1 (`−`). Peu d'étain, panne fine.
-- **Vert** : Q17 reste sans soudure (colonne de garde).
-- **Noir** : il passe en rangée E, deux rangées au-dessus de G14, où le bleu est
-  soudé. D'où l'ordre : le bleu avant le noir.
-- **Orange**, côté composants, couché à plat : bout entré dans K4 par le
+- **Marron** : Q17 reste sans soudure (colonne de garde).
+- **Noir** : il passe en rangée E, deux rangées au-dessus de G14, où le gris est
+  soudé. D'où l'ordre : le gris avant le noir.
+- **Rouge du 5V**, côté composants, couché à plat, marqué « 5V » au feutre : bout entré dans K4 par le
   dessus, puis pont L4-K4 côté soudures. Enfiler le manchon (1,5 cm de gaine
   fine) **avant** de souder le second bout, et le placer au-dessus de H3
   (`D_panneau`). Bout entré dans H24 par le dessus, puis pont H24-I24 côté
@@ -391,7 +391,7 @@ un autre sur la même face.
    des bords gauche et bas (R1 est à quelques millimètres du trou de coin) ;
    `D_carte` et `X1` sont en colonne 1.
 3. **Marquages au feutre** : la liste est sous le dessin côté composants (par
-   exemple « J2 OUVERT », « 6 = Q18 (vert) ; 7 = R18 (coin) »).
+   exemple « J2 OUVERT », « 6 = Q18 (marron) ; 7 = R18 (coin) »).
 4. **Cavalier de `J2`** : rangé hors de la plaque, dans un sachet scotché au
    boîtier. Jamais posé sur une seule broche.
 
@@ -636,7 +636,7 @@ dans le contact.
 | 11 | `TP−` (M1) → trou J24 (GND) | 200 Ω | environ 0 Ω |
 | 12 | K24 (3V3) → Q18 (broche 6) | 20 kΩ | environ 10 kΩ |
 | 13 | `TP_Dp` (H4) → Q18 (broche 6), **dans les deux sens** | le plus élevé | **OL dans un sens au moins** (ci-dessous) |
-| 14 | fil vert sur Q18 ; pont R17-R18 (contact de `R3` sur la broche 7, le coin) | visuel | GPIO6 et GPIO7 non interverties |
+| 14 | fil marron sur Q18 ; pont R17-R18 (contact de `R3` sur la broche 7, le coin) | visuel | GPIO6 et GPIO7 non interverties |
 | 15 | `Q1` : face plate vers la gauche, C en K13 ; `Q2` : face plate vers le bord bas, C en Q11 | visuel | |
 | 16 | Kapton sur la coque de l'USB-C ; USB-C libre | visuel | |
 | 17 | module seul sur l'USB (§5.3) | 20 V continu | broche 6 environ 3,3 V ; broche 7 à 0 V |

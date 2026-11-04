@@ -12,16 +12,16 @@
 <text x="529.5" y="354.4" font-size="12.0" fill="#6a5a8a" text-anchor="middle" font-weight="bold">C6</text>
 <rect x="310.9" y="208.9" width="24.0" height="24.0" rx="3.0" fill="#2b2b2b"/>
 <circle cx="322.9" cy="220.9" r="6.50" fill="#e9c46a"/>
-<text x="322.9" y="249.9" font-size="14.0" fill="#f08c00" text-anchor="middle" font-weight="bold">5V</text>
-<text x="325.9" y="198.9" font-size="13.5" fill="#f08c00" text-anchor="start" font-weight="bold" transform="rotate(-45 325.9 198.9)">5V (1re)</text>
+<text x="322.9" y="249.9" font-size="14.0" fill="#d62828" text-anchor="middle" font-weight="bold">5V</text>
+<text x="325.9" y="198.9" font-size="13.5" fill="#d62828" text-anchor="start" font-weight="bold" transform="rotate(-45 325.9 198.9)">5V (1re)</text>
 <rect x="354.1" y="208.9" width="24.0" height="24.0" rx="3.0" fill="#2b2b2b"/>
 <circle cx="366.1" cy="220.9" r="6.50" fill="#e9c46a"/>
 <text x="366.1" y="249.9" font-size="14.0" fill="#1e1e1e" text-anchor="middle" font-weight="bold">GND</text>
 <text x="369.1" y="198.9" font-size="13.5" fill="#1e1e1e" text-anchor="start" font-weight="bold" transform="rotate(-45 369.1 198.9)">GND (2e)</text>
 <rect x="397.3" y="208.9" width="24.0" height="24.0" rx="3.0" fill="#2b2b2b"/>
 <circle cx="409.3" cy="220.9" r="6.50" fill="#e9c46a"/>
-<text x="409.3" y="249.9" font-size="14.0" fill="#1f66d1" text-anchor="middle" font-weight="bold">3V3</text>
-<text x="412.3" y="198.9" font-size="13.5" fill="#1f66d1" text-anchor="start" font-weight="bold" transform="rotate(-45 412.3 198.9)">3V3 (3e)</text>
+<text x="409.3" y="249.9" font-size="14.0" fill="#8f969d" text-anchor="middle" font-weight="bold">3V3</text>
+<text x="412.3" y="198.9" font-size="13.5" fill="#8f969d" text-anchor="start" font-weight="bold" transform="rotate(-45 412.3 198.9)">3V3 (3e)</text>
 <rect x="440.5" y="208.9" width="24.0" height="24.0" rx="3.0" fill="#2b2b2b"/>
 <circle cx="452.5" cy="220.9" r="6.50" fill="#e9c46a"/>
 <text x="452.5" y="249.9" font-size="14.0" fill="#7a7a7a" text-anchor="middle" font-weight="bold">20</text>
@@ -78,8 +78,8 @@
 <text x="628.2" y="506.0" font-size="13.0" fill="#8a8a8a" text-anchor="start" transform="rotate(45 628.2 506.0)">5 : à éviter</text>
 <rect x="656.4" y="468.0" width="24.0" height="24.0" rx="3.0" fill="#2b2b2b"/>
 <circle cx="668.4" cy="480.0" r="6.50" fill="#e9c46a"/>
-<text x="668.4" y="461.0" font-size="14.0" fill="#1f9a3a" text-anchor="middle" font-weight="bold">6</text>
-<text x="671.4" y="506.0" font-size="13.5" fill="#1f9a3a" text-anchor="start" font-weight="bold" transform="rotate(45 671.4 506.0)">6 : ÉCOUTE (fil vert)</text>
+<text x="668.4" y="461.0" font-size="14.0" fill="#8b5a2b" text-anchor="middle" font-weight="bold">6</text>
+<text x="671.4" y="506.0" font-size="13.5" fill="#8b5a2b" text-anchor="start" font-weight="bold" transform="rotate(45 671.4 506.0)">6 : ÉCOUTE (fil marron)</text>
 <rect x="699.6" y="468.0" width="24.0" height="24.0" rx="3.0" fill="#2b2b2b"/>
 <circle cx="711.6" cy="480.0" r="6.50" fill="#e9c46a"/>
 <text x="711.6" y="461.0" font-size="14.0" fill="#8e44ad" text-anchor="middle" font-weight="bold">7</text>
@@ -92,7 +92,7 @@
 <text x="752.2" y="374.4" font-size="12.5" fill="#5f6670" text-anchor="start">carte d'environ 25,6 × 17,7 mm</text>
 <text x="24.0" y="680.0" font-size="15.0" fill="#1b1f23" text-anchor="start" font-weight="bold">À retenir</text>
 <text x="24.0" y="704.0" font-size="13.5" fill="#d62828" text-anchor="start" font-weight="bold">• GPIO6 et GPIO7 sont VOISINES, au bout de la rangée du bas, côté antenne : 6 est l'avant-dernière, 7 la dernière (le coin).</text>
-<text x="24.0" y="728.0" font-size="13.5" fill="#d62828" text-anchor="start">  Les intervertir est facile et dangereux (WIRING §6) : le fil vert va sur 6 ; le 4,7k de l'injection, sur 7.</text>
+<text x="24.0" y="728.0" font-size="13.5" fill="#d62828" text-anchor="start">  Les intervertir est facile et dangereux (WIRING §6) : le fil marron va sur 6 ; le 4,7k de l'injection, sur 7.</text>
 <text x="24.0" y="752.0" font-size="13.5" fill="#1b1f23" text-anchor="start">• Rangée du haut, depuis l'USB-C : 5V, GND, 3V3. Trous intérieurs 12, 13, 21, 22, 23 et pastille BAT : inutilisés.</text>
 <text x="24.0" y="776.0" font-size="13.5" fill="#1b1f23" text-anchor="start">• Sur le boîtier, le module est tourné d'un quart de tour : USB-C vers le haut de la plaque, rangée TX…7 en colonne 18, rangée 5V…8 en colonne 24.</text>
 <text x="24.0" y="800.0" font-size="13.5" fill="#1b1f23" text-anchor="start">• Toujours composants en haut : retourné, le module présenterait ses broches en miroir.</text>
