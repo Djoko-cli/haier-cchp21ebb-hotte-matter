@@ -254,7 +254,8 @@ la fois. `5V` et `GND` sont voisines : ne jamais poser la pointe en travers.
 Ensuite :
 
 - **Contrôle 16** : ruban Kapton sur la coque métallique de l'USB-C (elle est
-  reliée à `GND`), bouche libre.
+  reliée à `GND`), bouche libre. À défaut de Kapton, du ruban d'électricien en PVC
+  convient ici : 5 V au plus, et aucune chaleur sur le module.
 - **Détrompeur, si tu le veux** : couper au ras la broche mâle `TX` du module,
   et boucher le contact femelle I18 avec un bout de patte coupée, enfoncé à
   fond. Tourné d'un demi-tour, le module n'entre plus.
