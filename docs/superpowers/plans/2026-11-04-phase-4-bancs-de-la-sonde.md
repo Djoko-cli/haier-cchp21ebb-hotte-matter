@@ -8,7 +8,7 @@ elle est marquée « reportée en phase 4 ») ; les résultats vont dans
 ### Tâche 1 : Préparer le banc (FABRICATION §5.4 et §10)
 
 - [x] Générateur prêt : nanoESP32-C6 (MUSE LAB) en attendant une SuperMini, barrettes soudées, firmware `generateur` flashé, console vérifiée (04/11)
-- [ ] Banc de la tâche 16 monté sur la breadboard (§10)
+- [x] Banc de la tâche 16 monté sur la breadboard (§10), contrôles hors tension conformes, plus 7 mesures de placement (05/11)
 
 ### Tâche 2 : Banc 16 : validation de la sonde par l'USB
 
