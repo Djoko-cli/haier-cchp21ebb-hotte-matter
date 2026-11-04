@@ -38,7 +38,7 @@ toujours les repères imprimés de la plaque, en disant de quelle face ils vienn
 
 - [x] Lignes 7, 11, 12, 13 et 14 de WIRING §12 (04/11)
 - [x] Contrôles a), b), c), e) et f) (04/11)
-- [ ] Marquages au feutre ; cavalier de `J2` rangé hors de la plaque
+- [x] Marquages (étiquettes imprimées, dont « 5V » sur le fil rouge) ; cavalier de `J2` rangé hors de la plaque (04/11)
 
 ### Tâche 6 : Fixation
 

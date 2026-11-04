@@ -23,7 +23,7 @@ Dans l'ordre d'exécution. Une case se coche quand la phase est finie, banc comp
 
 - [x] Phase 1 : outils de la sonde (firmware, outils du Mac, procédures)
 - [x] Phase 2 : produit, logique et firmware Matter (tâches 1 à 11)
-- [ ] Phase 3 : boîtier de mesure
+- [x] Phase 3 : boîtier de mesure
 - [ ] Phase 4 : bancs de la sonde (tâches 16, 16b, 21, 24)
 - [ ] Phase 5 : reconnaissance sur la hotte (étapes −1 à 7, mesure M1)
 - [ ] Phase 6 : banc Matter (tâches 12 à 18)
