@@ -1,6 +1,6 @@
 # Plan de la sonde, partie 7 : injection
 
-> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](../2026-09-27-reconnaissance-sonde.md). Les tâches s'exécutent dans l'ordre des numéros (22 à 25).
+> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](2026-09-27-reconnaissance-sonde/en-tete.md). Les tâches s'exécutent dans l'ordre des numéros (22 à 25).
 
 ### Tâche 22 : Garde-fous de l'injection (`injection_regles`), réglages d'injection en NVS, commande `injection regle`
 
@@ -49,7 +49,7 @@
 - **NVS** : `inj_params` est l'image de `inj::Params` (7 × `uint32_t`, 28 octets). Une image d'une autre taille, ou hors bornes, est remplacée **tout entière** par les valeurs par défaut, et comptée dans le nombre rendu par `reglagesCharger` : le message existant de `setup()` (`[reglages] N valeur(s) hors bornes en NVS`) la signale.
 - **`injection regle <nom> <valeur>`** : USB seulement (`remoteRefusal` refuse déjà tout `injection` autre que `on`/`off`), valeurs vérifiées **avant** la NVS, puis `sondeAppliquer` (NVS, `config` réémise). Avec un `id`, `injection ...` reste ici une commande à texte (`reponse` `debut`, texte, `fin`) ; la tâche 23 la rend sans texte. C'est par elle que la préparation de l'étape 7 du journal charge les valeurs de l'avenant (`docs/RECONNAISSANCE.md`, complété plus bas dans cette tâche).
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_injection.cpp` :
 
@@ -327,12 +327,12 @@ $CXX src/injection_regles.cpp src/json_out.cpp tools/tests/test_injection.cpp -o
 
 `json_out.cpp` est lié au test pour la liste blanche (`remoteRefusal`) ; il n'appelle aucune fonction de `capture_model.cpp`.
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu : ÉCHEC après `test_h1 : 121 verification(s), 0 echec(s)`, avec « clang++: error: no such file or directory: 'src/injection_regles.cpp' ».
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `src/injection_regles.h` :
 
@@ -653,7 +653,7 @@ size_t versSymboles(const Demande &d, Sym *out, size_t cap) {
 }  // namespace inj
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh | tail -3`
 Attendu :
@@ -663,7 +663,7 @@ test_injection : 155 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 5 : Ranger les valeurs d'injection en NVS et ajouter `injection regle`**
+- [x] **Étape 5 : Ranger les valeurs d'injection en NVS et ajouter `injection regle`**
 
 Remplacer tout le contenu de `src/reglages.h` (deux champs, et l'inclusion de `injection_regles.h`) par :
 
@@ -867,7 +867,7 @@ insérer :
   {"injection", cmdInjection, "injection [regle <nom> <valeur>] : garde-fous de l'injection"},
 ```
 
-- [ ] **Étape 6 : Charger l'avenant par `injection regle` (journal de l'étape 7)**
+- [x] **Étape 6 : Charger l'avenant par `injection regle` (journal de l'étape 7)**
 
 La préparation de l'étape 7 du journal vérifie déjà dans `config` que les valeurs de l'avenant sont chargées ; elle dit maintenant comment les charger. Une ligne de plus dans son tableau, les suivantes renumérotées.
 
@@ -901,14 +901,14 @@ Instrument qui a donné le niveau de la ligne 9 : ☐ jugement fonctionnel
 Lancer : `grep -c "charger les valeurs de l'avenant : " docs/RECONNAISSANCE.md ; grep -c "niveau de la ligne 9" docs/RECONNAISSANCE.md`
 Attendu : `1`, puis `1`.
 
-- [ ] **Étape 7 : Compiler et relancer les tests**
+- [x] **Étape 7 : Compiler et relancer les tests**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|RAM:|Flash:|SUCCESS|FAILED"`
 Attendu : aucune ligne `warning` ni `error` ; `RAM:   [===       ]  30.5% (used 99812 bytes from 327680 bytes)`, `Flash: [========  ]  81.7% ...`, puis `sonde          SUCCESS`.
 Lancer : `sh tools/tests/test_hote.sh | tail -1` puis `python3 -m unittest discover -s tools/tests 2>&1 | tail -3`
 Attendu : « tests hote : OK » ; « Ran 153 tests », « OK » (aucun test Python ne change dans cette tâche).
 
-- [ ] **Étape 8 : Commit**
+- [x] **Étape 8 : Commit**
 
 ```bash
 git add src/injection_regles.h src/injection_regles.cpp tools/tests/test_injection.cpp tools/tests/test_hote.sh src/reglages.h src/reglages.cpp src/cli.cpp docs/RECONNAISSANCE.md
@@ -958,7 +958,7 @@ git commit -m "Ajouter les garde-fous de l'injection et leurs reglages en NVS" -
 - **`config.injection` est facultatif pour `json_check.py`** (toujours émis par ce firmware) : les captures des tâches 16 et 21, faites avant l'injection, restent conformes. `test_serie_enregistre.py` simule d'ailleurs une sonde de cette époque.
 - **Commandes avec `id`** : `injection <valeurs>` et `injecte ...` répondent sans texte, comme `capture` et `seuils <valeurs>` ; `injecte` acceptée répond `accepte` avec `suite` = `injection`.
 
-- [ ] **Étape 1 : Écrire les tests qui échouent**
+- [x] **Étape 1 : Écrire les tests qui échouent**
 
 Dans `tools/tests/test_injection.cpp` (`testSurveillance`, avant `testDistance`, et son appel) :
 
@@ -1189,7 +1189,7 @@ class BornesInjection(unittest.TestCase):
         self.assertEqual(c, json_check.INJ_BORNES)
 ```
 
-- [ ] **Étape 2 : Lancer les tests et vérifier qu'ils échouent**
+- [x] **Étape 2 : Lancer les tests et vérifier qu'ils échouent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu : ÉCHEC à la compilation de `test_injection`, avec « tools/tests/test_injection.cpp:237:3: error: use of undeclared identifier 'Surveillance'; did you mean 'testSurveillance'? ».
@@ -1205,7 +1205,7 @@ Ran 157 tests in ...
 FAILED (failures=4, errors=1)
 ```
 
-- [ ] **Étape 3 : Écrire la surveillance (pure)**
+- [x] **Étape 3 : Écrire la surveillance (pure)**
 
 Dans `src/injection_regles.h` (`Surveillance`, avant la fin de l'espace de noms) :
 
@@ -1310,7 +1310,7 @@ uint16_t Surveillance::relu(uint32_t *out, uint16_t cap) const {
 Lancer : `sh tools/tests/test_hote.sh | tail -2`
 Attendu : « test_injection : 180 verifications, 0 echecs », « tests hote : OK ».
 
-- [ ] **Étape 4 : Étendre le vérificateur**
+- [x] **Étape 4 : Étendre le vérificateur**
 
 Dans `tools/json_check.py` :
 
@@ -1474,7 +1474,7 @@ insérer :
 Lancer : `python3 -m unittest discover -s tools/tests 2>&1 | tail -3`
 Attendu : « Ran 157 tests », « OK ».
 
-- [ ] **Étape 5a : Surveillance dans l'interruption des fronts (`bord`)**
+- [x] **Étape 5a : Surveillance dans l'interruption des fronts (`bord`)**
 
 Remplacer tout le contenu de `src/bord.h` (surveillance d'une injection) par :
 
@@ -1620,7 +1620,7 @@ uint16_t bordRelu(uint32_t *out, uint16_t cap) {
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|SUCCESS|FAILED"`
 Attendu : aucune ligne `warning` ni `error` ; `sonde          SUCCESS` (rien n'appelle encore la surveillance).
 
-- [ ] **Étape 5b : Module d'injection (`injection.{h,cpp}`)**
+- [x] **Étape 5b : Module d'injection (`injection.{h,cpp}`)**
 
 `injection.cpp` rend chaque injection par `jsonInjection` : sa déclaration vient ici, avec le module, et sa définition à l'étape 5c. Le résultat `erreur` (décisions ci-dessus) entre aussi dans le commentaire de `jsonp::InjectionEv`.
 
@@ -2038,7 +2038,7 @@ void injectionDesarmer() {
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|SUCCESS|FAILED"`
 Attendu : aucune ligne `warning` ni `error` ; `sonde          SUCCESS`. Rien n'appelle encore le module : l'édition de liens écarte ses fonctions, et avec elles l'appel à `jsonInjection`, défini à l'étape 5c.
 
-- [ ] **Étape 5c : Blocs `config.injection` et `etat.injection`, événement `injection` (`json_mode.cpp`)**
+- [x] **Étape 5c : Blocs `config.injection` et `etat.injection`, événement `injection` (`json_mode.cpp`)**
 
 Dans `src/json_mode.cpp` (inclusion, objet `injection` de `config`, bloc `etat.injection`, `jsonInjection` ; la branche `default` de `produce` disparaît, tous les `Item` étant traités) :
 
@@ -2194,7 +2194,7 @@ bool jsonLog(const char *src, const char *niv, const char *txt) {
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|SUCCESS|FAILED"`
 Attendu : aucune ligne `warning` ni `error` ; `sonde          SUCCESS`.
 
-- [ ] **Étape 5d : Commandes `injection` et `injecte` (`cli.cpp`), appels dans `main.cpp`**
+- [x] **Étape 5d : Commandes `injection` et `injecte` (`cli.cpp`), appels dans `main.cpp`**
 
 Dans `src/cli.cpp` :
 
@@ -2620,14 +2620,14 @@ insérer :
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|SUCCESS|FAILED"`
 Attendu : aucune ligne `warning` ni `error` ; `sonde          SUCCESS`. L'étape 6 relève la mémoire et vérifie l'IRAM.
 
-- [ ] **Étape 6 : Compiler et vérifier l'IRAM**
+- [x] **Étape 6 : Compiler et vérifier l'IRAM**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|RAM:|Flash:|SUCCESS|FAILED"`
 Attendu : aucune ligne `warning` ni `error` ; `RAM:   [===       ]  31.2% (used 102252 bytes from 327680 bytes)`, `Flash: [========  ]  82.3% ...`, `sonde          SUCCESS`.
 Lancer : `$(ls ~/.platformio/packages/toolchain-riscv32-esp/bin/*-objdump | head -1) -t .pio/build/sonde/firmware.elf | grep -E "frontProgramme|frontAnormal|niveauAttendu|Surveillance5front|surFront|finEmission" | awk '{print $4, $NF}'`
 Attendu : les six fonctions en `.iram0.text` (l'interruption des fronts ne lit rien en flash).
 
-- [ ] **Étape 7 : Documenter l'injection dans le protocole (exemples vérifiés)**
+- [x] **Étape 7 : Documenter l'injection dans le protocole (exemples vérifiés)**
 
 Dans `docs/PROTOCOLE-JSON.md` :
 
@@ -3112,7 +3112,7 @@ particulier `json` seul, `json cle ...`, `wifi`, `injection` seul,
 
 ```
 
-- [ ] **Étape 8 : Relancer toutes les vérifications**
+- [x] **Étape 8 : Relancer toutes les vérifications**
 
 Lancer : `sh tools/tests/test_hote.sh | grep -A2 "^40 ligne"` puis `sh tools/tests/test_hote.sh | tail -1`
 Attendu :
@@ -3125,7 +3125,7 @@ tests hote : OK
 Lancer : `python3 -m unittest discover -s tools/tests 2>&1 | tail -3` ; `~/.platformio/penv/bin/pio run -e sonde 2>&1 | tail -3`
 Attendu : « Ran 157 tests », « OK » ; « sonde          SUCCESS ».
 
-- [ ] **Étape 9 : Commit**
+- [x] **Étape 9 : Commit**
 
 ```bash
 git add src/injection_regles.h src/injection_regles.cpp tools/tests/test_injection.cpp tools/json_check.py tools/tests/test_json_check.py src/bord.h src/bord.cpp src/json_out.h src/injection.h src/injection.cpp src/json_mode.h src/json_mode.cpp src/cli.cpp src/main.cpp docs/PROTOCOLE-JSON.md
@@ -3160,7 +3160,7 @@ séance, contrôle au multimètre compris.
 - **Démontage à la fin** (§9.6) : `injection monte 0`, puis, les deux USB débranchés, Q2, le 4,7k, le 10k et les 470 Ω retirés (ou au moins le collecteur de Q2 dessoudé de la LIGNE) ; contrôle `TP_Dp` vers la broche 7 des barrettes, dans les deux sens : plus de 100 kΩ. Le tableau du critère 5 a sa ligne « étage d'injection démonté : oui / non ».
 - **`tol_us`** : si la tâche 16b en propose un au-dessus de 20 µs, il est réglé au §9.1, avant la première injection.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Dans `tools/tests/test_generateur.cpp` :
 
@@ -3217,12 +3217,12 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu : ÉCHEC à la compilation de `test_generateur`, avec « tools/tests/test_generateur.cpp:102:14: error: no member named 'impulsionValide' in namespace 'gen' ».
 
-- [ ] **Étape 3 : Écrire la commande `impulsions`**
+- [x] **Étape 3 : Écrire la commande `impulsions`**
 
 Dans `src/gen_symboles.h` :
 
@@ -3502,14 +3502,14 @@ insérer :
     demarrerImpulsions(bas, periode, nb);
 ```
 
-- [ ] **Étape 4 : Lancer les tests et compiler le générateur**
+- [x] **Étape 4 : Lancer les tests et compiler le générateur**
 
 Lancer : `sh tools/tests/test_hote.sh | grep -E "test_generateur|tests hote"`
 Attendu : « test_generateur : 34 verifications, 0 echecs », « tests hote : OK ».
 Lancer : `~/.platformio/penv/bin/pio run -e generateur 2>&1 | grep -E "warning|error|RAM:|Flash:|SUCCESS|FAILED"`
 Attendu : aucune ligne `warning` ni `error` ; `RAM:   [=         ]   5.6% (used 18216 bytes from 327680 bytes)`, `Flash: [==        ]  21.5% ...`, `generateur     SUCCESS`.
 
-- [ ] **Étape 5 : Écrire la procédure du critère 5 dans `docs/BANC.md`**
+- [x] **Étape 5 : Écrire la procédure du critère 5 dans `docs/BANC.md`**
 
 Dans `docs/BANC.md` (matériel, commandes du générateur, critère 5 du §6, deux tableaux du §7, puis le §9 ajouté en fin de fichier) :
 
@@ -3808,7 +3808,7 @@ relues, et la limite part dans l'avenant de l'étape 6 (spec §8.4 : la collisio
 n'est alors constatée qu'après coup, par relecture).
 ````
 
-- [ ] **Étape 6 : Vérifier la procédure et relancer les tests**
+- [x] **Étape 6 : Vérifier la procédure et relancer les tests**
 
 Lancer :
 
@@ -3820,7 +3820,7 @@ Attendu : sept lignes « ok : ... ».
 Lancer : `grep -c '^### 9\.' docs/BANC.md` ; `python3 -m unittest discover -s tools/tests 2>&1 | tail -3`
 Attendu : `6` ; « Ran 157 tests », « OK ».
 
-- [ ] **Étape 7 : Commit**
+- [x] **Étape 7 : Commit**
 
 ```bash
 git add src/gen_symboles.h src/gen_main.cpp tools/tests/test_generateur.cpp docs/BANC.md
@@ -3845,12 +3845,12 @@ Exécutée par l'agent principal avec l'utilisateur, jamais par un sous-agent. M
 - Aucun code ni document à écrire : seulement des résultats, dans les tableaux prévus par la tâche 23b. Les deux firmwares sont flashés depuis l'arbre propre de la tâche 23b.
 - À la fin : `injection monte 0`, puis, les deux USB débranchés, l'étage d'injection **démonté** et contrôlé au multimètre (§9.6) : le boîtier ne retourne sur la hotte (étapes 5 et 5b) que sans étage d'injection.
 
-- [ ] **Étape 1 : Vérifier le logiciel avant le banc (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 1 : Vérifier le logiciel avant le banc (l'agent)**
 
 Lancer : `git status --short`, `sh tools/tests/test_hote.sh | tail -1`, `python3 -m unittest discover -s tools/tests 2>&1 | tail -1`, `~/.platformio/penv/bin/pio run -e sonde -e generateur 2>&1 | tail -3`, `grep -c '^### 9\.' docs/BANC.md`
 Attendu : rien (arbre propre, au commit de la tâche 23b), « tests hote : OK », « OK », `sonde          SUCCESS` et `generateur     SUCCESS`, `6` (§9.1 à §9.6). Si l'un échoue : on s'arrête, pas de banc.
 
-- [ ] **Étape 2 : Montage, hors tension, sans liaison avec la hotte (l'utilisateur)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 2 : Montage, hors tension, sans liaison avec la hotte (l'utilisateur)**
 
 Tous les câbles USB débranchés. Le montage de la tâche 16, variante 1 (`docs/BANC.md` §2.1 et §2.2), plus l'étage d'injection du §9 (Q2 : 4,7k de GPIO7 de la sonde à la base, 10k base-émetteur, émetteur au GND de la sonde, collecteur par 470 Ω sur la LIGNE). Contrôles au multimètre, hors tension, **avant de brancher le moindre USB**, notés au §7 (« Montage et firmwares », ligne `24`) :
 
@@ -3863,19 +3863,19 @@ Tous les câbles USB débranchés. Le montage de la tâche 16, variante 1 (`docs
 | GPIO7 de la sonde | relié seulement au 4,7k de base de Q2 | revoir le câblage |
 | GPIO6 de la sonde | relié seulement au collecteur de l'étage d'écoute et à son 10k | GPIO6 et GPIO7 intervertis ? revoir le câblage |
 
-- [ ] **Étape 3 : Flasher la sonde (l'agent, avec l'accord de l'utilisateur)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 3 : Flasher la sonde (l'agent, avec l'accord de l'utilisateur)**
 
 Montage de l'étape 2 en place, sonde seule sur l'USB du Mac (`PORT_SONDE`, `docs/BANC.md` §3). Pendant le flashage, le 10k base-émetteur tient Q2 bloqué (WIRING.md §6) : la LIGNE reste relâchée.
 Lancer : `~/.platformio/penv/bin/pio run -e sonde -t upload --upload-port $PORT_SONDE`
 Attendu : `SUCCESS`. Le `fw` de la sonde porte le commit de la tâche 23b (`git rev-parse --short HEAD`) : `info` le montrera à l'étape 5.
 
-- [ ] **Étape 4 : Flasher le générateur (l'agent, avec l'accord de l'utilisateur)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 4 : Flasher le générateur (l'agent, avec l'accord de l'utilisateur)**
 
 L'utilisateur branche ensuite le générateur (`PORT_GEN`, `docs/BANC.md` §3).
 Lancer : `~/.platformio/penv/bin/pio run -e generateur -t upload --upload-port $PORT_GEN`
 Attendu : `SUCCESS` ; même commit, noté au §7 pour les deux cartes. L'utilisateur ouvre la console du générateur (`~/.platformio/penv/bin/pio device monitor -e generateur -p $PORT_GEN`) et tape `help` : la ligne `impulsions <bas_us> <periode_ms> [n]  impulsion basse repetee (n : defaut 0, sans fin), critere 5` apparaît. Puis `etat` : `etat : arret, ligne relachee (GPIO7 bas)`.
 
-- [ ] **Étape 5 : Repos et refus, §9.1 (l'utilisateur au clavier, l'agent lit)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 5 : Repos et refus, §9.1 (l'utilisateur au clavier, l'agent lit)**
 
 L'utilisateur ouvre une console sur la sonde (`~/.platformio/penv/bin/pio device monitor -p $PORT_SONDE -b 115200`) et tape, dans l'ordre :
 - `info` : attendu, entre autres, `firmware 0.1.0-<commit de la tâche 23b> (env sonde)` et `ecoute GPIO6, injection GPIO7 (tenue basse)`. Au multimètre : GPIO7 à 0 V, LIGNE à 5 V environ (noté au §7, ligne `24`).
@@ -3887,7 +3887,7 @@ L'utilisateur ouvre une console sur la sonde (`~/.platformio/penv/bin/pio device
 - si le §7 (« Critère 2 à l'analyseur », tâche 16b) propose un `tol_us` au-dessus de 20 : `injection regle tol_us <valeur>`, et la ligne des valeurs le montre.
 Il ferme la console (Ctrl-C) : le port doit être libre.
 
-- [ ] **Étape 6 : Injection simple, relue par la voie 1, §9.2 (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 6 : Injection simple, relue par la voie 1, §9.2 (l'agent)**
 
 Générateur : l'utilisateur tape `stop`.
 Lancer : `python3 tools/serie_enregistre.py $PORT_SONDE banc-injection "injection on" "injecte durees 1500 750 750 750 750 2250 750" "injecte durees 1000" --duree 6`
@@ -3898,7 +3898,7 @@ Lancer : `python3 tools/json_check.py --jsonl logs/<fichier>.jsonl | tail -3`
 Attendu : `... ligne(s) machine, 0 erreur(s) ...`.
 Recommencer neuf fois la première commande (chaque lancement dure 6 s : le délai minimal est tenu) ; noter le nombre de `ok` et le plus grand écart relu − émis. Si une injection simple rend `collision` : `docs/BANC.md` §9.2, dernier paragraphe (`injection regle tol_us <écart + 10>` par la console).
 
-- [ ] **Étape 7 : Collision provoquée, §9.3 (l'utilisateur, puis l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 7 : Collision provoquée, §9.3 (l'utilisateur, puis l'agent)**
 
 1. L'utilisateur tape `impulsions 500 50` dans la console du générateur. Attendu : `impulsions : sans fin, 500 us basses toutes les 50 ms, ligne haute entre deux`, puis `impulsion 0`, `impulsion 1`...
 2. L'agent lance : `for i in 1 2 3 4 5 6 7 8 9 10; do python3 tools/serie_enregistre.py $PORT_SONDE banc-collision-$i "seuils 1 30000" "injection on" "injecte durees 500 20000 500 20000 2500" --duree 4; done`
@@ -3907,29 +3907,29 @@ Recommencer neuf fois la première commande (chaque lancement dure 6 s : le dél
 4. L'agent lance le résumé de `docs/BANC.md` §9 sur `logs/*-banc-collision-*.jsonl`.
    Attendu, pour chacun des dix fichiers : `injection 4 collision attente <a> emises [500, 20000, 500, 20000, 2500] relues [<1 à 4 durées>]`, puis `bas le plus long : <500 à 1000> us`. **Sous 2 000 µs, l'impulsion de 2 500 µs n'est jamais partie : l'émission s'est arrêtée.** À 2 500 ou plus, elle ne s'est pas arrêtée : critère 5 en échec, on garde les fichiers.
 
-- [ ] **Étape 8 : Bus jamais silencieux, §9.4 (l'utilisateur, puis l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 8 : Bus jamais silencieux, §9.4 (l'utilisateur, puis l'agent)**
 
 L'utilisateur tape `motif wtc 0` dans la console du générateur.
 Lancer : `python3 tools/serie_enregistre.py $PORT_SONDE banc-delai "injection on" "injecte durees 1000" --duree 4`
 Attendu : `id=3 injecte durees 1000 : accepte` ; le résumé donne `injection 3 delai attente <environ 1000000> emises [1000] relues []`.
 L'utilisateur tape `stop`.
 
-- [ ] **Étape 9 : Désarmement seul, §9.5 (l'utilisateur au clavier)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 9 : Désarmement seul, §9.5 (l'utilisateur au clavier)**
 
 Console de la sonde. `injection regle arme_max_s 30`, puis `injection on` : `injection armee pour 30 s ('injection off' pour desarmer)`. Après 35 s : `[injection] desarmee seule (30 s ecoulees)`. Puis `injecte durees 1000` : `injecte : non armee ('injection on')`. Puis `injection regle arme_max_s 600`.
 
-- [ ] **Étape 10 : Fin, §9.6 (l'utilisateur, puis l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 10 : Fin, §9.6 (l'utilisateur, puis l'agent)**
 
 Console de la sonde : `injection monte 0`, `seuils 1 5000`, puis `injection` : `injection : etage non monte (GPIO7), desarmee`. Au multimètre : GPIO7 à 0 V, LIGNE à 5 V environ. L'utilisateur ferme la console.
 Si le Wi-Fi et la clé de la tâche 21 sont en place, l'agent lance : `python3 tools/hotte_udp.py session hotte-sonde.local "injection regle tol_us 30" "injection monte 1" --duree 5`
 Attendu : `reponse id=2 fin interdite « injection regle tol_us 30 » : interdite a distance (10.5) : USB seulement` et la même ligne pour `id=3` et `injection monte 1`.
 
-- [ ] **Étape 11 : Démontage de l'étage d'injection, §9.6 (l'utilisateur)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 11 : Démontage de l'étage d'injection, §9.6 (l'utilisateur)**
 
 Les deux câbles USB débranchés (sonde et générateur), l'utilisateur démonte l'étage d'injection : Q2, le 4,7k, le 10k et les 470 Ω retirés, ou au moins le collecteur de Q2 dessoudé de la LIGNE. Puis, hors tension, multimètre au calibre le plus élevé : `TP_Dp` vers la broche 7 des barrettes (GPIO7 de la sonde ; sur la plaque d'essai, la broche GPIO7), dans les deux sens.
 Attendu : **plus de 100 kΩ** les deux fois. Sinon l'étage n'est pas démonté : l'utilisateur finit de le retirer et refait la mesure. Il donne à l'agent « démonté : oui / non » et les deux lectures. `injection monte 0` (étape 10) reste envoyé : les deux ensemble, avant tout retour du boîtier sur la hotte.
 
-- [ ] **Étape 12 : Noter les résultats (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 12 : Noter les résultats (l'agent)**
 
 Dans `docs/BANC.md` §7, remplir :
 - « Montage et firmwares », ligne `24` : date, où est la sonde (`boîtier` ou `plaque`), les deux **OL** (boîtier), `fw` de la sonde et du générateur (`0.1.0-<commit de la tâche 23b>`), ports, LIGNE au repos ;
@@ -3938,7 +3938,7 @@ Dans `docs/BANC.md` §7, remplir :
 
 **Critère 5 rempli** si les 10 collisions sont vues et si aucun palier bas de 2 500 µs n'est capturé. Sinon, la limite part dans l'avenant (spec §8.4). Dans tous les cas, l'étage d'injection est démonté (étape 11) avant que le boîtier ne retourne sur la hotte. Relire le diff avant le commit : `git diff docs/BANC.md`.
 
-- [ ] **Étape 13 : Commit**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 13 : Commit**
 
 ```bash
 git add docs/BANC.md
@@ -3965,7 +3965,7 @@ git commit -m "Consigner le critere 5 du banc (injection et collision)" -m "Co-A
 - Le README cite aussi `captures/` (lien vers `captures/README.md`) et `tools/verse_capture.py` (tâche 12b) ; `test_liens.py` le vérifie.
 - `anyMachine()` de `src/json_mode.cpp` (tâche 11) n'est appelée nulle part, ni après les tâches 19 et 23 : elle est retirée ici.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_liens.py` :
 
@@ -4040,7 +4040,7 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_liens.py 2>&1 | grep -E "^(FAIL|AssertionError|Ran|FAILED)" | cut -c1-80`
 Attendu :
@@ -4052,7 +4052,7 @@ FAILED (failures=1)
 ```
 (`test_liens_relatifs` passe déjà.)
 
-- [ ] **Étape 3 : Écrire le README et les renvois de la spec**
+- [x] **Étape 3 : Écrire le README et les renvois de la spec**
 
 Remplacer tout le contenu de `README.md` (statut, sonde, outils, documents) par :
 
@@ -4344,12 +4344,12 @@ insérer :
     BANC.md                      banc de validation (§10) : procédure et résultats
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_liens.py -v 2>&1 | tail -4`
 Attendu : `test_renvois ... ok`, « Ran 2 tests », « OK ».
 
-- [ ] **Étape 5 : Retirer `anyMachine`, jamais appelée**
+- [x] **Étape 5 : Retirer `anyMachine`, jamais appelée**
 
 Lancer : `grep -rn anyMachine src/`
 Attendu : une seule ligne, `src/json_mode.cpp:109:static bool anyMachine() {` (la définition ; aucun appel).
@@ -4377,7 +4377,7 @@ static bool remote(uint8_t o) { return o != kUsb; }
 Lancer : `grep -rn anyMachine src/ ; ~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|SUCCESS|FAILED"`
 Attendu : rien pour `grep` ; aucune ligne `warning` ni `error`, puis `sonde          SUCCESS`.
 
-- [ ] **Étape 6 : Vérification finale complète**
+- [x] **Étape 6 : Vérification finale complète**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu (le chemin de `$TMPDIR` varie) :
@@ -4415,7 +4415,7 @@ generateur     SUCCESS   00:00:02.413
 Lancer : `git status --short`
 Attendu : ` M README.md`, ` M docs/SPEC-RECONNAISSANCE.md`, ` M src/json_mode.cpp`, `?? tools/tests/test_liens.py`, et rien d'autre.
 
-- [ ] **Étape 7 : Commit**
+- [x] **Étape 7 : Commit**
 
 ```bash
 git add README.md docs/SPEC-RECONNAISSANCE.md src/json_mode.cpp tools/tests/test_liens.py

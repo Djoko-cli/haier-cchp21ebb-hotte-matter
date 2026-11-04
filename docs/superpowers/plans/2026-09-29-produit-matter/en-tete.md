@@ -20,7 +20,7 @@ viendra au second plan, après l'étape 6.
 ESP-IDF 5.5.5, esp_matter 1.5.1), ESP32-C6 SuperMini violette ; C++17 ; tests
 sur le Mac par clang++ ; Python 3.11 (bibliothèque standard), `unittest`.
 
-**Spec:** [docs/SPEC-PRODUIT.md](../../SPEC-PRODUIT.md), à lire avec ce plan
+**Spec:** [docs/SPEC-PRODUIT.md](../../../SPEC-PRODUIT.md), à lire avec ce plan
 (§3 à §5 pour l'automate et Matter, §7 pour le compagnon, §9.1 et §9.2 pour la
 vérification). Références : benq au commit `c58a506`
 (`../benq`, lecture seule), la sonde au commit
@@ -162,7 +162,7 @@ sur `main`.
 
 ## Tâches
 
-### [Partie 1 : logique pure (automate, hotte simulée, correspondance, surveillance)](2026-09-29-produit-matter/1-automate.md)
+### [Partie 1 : logique pure (automate, hotte simulée, correspondance, surveillance)](../../2026-09-29-phase-2a-automate.md)
 
 - Tâche 1 : Automate, partie 1 : types, table des transitions, réglages
 - Tâche 2 : Automate, partie 2 : ordres, confiance, séquences, règle d'or
@@ -171,18 +171,18 @@ sur `main`.
 - Tâche 5 : Correspondance Matter et boîte d'intentions
 - Tâche 6 : Surveillance : température de la puce et tensions
 
-### [Partie 2 : protocole compagnon du produit et outils du Mac](2026-09-29-produit-matter/2-compagnon.md)
+### [Partie 2 : protocole compagnon du produit et outils du Mac](../../2026-09-29-phase-2b-compagnon.md)
 
 - Tâche 7 : Briques du protocole compagnon du produit
 - Tâche 8 : Profil produit de `json_check.py` et document du protocole
 - Tâche 9 : `hotte_udp.py` : clé du produit, nom SRP, résumé
 
-### [Partie 3 : firmware du produit et documents](2026-09-29-produit-matter/3-firmware.md)
+### [Partie 3 : firmware du produit et documents](../../2026-09-29-phase-2c-firmware.md)
 
 - Tâche 10 : Firmware du produit : environnement `produit`, Matter, compagnon, build
 - Tâche 11 : Documents : procédure du banc Matter, README, taille de l'image
 
-### [Partie 4 : banc Matter avec l'utilisateur](2026-09-29-produit-matter/4-banc.md)
+### [Partie 4 : banc Matter avec l'utilisateur](../../2026-09-29-phase-6-banc-matter.md)
 
 - Tâche 12 : Banc Matter : préparer la carte et la mettre en service (P1 à P8) **[BANC avec l'utilisateur]**
 - Tâche 13 : Banc Matter : rendu, bouton de la tuile, affichage, latences (B1, B2, B7, B9, B13) **[BANC avec l'utilisateur]**

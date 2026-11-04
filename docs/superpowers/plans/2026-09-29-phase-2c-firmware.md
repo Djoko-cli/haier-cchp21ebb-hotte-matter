@@ -1,6 +1,6 @@
 # Partie 3 : firmware du produit et documents
 
-Plan : [2026-09-29-produit-matter.md](../2026-09-29-produit-matter.md) (contraintes globales, écarts à la spec).
+Plan : [2026-09-29-produit-matter.md](2026-09-29-produit-matter/en-tete.md) (contraintes globales, écarts à la spec).
 
 Le firmware sur la carte : son test est la compilation des trois
 environnements. Les documents : procédure du banc Matter, README, réponse à
@@ -46,7 +46,7 @@ scripts qui vérifient chaque texte remplacé.
   `net_udp_thread.h` (transport de la ScreenBar, plus `netUdpRafale`) ; `json_mode_produit.h`
   (`jsonOrdreApp`, `jsonSequence`, `jsonHotte`, `jsonAlerte`, `jsonTrameD`, ...) ; `cli_produit.h`.
 
-- [ ] **Étape 1 : Annoncer le produit en tête de `platformio.ini`**
+- [x] **Étape 1 : Annoncer le produit en tête de `platformio.ini`**
 
 Dans `platformio.ini`, remplacer :
 
@@ -63,7 +63,7 @@ par :
 ; banc ; module produit Matter sur Thread (sous-projet 2, docs/SPEC-PRODUIT.md).
 ```
 
-- [ ] **Étape 2 : Écarter `src/produit/` de la sonde**
+- [x] **Étape 2 : Écarter `src/produit/` de la sonde**
 
 Dans `platformio.ini`, remplacer :
 
@@ -80,7 +80,7 @@ par :
 build_src_filter = +<*> -<gen_main.cpp> -<produit/>
 ```
 
-- [ ] **Étape 3 : Ajouter l'environnement `produit`**
+- [x] **Étape 3 : Ajouter l'environnement `produit`**
 
 Les quatre lignes du rôle Thread vont ensemble (spec 4.7) ; `MATTER_THREAD_MED=0` : éligible routeur par défaut.
 
@@ -120,7 +120,7 @@ build_flags =
     -Wl,--wrap=_ZN4chip11DeviceLayer8Internal40GenericThreadStackManagerImpl_OpenThreadINS0_22ThreadStackManagerImplEE20_SetThreadDeviceTypeENS0_19ConnectivityManager16ThreadDeviceTypeE
 ```
 
-- [ ] **Étape 4 : Écrire `src/produit/config_produit.h`**
+- [x] **Étape 4 : Écrire `src/produit/config_produit.h`**
 
 Codes d'appairage tirés au hasard le 29/09 (discriminateur de 12 bits
 différent de 0xF00 ; code hors de la liste interdite, lue dans la pile :
@@ -180,7 +180,7 @@ static_assert(kCodeAppairage != 20202021, "code d'appairage de la ScreenBar");
 static_assert(kDiscriminateur <= 0xFFF && kDiscriminateur != 0xF00, "discriminateur : 12 bits, pas celui de la ScreenBar");
 ```
 
-- [ ] **Étape 5 : Vérifier les codes d'appairage dans `tools/tests/test_hote.sh`**
+- [x] **Étape 5 : Vérifier les codes d'appairage dans `tools/tests/test_hote.sh`**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -196,7 +196,7 @@ echo '#include "config_produit.h"' | $CXXP -fsyntax-only -x c++ -
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 6 : Lancer les tests hôte**
+- [x] **Étape 6 : Lancer les tests hôte**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -208,7 +208,7 @@ Attendu :
 tests hote : OK
 ```
 
-- [ ] **Étape 7 : Lancer le build : il échoue (ni `setup` ni `loop`)**
+- [x] **Étape 7 : Lancer le build : il échoue (ni `setup` ni `loop`)**
 
 ```bash
 ~/.platformio/penv/bin/pio run -e produit
@@ -221,7 +221,7 @@ Attendu : **échec**, avec :
 produit        FAILED    00:00:06.156
 ```
 
-- [ ] **Étape 8 : Écrire `src/produit/produit.h`**
+- [x] **Étape 8 : Écrire `src/produit/produit.h`**
 
 ```cpp
 #pragma once
@@ -268,7 +268,7 @@ uint32_t produitSimuAutoS();
 #endif
 ```
 
-- [ ] **Étape 9 : Écrire `src/produit/reglages_produit.h` (NVS, espace `produit`)**
+- [x] **Étape 9 : Écrire `src/produit/reglages_produit.h` (NVS, espace `produit`)**
 
 ```cpp
 #pragma once
@@ -308,7 +308,7 @@ bool nvsEcrireSimuDem(const sim::EtatHotte &e);
 #endif
 ```
 
-- [ ] **Étape 10 : Écrire `src/produit/reglages_produit.cpp`**
+- [x] **Étape 10 : Écrire `src/produit/reglages_produit.cpp`**
 
 ```cpp
 // ===========================================================================
@@ -466,7 +466,7 @@ bool nvsEcrireSimuDem(const sim::EtatHotte &e) {
 #endif
 ```
 
-- [ ] **Étape 11 : Écrire `src/produit/alim.h`**
+- [x] **Étape 11 : Écrire `src/produit/alim.h`**
 
 ```cpp
 #pragma once
@@ -495,7 +495,7 @@ bool alimReprendre();
 void alimStatut(Print &out, const surv::Surveillance &s);
 ```
 
-- [ ] **Étape 12 : Écrire `src/produit/alim.cpp`**
+- [x] **Étape 12 : Écrire `src/produit/alim.cpp`**
 
 ADC1 en mode continu par le pilote d'IDF (pas l'enveloppe Arduino, qui moyenne et cacherait les creux) ; température de la puce toutes les 10 s.
 
@@ -648,7 +648,7 @@ void alimStatut(Print &out, const surv::Surveillance &s) {
 }
 ```
 
-- [ ] **Étape 13 : Écrire `src/produit/matter_hotte.h`**
+- [x] **Étape 13 : Écrire `src/produit/matter_hotte.h`**
 
 ```cpp
 #pragma once
@@ -704,7 +704,7 @@ bool matterOtTryLock(uint32_t totalMs);
 void matterOtUnlock();
 ```
 
-- [ ] **Étape 14 : Écrire `src/produit/matter_hotte.cpp`**
+- [x] **Étape 14 : Écrire `src/produit/matter_hotte.cpp`**
 
 Recettes de benq (`src/matter_bridge.cpp` au commit `c58a506`) : boîte
 d'intentions sous verrou court, écho propre écarté, reflets par
@@ -1361,7 +1361,7 @@ void matterHotteStatut(Print &out) {
 }
 ```
 
-- [ ] **Étape 15 : Copier le transport UDP de benq (commit `c58a506`) et l'adapter**
+- [x] **Étape 15 : Copier le transport UDP de benq (commit `c58a506`) et l'adapter**
 
 Le dépôt de benq (`../benq`) est lu, jamais modifié.
 
@@ -1528,7 +1528,7 @@ Sortie attendue :
 net_udp_thread.{h,cpp} ecrits
 ```
 
-- [ ] **Étape 16 : Écrire `src/produit/json_mode_produit.h`**
+- [x] **Étape 16 : Écrire `src/produit/json_mode_produit.h`**
 
 ```cpp
 // Copie de src/json_mode.h de la sonde (commit 1cb2c7c), elle-meme copiee de
@@ -1617,7 +1617,7 @@ bool jsonRemoteAdmit(uint32_t id, const char *shown);
 void jsonCountRejected();
 ```
 
-- [ ] **Étape 17 : Copier la session JSON de la sonde (commit `1cb2c7c`) et l'adapter**
+- [x] **Étape 17 : Copier la session JSON de la sonde (commit `1cb2c7c`) et l'adapter**
 
 Depuis la racine du dépôt :
 
@@ -2073,7 +2073,7 @@ Sortie attendue :
 json_mode_produit.cpp ecrit
 ```
 
-- [ ] **Étape 18 : Écrire `src/produit/cli_produit.h`**
+- [x] **Étape 18 : Écrire `src/produit/cli_produit.h`**
 
 ```cpp
 // Copie de src/cli.h de la sonde (commit 1cb2c7c) (adapte : produit)
@@ -2087,7 +2087,7 @@ void cliPoll();  // lignes de l'USB ; redemarrage differe ('reboot')
 void cliRunRemote(uint8_t origin, char *line, bool tooLong);
 ```
 
-- [ ] **Étape 19 : Écrire `src/produit/cli_produit.cpp`**
+- [x] **Étape 19 : Écrire `src/produit/cli_produit.cpp`**
 
 ```cpp
 // Copie partielle de src/cli.cpp de la sonde (commit 1cb2c7c), elle-meme reprise
@@ -2786,7 +2786,7 @@ void cliPoll() {
 }
 ```
 
-- [ ] **Étape 20 : Écrire `src/produit/main_produit.cpp`**
+- [x] **Étape 20 : Écrire `src/produit/main_produit.cpp`**
 
 `setup()` suit le §5.7 : GPIO1 basse en toute première instruction, `enableLoopWDT()` en dernier. Aucun appui n'est injecté au démarrage.
 
@@ -3122,7 +3122,7 @@ void loop() {
 }
 ```
 
-- [ ] **Étape 21 : Lancer le build du produit : il passe**
+- [x] **Étape 21 : Lancer le build du produit : il passe**
 
 Relire la sortie : aucun avertissement venant de `src/produit/`. Noter la taille de l'image : c'est la réponse à Q22.
 
@@ -3139,7 +3139,7 @@ Flash: [========  ]  79.0% (used 2486660 bytes from 3145728 bytes)
 produit        SUCCESS   00:00:36.906
 ```
 
-- [ ] **Étape 22 : La sonde et le générateur compilent toujours**
+- [x] **Étape 22 : La sonde et le générateur compilent toujours**
 
 ```bash
 ~/.platformio/penv/bin/pio run -e sonde -e generateur
@@ -3154,7 +3154,7 @@ sonde          SUCCESS   00:00:10.754
 generateur     SUCCESS   00:00:06.616
 ```
 
-- [ ] **Étape 23 : Lancer tous les tests hôte et Python**
+- [x] **Étape 23 : Lancer tous les tests hôte et Python**
 
 ```bash
 sh tools/tests/test_hote.sh && python3 -m unittest discover -s tools/tests -p 'test_*.py'
@@ -3168,7 +3168,7 @@ Ran 175 tests in 9.596s
 OK
 ```
 
-- [ ] **Étape 24 : Committer**
+- [x] **Étape 24 : Committer**
 
 ```bash
 git add platformio.ini tools/tests/test_hote.sh src/produit/config_produit.h src/produit/produit.h src/produit/reglages_produit.h src/produit/reglages_produit.cpp src/produit/alim.h src/produit/alim.cpp src/produit/matter_hotte.h src/produit/matter_hotte.cpp src/produit/net_udp_thread.h src/produit/net_udp_thread.cpp src/produit/json_mode_produit.h src/produit/json_mode_produit.cpp src/produit/cli_produit.h src/produit/cli_produit.cpp src/produit/main_produit.cpp
@@ -3191,7 +3191,7 @@ git push
 **Interfaces :**
 - Produit : `docs/BANC-MATTER.md` (préparation P1 à P8, commandes, essais B1 à B16 et leurs relevés, bilan).
 
-- [ ] **Étape 1 : Écrire `docs/BANC-MATTER.md`**
+- [x] **Étape 1 : Écrire `docs/BANC-MATTER.md`**
 
 Relevé B13 : reporter la taille donnée par le build de la tâche 10 si elle diffère.
 
@@ -3402,7 +3402,7 @@ Q36, Q42 ; réglages retenus (`lissage_calme_ms`, `lissage_plafond_ms`,
 faites pendant le banc.
 ```
 
-- [ ] **Étape 2 : Présenter le module produit dans `README.md`**
+- [x] **Étape 2 : Présenter le module produit dans `README.md`**
 
 Dans `README.md`, remplacer :
 
@@ -3432,7 +3432,7 @@ compagnon : [docs/PROTOCOLE-JSON-PRODUIT.md](docs/PROTOCOLE-JSON-PRODUIT.md).
 ## Outils Mac
 ````
 
-- [ ] **Étape 3 : Mettre à jour la ligne de `hotte_udp.py cle`**
+- [x] **Étape 3 : Mettre à jour la ligne de `hotte_udp.py cle`**
 
 Dans `README.md`, remplacer :
 
@@ -3446,7 +3446,7 @@ par :
 | `tools/hotte_udp.py [--appareil sonde\|produit] cle <port>` | clé H1 posée par l'USB, rangée dans `~/.config/hotte-<appareil>/cle` (jamais affichée) ; l'appareil se lit dans `hello` s'il n'est pas donné |
 ```
 
-- [ ] **Étape 4 : Mettre à jour la ligne de `json_check.py`**
+- [x] **Étape 4 : Mettre à jour la ligne de `json_check.py`**
 
 Dans `README.md`, remplacer :
 
@@ -3460,7 +3460,7 @@ par :
 | `tools/json_check.py [--jsonl] [--profil sonde\|produit] <capture>` | conformité des lignes machine au profil hotte (sonde ou produit) |
 ```
 
-- [ ] **Étape 5 : Ajouter les documents du produit**
+- [x] **Étape 5 : Ajouter les documents du produit**
 
 Dans `README.md`, remplacer :
 
@@ -3477,7 +3477,7 @@ par :
 | [docs/BANC-MATTER.md](docs/BANC-MATTER.md) | banc Matter sans hotte : procédure et résultats |
 ```
 
-- [ ] **Étape 6 : Mettre à jour l'état des sous-projets**
+- [x] **Étape 6 : Mettre à jour l'état des sous-projets**
 
 Dans `README.md`, remplacer :
 
@@ -3493,7 +3493,7 @@ par :
    interface définitive et firmware Matter (ventilateur 3 vitesses, lumière).
 ```
 
-- [ ] **Étape 7 : Répondre à Q22 dans `docs/SPEC-PRODUIT.md`**
+- [x] **Étape 7 : Répondre à Q22 dans `docs/SPEC-PRODUIT.md`**
 
 Reporter la taille exacte de la tâche 10 si elle diffère.
 
@@ -3509,7 +3509,7 @@ par :
 | Q22 | Taille de l'image et tas libre du produit ? | premier build de `produit` (premier plan) : **image de 2 486 660 octets sur 3 145 728 (79,0 %)**, build du premier plan avec le pilote simulé ; tas libre : banc Matter (B13) | marge de la partition ; fonctions à alléger si elle manque |
 ```
 
-- [ ] **Étape 8 : Lancer les tests Python (liens des documents)**
+- [x] **Étape 8 : Lancer les tests Python (liens des documents)**
 
 ```bash
 python3 -m unittest discover -s tools/tests -p 'test_*.py'
@@ -3522,7 +3522,7 @@ Ran 175 tests in 9.328s
 OK
 ```
 
-- [ ] **Étape 9 : Committer**
+- [x] **Étape 9 : Committer**
 
 ```bash
 git add docs/BANC-MATTER.md README.md docs/SPEC-PRODUIT.md

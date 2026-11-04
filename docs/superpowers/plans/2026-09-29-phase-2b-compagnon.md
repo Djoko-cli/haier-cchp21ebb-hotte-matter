@@ -1,6 +1,6 @@
 # Partie 2 : protocole compagnon du produit et outils du Mac
 
-Plan : [2026-09-29-produit-matter.md](../2026-09-29-produit-matter.md) (contraintes globales, écarts à la spec).
+Plan : [2026-09-29-produit-matter.md](2026-09-29-produit-matter/en-tete.md) (contraintes globales, écarts à la spec).
 
 Les briques pures du profil « hotte » du produit (copiées de la sonde puis
 adaptées), le profil produit de `tools/json_check.py`, le document du
@@ -28,7 +28,7 @@ protocole, et `tools/hotte_udp.py`. Les copies passent par des scripts qui
   `etatThermique`, `etatAlim`, `compteursHotte`, `compteursAlim`, `etatMatter` (`struct MatterEtat`),
   `compteursRadio` (`struct RadioCompteurs`).
 
-- [ ] **Étape 1 : Écrire le test (messages au caractère près, pires cas, liste blanche du §7.5)**
+- [x] **Étape 1 : Écrire le test (messages au caractère près, pires cas, liste blanche du §7.5)**
 
 ```cpp
 // Tests hote des briques du protocole compagnon du produit
@@ -397,7 +397,7 @@ int main(int argc, char **argv) {
 }
 ```
 
-- [ ] **Étape 2 : Brancher le test**
+- [x] **Étape 2 : Brancher le test**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -413,7 +413,7 @@ $CXXP src/produit/hotte_etat.cpp src/produit/surveillance.cpp src/produit/json_o
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 3 : Lancer les tests : ils échouent**
+- [x] **Étape 3 : Lancer les tests : ils échouent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -425,7 +425,7 @@ Attendu : **échec**, avec :
 clang++: error: no such file or directory: 'src/produit/json_out_produit.cpp'
 ```
 
-- [ ] **Étape 4 : Copier les briques de la sonde et les adapter au produit**
+- [x] **Étape 4 : Copier les briques de la sonde et les adapter au produit**
 
 Le script prend `src/json_out.{h,cpp}` au commit `1cb2c7c` (celui de la
 sonde, inchangé depuis), vérifie que chaque texte remplacé s'y trouve une
@@ -916,7 +916,7 @@ Sortie attendue :
 json_out_produit.{h,cpp} ecrits
 ```
 
-- [ ] **Étape 5 : Lancer les tests : ils passent**
+- [x] **Étape 5 : Lancer les tests : ils passent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -930,7 +930,7 @@ test_json_produit : 75 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 6 : Committer**
+- [x] **Étape 6 : Committer**
 
 ```bash
 git add src/produit/json_out_produit.h src/produit/json_out_produit.cpp tools/tests/test_json_produit.cpp tools/tests/test_hote.sh
@@ -956,7 +956,7 @@ git push
   `check_line(raw, profil="sonde")`, `coherence_produit`, option `--profil sonde|produit` (défaut `sonde` :
   la sonde ne change pas) ; `docs/PROTOCOLE-JSON-PRODUIT.md` (profil par différence, 29 exemples vérifiés).
 
-- [ ] **Étape 1 : Écrire le test du profil produit**
+- [x] **Étape 1 : Écrire le test du profil produit**
 
 ```python
 #!/usr/bin/env python3
@@ -1167,7 +1167,7 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer les tests Python : ils échouent**
+- [x] **Étape 2 : Lancer les tests Python : ils échouent**
 
 ```bash
 python3 -m unittest discover -s tools/tests -p 'test_*.py'
@@ -1180,7 +1180,7 @@ AttributeError: module 'json_check' has no attribute 'AUTOMATE_BORNES'
 FAILED (errors=1)
 ```
 
-- [ ] **Étape 3 : Ajouter le profil produit à `tools/json_check.py`**
+- [x] **Étape 3 : Ajouter le profil produit à `tools/json_check.py`**
 
 Depuis la racine du dépôt :
 
@@ -1558,7 +1558,7 @@ Sortie attendue :
 json_check.py : profil produit ajoute
 ```
 
-- [ ] **Étape 4 : Écrire `docs/PROTOCOLE-JSON-PRODUIT.md`**
+- [x] **Étape 4 : Écrire `docs/PROTOCOLE-JSON-PRODUIT.md`**
 
 ````markdown
 # Protocole compagnon v1 : profil « hotte » du module produit
@@ -1784,7 +1784,7 @@ Celui de la ScreenBar (§10), code copié (`src/produit/net_udp_thread.*`) :
 - la liste blanche est celle de la section 6.
 ````
 
-- [ ] **Étape 5 : Lancer les tests Python : ils passent**
+- [x] **Étape 5 : Lancer les tests Python : ils passent**
 
 ```bash
 python3 -m unittest discover -s tools/tests -p 'test_*.py'
@@ -1797,7 +1797,7 @@ Ran 172 tests in 9.319s
 OK
 ```
 
-- [ ] **Étape 6 : Vérifier les lignes du produit dans `tools/tests/test_hote.sh`**
+- [x] **Étape 6 : Vérifier les lignes du produit dans `tools/tests/test_hote.sh`**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -1814,7 +1814,7 @@ python3 tools/json_check.py --profil produit --strict -q --exemples docs/PROTOCO
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 7 : Lancer les tests hôte**
+- [x] **Étape 7 : Lancer les tests hôte**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -1830,7 +1830,7 @@ Attendu :
 tests hote : OK
 ```
 
-- [ ] **Étape 8 : Committer**
+- [x] **Étape 8 : Committer**
 
 ```bash
 git add tools/json_check.py tools/tests/test_json_check_produit.py docs/PROTOCOLE-JSON-PRODUIT.md tools/tests/test_hote.sh
@@ -1854,7 +1854,7 @@ git push
   `cmd_cle(port, chemin=None, appareil=None)`, `resume_produit(t, b, m)`, option globale
   `--appareil sonde|produit` (avant la sous-commande).
 
-- [ ] **Étape 1 : Ajouter les tests du produit à `tools/tests/test_hotte_udp.py`**
+- [x] **Étape 1 : Ajouter les tests du produit à `tools/tests/test_hotte_udp.py`**
 
 Depuis la racine du dépôt :
 
@@ -1956,7 +1956,7 @@ Sortie attendue :
 test_hotte_udp.py : tests du produit ajoutes
 ```
 
-- [ ] **Étape 2 : Lancer les tests Python : ils échouent**
+- [x] **Étape 2 : Lancer les tests Python : ils échouent**
 
 ```bash
 python3 -m unittest discover -s tools/tests -p 'test_*.py'
@@ -1969,7 +1969,7 @@ AttributeError: module 'hotte_udp' has no attribute 'lire_build'
 FAILED (failures=1, errors=2)
 ```
 
-- [ ] **Étape 3 : Ajouter le produit à `tools/hotte_udp.py`**
+- [x] **Étape 3 : Ajouter le produit à `tools/hotte_udp.py`**
 
 Clé d'après l'appareil : `~/.config/hotte-<appareil>/cle`. `cle <port>` lit
 `hello.base.build` par l'USB (`id=<n> json hello`) si `--appareil` manque ;
@@ -2178,7 +2178,7 @@ Sortie attendue :
 hotte_udp.py : produit ajoute
 ```
 
-- [ ] **Étape 4 : Lancer les tests Python : ils passent**
+- [x] **Étape 4 : Lancer les tests Python : ils passent**
 
 ```bash
 python3 -m unittest discover -s tools/tests -p 'test_*.py'
@@ -2191,7 +2191,7 @@ Ran 175 tests in 9.289s
 OK
 ```
 
-- [ ] **Étape 5 : Committer**
+- [x] **Étape 5 : Committer**
 
 ```bash
 git add tools/hotte_udp.py tools/tests/test_hotte_udp.py

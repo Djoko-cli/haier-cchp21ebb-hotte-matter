@@ -1,6 +1,6 @@
 # Plan de la sonde, partie 4 : machine-usb
 
-> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](../2026-09-27-reconnaissance-sonde.md). Les tâches s'exécutent dans l'ordre des numéros (11 à 12b).
+> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](2026-09-27-reconnaissance-sonde/en-tete.md). Les tâches s'exécutent dans l'ordre des numéros (11 à 12b).
 
 ### Tâche 11 : Mode machine sur l'USB : sessions, instantanés, événements `trame`, profil hotte du protocole
 
@@ -45,7 +45,7 @@ Les originaux de la ScreenBar se lisent par `git -C ../benq show c58a506:src/jso
 - **`caps`** : `["sonde","injection","trames","log"]` comme le contrat, `injection` compris avant la tâche 23. **`log`** : `src` vaut `sonde`, `capture`, `injection` ou `reseau` (enumération nouvelle, vérifiée par `json_check.py`).
 - **Valeurs hors bornes lues en NVS** (spec §8.2 : « un `log` le signale ») : `main.cpp` garde le nombre rendu par `reglagesCharger` (`sondeHorsBornes()`). Le texte `[reglages] ...` du démarrage part en général avant que le Mac n'ouvre le port ; aussi, **à chaque ouverture de session** (`json 1`), si ce nombre N n'est pas nul, un `log` `sonde` `notice` « `N valeur(s) hors bornes en NVS : valeurs par defaut` » suit l'instantané et sa réponse, **même sans `json log 1`** (hors plafond des `log`). Le firmware n'est pas testable sur l'hôte : `test_json_check.py` vérifie l'exemple du protocole (§8.3), que `test_hote.sh` passe aussi à `json_check.py`.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_json_check.py` :
 
@@ -321,7 +321,7 @@ python3 tools/json_check.py --strict --independantes -q "$OUT/test_json_lignes.t
 python3 tools/json_check.py --strict -q --exemples docs/PROTOCOLE-JSON.md
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_json_check.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'json_check' »
@@ -329,7 +329,7 @@ Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'json_check' »
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu : ÉCHEC après « test_json : 243 verifications, 0 echecs », avec « python3: can't open file '.../tools/json_check.py': [Errno 2] No such file or directory » (et pas de « tests hote : OK »)
 
-- [ ] **Étape 3 : Écrire `tools/json_check.py`**
+- [x] **Étape 3 : Écrire `tools/json_check.py`**
 
 Le vérificateur d'abord, seul : le document du protocole vient à l'étape 5, et ses exemples passeront par ce vérificateur.
 
@@ -986,7 +986,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Étape 4 : Vérifier `json_check.py` seul**
+- [x] **Étape 4 : Vérifier `json_check.py` seul**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_json_check.py -v`
 Attendu : « Ran 16 tests », puis « FAILED (errors=2) » : seuls `test_exemples_du_protocole` et `test_exemple_valeurs_hors_bornes` échouent, sur « FileNotFoundError: [Errno 2] No such file or directory: '.../docs/PROTOCOLE-JSON.md' » ; les 14 autres sont à `ok`.
@@ -1002,7 +1002,7 @@ lecture impossible : [Errno 2] No such file or directory: 'docs/PROTOCOLE-JSON.m
 ```
 (et pas de « tests hote : OK »)
 
-- [ ] **Étape 5 : Écrire `docs/PROTOCOLE-JSON.md`**
+- [x] **Étape 5 : Écrire `docs/PROTOCOLE-JSON.md`**
 
 Le profil hotte par différence avec la ScreenBar ; chaque exemple `<RS>{...}` de la section 8 passera par `json_check.py --strict --exemples`.
 
@@ -1379,7 +1379,7 @@ Format seulement (les commandes viennent avec l'étage d'injection) :
 ```
 ````
 
-- [ ] **Étape 6 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 6 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_json_check.py -v`
 Attendu : « Ran 16 tests » puis « OK »
@@ -1398,7 +1398,7 @@ par type : compteurs/sonde 1, config 2, etat/bus 1, etat/capture 1, etat/sys 1, 
 tests hote : OK
 ```
 
-- [ ] **Étape 7 : Brancher le firmware sur le mode machine (le test est la compilation)**
+- [x] **Étape 7 : Brancher le firmware sur le mode machine (le test est la compilation)**
 
 Le « test » du firmware est sa compilation : on écrit d'abord les appelants de `json_mode`, qui n'existe pas encore.
 
@@ -1930,12 +1930,12 @@ void cliPoll() {
 }
 ```
 
-- [ ] **Étape 8 : Compiler et vérifier l'échec**
+- [x] **Étape 8 : Compiler et vérifier l'échec**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "error|FAILED"`
 Attendu : ÉCHEC avec « src/cli.cpp:26:10: fatal error: json_mode.h: No such file or directory » (et la même erreur pour `src/main.cpp:16:10`)
 
-- [ ] **Étape 9 : Écrire `json_mode.h` et le début de `json_mode.cpp` (état, émission, textes)**
+- [x] **Étape 9 : Écrire `json_mode.h` et le début de `json_mode.cpp` (état, émission, textes)**
 
 `json_mode.cpp` s'écrit en quatre morceaux, chacun compilé : le compilateur vérifie chaque morceau, et l'édition de liens ne réclame plus que les fonctions publiques pas encore écrites.
 
@@ -2252,7 +2252,7 @@ undefined reference to `jsonReplyEnd
 undefined reference to `jsonTrame
 ```
 
-- [ ] **Étape 10 : Ajouter les messages, la file des périodiques et les réponses**
+- [x] **Étape 10 : Ajouter les messages, la file des périodiques et les réponses**
 
 Ajouter à la fin de `src/json_mode.cpp` (le bloc commence par une ligne vide) :
 
@@ -2636,7 +2636,7 @@ undefined reference to `jsonPoll
 undefined reference to `jsonTrame
 ```
 
-- [ ] **Étape 11 : Ajouter la session et la commande `json`**
+- [x] **Étape 11 : Ajouter la session et la commande `json`**
 
 Ajouter à la fin de `src/json_mode.cpp` (le bloc commence par une ligne vide) :
 
@@ -2901,7 +2901,7 @@ undefined reference to `jsonPoll
 undefined reference to `jsonTrame
 ```
 
-- [ ] **Étape 12 : Ajouter les événements et le cycle de vie**
+- [x] **Étape 12 : Ajouter les événements et le cycle de vie**
 
 Ajouter à la fin de `src/json_mode.cpp` (le bloc commence par une ligne vide) :
 
@@ -3012,7 +3012,7 @@ void jsonPoll() {
 }
 ```
 
-- [ ] **Étape 13 : Compiler et relancer tous les tests**
+- [x] **Étape 13 : Compiler et relancer tous les tests**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|RAM:|Flash:|SUCCESS|FAILED"`
 Attendu :
@@ -3030,7 +3030,7 @@ Attendu : « tests hote : OK »
 Lancer : `python3 -m unittest discover -s tools/tests 2>&1 | tail -3`
 Attendu : « Ran 97 tests », puis « OK » (toutes les suites Python, `test_json_check` compris)
 
-- [ ] **Étape 14 : Commit**
+- [x] **Étape 14 : Commit**
 
 ```bash
 git add src/json_mode.h src/json_mode.cpp src/sonde.h src/main.cpp src/cli.cpp tools/json_check.py tools/tests/test_json_check.py tools/tests/test_hote.sh docs/PROTOCOLE-JSON.md
@@ -3057,7 +3057,7 @@ git commit -m "Ajouter le mode machine sur l'USB et le profil hotte du protocole
 
 **Comportement :** Ctrl-U, puis `id=1 json 1 bail 0` et les commandes demandées, une à la fois (la suivante part après la réponse `fin`, ou 3 s sans elle) ; chaque ligne machine reçue est écrite telle quelle dans le `.jsonl` (texte, lignes abîmées et reste d'avant le premier LF ne le sont pas, mais sont comptés) ; à la fin (`--duree` écoulée ou Ctrl-C), `json 0` part et l'outil attend le message `fin` (1 s au plus). Si le port disparaît (sonde redémarrée), l'enregistrement s'arrête proprement, sans `json 0`. Les tests n'ouvrent aucun port : une fausse sonde répond aux commandes, `ouvrir_port` est vérifiée avec des `ioctl` simulés, et `main()` tourne sur une paire de sockets.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_serie_enregistre.py` :
 
@@ -3378,12 +3378,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_serie_enregistre.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'serie_enregistre' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/serie_enregistre.py` :
 
@@ -3732,7 +3732,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_serie_enregistre.py -v`
 Attendu : « Ran 11 tests » (environ 1 s : `test_main` enregistre pendant 1 s réelle) puis « OK »
@@ -3743,7 +3743,7 @@ Attendu : « Ran 108 tests », puis « OK »
 Lancer : `python3 tools/serie_enregistre.py /dev/cu.inexistant essai --duree 1 --dossier "$TMPDIR/essai-serie"; echo "code $?"`
 Attendu : « /dev/cu.inexistant : No such file or directory (port tenu par 'pio device monitor' ou l'app ?) » puis « code 1 » (aucun port n'est ouvert par cette vérification)
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/serie_enregistre.py tools/tests/test_serie_enregistre.py
@@ -3777,7 +3777,7 @@ git commit -m "Ajouter l'enregistrement d'une session machine par l'USB" -m "Co-
 - **`json_check.py` sans `--strict`** : un trou de `n` est un avertissement ; le journal exige déjà zéro perte à l'étape 5 (ligne 9), sinon on refait le scénario.
 - **Provenance écrite par l'outil**, pour que chaque fichier de `captures/` ait sa ligne sans rien à faire à la main : fichier, source dans `logs/`, heure du Mac de la première ligne, nombre de lignes, transport (`usb`, `udp`), `fw` du premier `hello` `base`, premier `boot` vu (`?` s'ils manquent).
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_verse_capture.py` :
 
@@ -3956,12 +3956,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_verse_capture.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'verse_capture' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/verse_capture.py` :
 
@@ -4133,7 +4133,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Étape 4 : Écrire `captures/README.md`**
+- [x] **Étape 4 : Écrire `captures/README.md`**
 
 Les tests en copient le tableau : il doit exister avant de les relancer.
 
@@ -4176,7 +4176,7 @@ message machine reçu : `{"rx_ms": <heure du Mac en ms>, "de": "usb" | "<ip>",
 |---|---|---|---|---|---|---|
 ````
 
-- [ ] **Étape 5 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 5 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_verse_capture.py -v`
 Attendu : les 11 tests à `ok` (`Refus` 6, `Versement` 5), « Ran 11 tests », « OK »
@@ -4187,7 +4187,7 @@ Attendu : « Ran 119 tests », puis « OK »
 Lancer : `python3 tools/verse_capture.py logs/absent.jsonl essai; echo "code $?"`
 Attendu : « lecture impossible : [Errno 2] No such file or directory: 'logs/absent.jsonl' » puis « code 2 » ; `captures/` ne contient toujours que `README.md`.
 
-- [ ] **Étape 6 : Commit**
+- [x] **Étape 6 : Commit**
 
 ```bash
 git add tools/verse_capture.py tools/tests/test_verse_capture.py captures/README.md

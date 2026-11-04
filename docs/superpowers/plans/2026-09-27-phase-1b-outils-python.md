@@ -1,6 +1,6 @@
 # Plan de la sonde, partie 2 : outils-python
 
-> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](../2026-09-27-reconnaissance-sonde.md). Les tâches s'exécutent dans l'ordre des numéros (2 à 6).
+> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](2026-09-27-reconnaissance-sonde/en-tete.md). Les tâches s'exécutent dans l'ordre des numéros (2 à 6).
 
 ### Tâche 2 : Signaux synthétiques et simulation de la sonde (`tools/signaux.py`)
 
@@ -28,7 +28,7 @@
 - `simuler_sonde` : `n` compte les objets à partir de 1 ; `ms` = fin de la partie (plus `silence_us` pour la dernière), en ms. Un palier **hors repos** de `silence_us` ou plus lève `ValueError` : le RMT clôt une réception après `silence_us` sans front, quel que soit le niveau, ce que le simulateur ne reproduit pas. Pour `uart500`, `uart500inv` et `krona` (octet 0x00 : 18 ms hors repos), il faut donc un silence supérieur à 18 000 µs.
 - `krona` : pour `index % 8` égal à 0 ou 1, l'octet 0xFF ou 0xFE et la pause de 4 ms donnent 22 ou 20 ms de repos dans la trame, autant ou plus que les 20 ms entre deux trames. Aucun silence ne sépare alors les trames : la sonde les coupe entre deux octets, sans rien perdre. Le test `test_krona_index_0_coupe_entre_deux_octets` le fixe.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_signaux.py` :
 
@@ -214,12 +214,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_signaux.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'signaux' », puis « FAILED (errors=1) ».
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/signaux.py` :
 
@@ -410,12 +410,12 @@ def simuler_sonde(segments: list[Segment], t0_us: int, silence_us: int, repos_ha
     return objets
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_signaux.py -v`
 Attendu : « Ran 27 tests », puis « OK ».
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/signaux.py tools/tests/test_signaux.py
@@ -441,7 +441,7 @@ git commit -m "Ajouter les signaux synthetiques et la simulation de la sonde" -m
   - `flux(recs, repos_haut: bool) -> list[tuple[bool, int]]` (commence au premier front ; silence inséré seulement si l'écart est positif).
 - Produit (ajout) : `repos_majoritaire(recs: list[Reception]) -> bool`, le niveau qui suit la dernière durée de chaque réception, à la majorité (haut en cas d'égalité ou sans réception) ; c'est le défaut de `--repos` dans `analyse.py`.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_capture_fmt.py` :
 
@@ -585,12 +585,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_capture_fmt.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'capture_fmt' », puis « FAILED (errors=1) ».
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/capture_fmt.py` :
 
@@ -763,7 +763,7 @@ def repos_majoritaire(recs: list[Reception]) -> bool:
     return haut >= bas
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_capture_fmt.py -v`
 Attendu : « Ran 11 tests », puis « OK ».
@@ -771,7 +771,7 @@ Attendu : « Ran 11 tests », puis « OK ».
 Lancer : `python3 -m unittest discover -s tools/tests -v`
 Attendu : « Ran 38 tests », puis « OK ».
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/capture_fmt.py tools/tests/test_capture_fmt.py
@@ -801,7 +801,7 @@ git commit -m "Ajouter la lecture des captures de la sonde" -m "Co-Authored-By: 
 
 Sans cette dernière règle, un débit moitié ou double du vrai peut sortir sans erreur et passer en tête. Au-delà du dernier segment, le niveau est l'opposé de ce segment : c'est le repos réel, quelle que soit l'hypothèse. Une polarité fausse fait donc échouer le stop du dernier octet.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_decodeurs.py` :
 
@@ -913,12 +913,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_decodeurs.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'decodeurs' », puis « FAILED (errors=1) ».
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/decodeurs.py` :
 
@@ -1087,7 +1087,7 @@ def uart(trame, bauds: int, inverse: bool = False) -> Decodage:
     return Decodage("uart", params, bytes(octets), bits, erreurs, symboles)
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_decodeurs.py -v`
 Attendu : « Ran 14 tests », puis « OK ».
@@ -1095,7 +1095,7 @@ Attendu : « Ran 14 tests », puis « OK ».
 Lancer : `python3 -m unittest discover -s tools/tests -v`
 Attendu : « Ran 52 tests », puis « OK ».
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/decodeurs.py tools/tests/test_decodeurs.py
@@ -1136,7 +1136,7 @@ git commit -m "Ajouter le decoupage en trames et le decodeur UART" -m "Co-Author
   - à taux égal, moins de symboles d'abord : un UART à débit double tente plus d'octets ;
   - une hypothèse sans symbole va en queue.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Dans `tools/tests/test_decodeurs.py`, repérer la fin de la classe `Uart` et le bloc final :
 
@@ -1238,12 +1238,12 @@ class Auto(unittest.TestCase):
         self.assertEqual(decodeurs.auto([]), [])
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_decodeurs.py -v`
 Attendu : ÉCHEC avec « AttributeError: module 'decodeurs' has no attribute 'distance_impulsion' » (et `'manchester'`, `'auto'`), puis « FAILED (errors=14) » ; les 14 tests de la tâche 4 passent toujours.
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Dans `tools/decodeurs.py`, après la fin de la fonction `uart` :
 
@@ -1414,7 +1414,7 @@ def auto(trames, bauds=BAUDS) -> list[Decodage]:
     return sorted(hyps, key=lambda h: (h.symboles == 0, h.taux, h.symboles))
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_decodeurs.py -v`
 Attendu : « Ran 28 tests », puis « OK ».
@@ -1424,7 +1424,7 @@ Attendu : « Ran 66 tests », puis « OK ».
 
 Contrôle mesuré lors de la rédaction : sur les motifs du banc, 1 000 trames par motif, avec ou sans gigue de ±2 µs et asymétrie de 5 µs, `auto` met en tête le bon décodeur, sans erreur et avec les bons octets. C'est vrai pour `uart500`, `uart500inv`, `uart2400`, `uart2400inv`, `uart9600`, `uart9600inv`, `wtc` et `krona` (silence de 19 000 µs pour `uart500`, `uart500inv` et `krona`, 5 000 µs pour les autres). Il faut moins d'une seconde par motif. La deuxième hypothèse est loin derrière : au mieux 1 000 erreurs sur 25 000 symboles (`wtc` lu en UART à 9 600 bauds).
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/decodeurs.py tools/tests/test_decodeurs.py
@@ -1453,7 +1453,7 @@ git commit -m "Ajouter les decodeurs distance d'impulsion et Manchester et le cl
   - liste les contenus distincts de chaque capture, avec leurs effectifs ;
   - compare les contenus les plus fréquents : octets pour l'UART (avec les numéros des bits qui changent, LSB = 0), bits par message sinon.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_analyse.py`. Les captures `.jsonl` et série brute y sont fabriquées par `signaux.simuler_sonde`, au format `.jsonl` du contrat :
 
@@ -1655,12 +1655,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_analyse.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'analyse' », puis « FAILED (errors=1) ».
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/analyse.py` :
 
@@ -1957,7 +1957,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_analyse.py -v`
 Attendu : « Ran 15 tests », puis « OK ».
@@ -2000,7 +2000,7 @@ trames decodees avec : uart 500 bauds inverse
   ... 3 trames de plus (--max 0 : toutes)
 ```
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/analyse.py tools/tests/test_analyse.py

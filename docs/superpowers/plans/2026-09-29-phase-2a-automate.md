@@ -1,6 +1,6 @@
 # Partie 1 : logique pure (automate, hotte simulée, correspondance, surveillance)
 
-Plan : [2026-09-29-produit-matter.md](../2026-09-29-produit-matter.md) (contraintes globales, écarts à la spec).
+Plan : [2026-09-29-produit-matter.md](2026-09-29-produit-matter/en-tete.md) (contraintes globales, écarts à la spec).
 
 Tout ce qui décide est ici, sans Arduino ni pile Matter, testé sur le Mac par
 `sh tools/tests/test_hote.sh` (clang++, `-Wall -Wextra -Werror`). Cycle de
@@ -29,7 +29,7 @@ avec leurs bornes (§4.2), comme `inj::Params` de la sonde. Les lignes
   `enum class Reglage` ; `Reglage reglerParam(Params*, const char*, uint32_t)` ;
   `bool chargerParams(const void*, size_t, Params*)`.
 
-- [ ] **Étape 1 : Écrire le test (table du §2.2, textes, réglages)**
+- [x] **Étape 1 : Écrire le test (table du §2.2, textes, réglages)**
 
 ```cpp
 // Tests hote de l'automate (src/produit/hotte_etat.*) : table des
@@ -166,7 +166,7 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Annoncer le produit dans `tools/tests/test_hote.sh`**
+- [x] **Étape 2 : Annoncer le produit dans `tools/tests/test_hote.sh`**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -180,7 +180,7 @@ par :
 # Tests hote de la sonde et du produit (sans carte). A lancer depuis n'importe ou : sh tools/tests/test_hote.sh
 ```
 
-- [ ] **Étape 3 : Brancher le test dans `tools/tests/test_hote.sh`**
+- [x] **Étape 3 : Brancher le test dans `tools/tests/test_hote.sh`**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -198,7 +198,7 @@ $CXXP src/produit/hotte_etat.cpp tools/tests/test_hotte_etat.cpp -o "$OUT/test_h
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 4 : Lancer les tests : ils échouent (module absent)**
+- [x] **Étape 4 : Lancer les tests : ils échouent (module absent)**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -210,7 +210,7 @@ Attendu : **échec**, avec :
 clang++: error: no such file or directory: 'src/produit/hotte_etat.cpp'
 ```
 
-- [ ] **Étape 5 : Écrire l'en-tête `src/produit/hotte_etat.h`**
+- [x] **Étape 5 : Écrire l'en-tête `src/produit/hotte_etat.h`**
 
 ```cpp
 #pragma once
@@ -314,7 +314,7 @@ bool chargerParams(const void *octets, size_t n, Params *out);
 }  // namespace hotte
 ```
 
-- [ ] **Étape 6 : Écrire `src/produit/hotte_etat.cpp`**
+- [x] **Étape 6 : Écrire `src/produit/hotte_etat.cpp`**
 
 ```cpp
 // ===========================================================================
@@ -531,7 +531,7 @@ bool chargerParams(const void *octets, size_t n, Params *out) {
 }  // namespace hotte
 ```
 
-- [ ] **Étape 7 : Lancer les tests : ils passent**
+- [x] **Étape 7 : Lancer les tests : ils passent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -544,7 +544,7 @@ test_hotte_etat : 153 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 8 : Committer**
+- [x] **Étape 8 : Committer**
 
 ```bash
 git add src/produit/hotte_etat.h src/produit/hotte_etat.cpp tools/tests/test_hotte_etat.cpp tools/tests/test_hote.sh
@@ -577,7 +577,7 @@ git push
   `surAnomalie(uint16_t, uint32_t)`, `surPilote(bool, uint32_t)`, `Action suivante(uint32_t now)`,
   `etat()`, `derniereVitesse()`, `diagnostic(uint32_t)`, `params()`, `mode()`, `annexe()`.
 
-- [ ] **Étape 1 : Écrire les tests de l'automate (confiance, ordres, pilote hors service)**
+- [x] **Étape 1 : Écrire les tests de l'automate (confiance, ordres, pilote hors service)**
 
 Ils remplacent le `main` de la tâche 1.
 
@@ -747,7 +747,7 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Lancer les tests : ils échouent (automate absent)**
+- [x] **Étape 2 : Lancer les tests : ils échouent (automate absent)**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -770,7 +770,7 @@ tools/tests/test_hotte_etat.cpp:163:19: error: use of undeclared identifier 'Act
 tools/tests/test_hotte_etat.cpp:165:26: error: use of undeclared identifier 'Action'
 ```
 
-- [ ] **Étape 3 : Déclarer l'automate dans `src/produit/hotte_etat.h`**
+- [x] **Étape 3 : Déclarer l'automate dans `src/produit/hotte_etat.h`**
 
 Le bloc s'insère avant la fermeture du namespace.
 
@@ -970,7 +970,7 @@ class Automate {
 }  // namespace hotte
 ```
 
-- [ ] **Étape 4 : Écrire l'automate dans `src/produit/hotte_etat.cpp`**
+- [x] **Étape 4 : Écrire l'automate dans `src/produit/hotte_etat.cpp`**
 
 Règles tenues ici : un appui à la fois, confirmation par mode (tableau
 du §5.4), un nouvel essai seulement si l'échec est prouvé, jamais « marche »
@@ -1639,7 +1639,7 @@ Diagnostic Automate::diagnostic(uint32_t nowMs) const {
 }  // namespace hotte
 ```
 
-- [ ] **Étape 5 : Lancer les tests : ils passent**
+- [x] **Étape 5 : Lancer les tests : ils passent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -1652,7 +1652,7 @@ test_hotte_etat : 193 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 6 : Committer**
+- [x] **Étape 6 : Committer**
 
 ```bash
 git add src/produit/hotte_etat.h src/produit/hotte_etat.cpp tools/tests/test_hotte_etat.cpp
@@ -1690,7 +1690,7 @@ d'or, indépendants de l'automate).
   (`regler`, `reglages`, `poserHotte`, `hotte`, `appuiPanneau`, `coupure`, `illisibles`, `sansEffet`,
   `perdus`, `collisions`, `delais`, `refuser`, `refuse`, `horsService`).
 
-- [ ] **Étape 1 : Écrire le test (modes d'état, appui, garde-fous, pannes, prolongation, réglages)**
+- [x] **Étape 1 : Écrire le test (modes d'état, appui, garde-fous, pannes, prolongation, réglages)**
 
 ```cpp
 // Tests hote du pilote simule (src/produit/pilote_simule.*) : trois modes
@@ -1963,7 +1963,7 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Brancher le test**
+- [x] **Étape 2 : Brancher le test**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -1979,7 +1979,7 @@ $CXXP src/produit/hotte_etat.cpp src/produit/pilote_simule.cpp tools/tests/test_
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 3 : Lancer les tests : ils échouent**
+- [x] **Étape 3 : Lancer les tests : ils échouent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -1991,7 +1991,7 @@ Attendu : **échec**, avec :
 clang++: error: no such file or directory: 'src/produit/pilote_simule.cpp'
 ```
 
-- [ ] **Étape 4 : Écrire l'interface `src/produit/pilote_ligne.h` (§4.3)**
+- [x] **Étape 4 : Écrire l'interface `src/produit/pilote_ligne.h` (§4.3)**
 
 ```cpp
 #pragma once
@@ -2076,7 +2076,7 @@ class Pilote {
 }  // namespace ligne
 ```
 
-- [ ] **Étape 5 : Écrire `src/produit/pilote_simule.h`**
+- [x] **Étape 5 : Écrire `src/produit/pilote_simule.h`**
 
 ```cpp
 #pragma once
@@ -2220,7 +2220,7 @@ class PiloteSimule : public ligne::Pilote {
 }  // namespace sim
 ```
 
-- [ ] **Étape 6 : Écrire `src/produit/pilote_simule.cpp`**
+- [x] **Étape 6 : Écrire `src/produit/pilote_simule.cpp`**
 
 ```cpp
 // ===========================================================================
@@ -2580,7 +2580,7 @@ void PiloteSimule::poll(uint32_t nowMs) {
 }  // namespace sim
 ```
 
-- [ ] **Étape 7 : Lancer les tests : ils passent**
+- [x] **Étape 7 : Lancer les tests : ils passent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -2593,7 +2593,7 @@ test_pilote_simule : 56 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 8 : Committer**
+- [x] **Étape 8 : Committer**
 
 ```bash
 git add src/produit/pilote_ligne.h src/produit/pilote_simule.h src/produit/pilote_simule.cpp tools/tests/test_pilote_simule.cpp tools/tests/test_hote.sh
@@ -2619,7 +2619,7 @@ git push
   dans `loop()`, pas de 10 ms, vérification indépendante de la règle d'or à chaque « marche » ;
   `demarrer`, `pas`, `attendreFin`, `panneau`, `mener`, `hotteEst`, `nbAppuis`.
 
-- [ ] **Étape 1 : Écrire le banc de test `tools/tests/banc_hotte.h`**
+- [x] **Étape 1 : Écrire le banc de test `tools/tests/banc_hotte.h`**
 
 ```cpp
 #pragma once
@@ -2761,7 +2761,7 @@ struct BancHotte {
 };
 ```
 
-- [ ] **Étape 2 : Écrire `tools/tests/test_sequences.cpp`**
+- [x] **Étape 2 : Écrire `tools/tests/test_sequences.cpp`**
 
 Chaque couple (état, cible) du §5.3 dans les cinq configurations de ligne,
 les cas imposés du §9.1, l'annulation par le panneau à chaque étape, la règle
@@ -3343,7 +3343,7 @@ int main() {
 }
 ```
 
-- [ ] **Étape 3 : Brancher le test**
+- [x] **Étape 3 : Brancher le test**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -3359,7 +3359,7 @@ $CXXP src/produit/hotte_etat.cpp src/produit/pilote_simule.cpp tools/tests/test_
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 4 : Lancer les tests : ils passent (l'automate des tâches 1 et 2 est complet)**
+- [x] **Étape 4 : Lancer les tests : ils passent (l'automate des tâches 1 et 2 est complet)**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -3372,7 +3372,7 @@ test_sequences : 1670 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 5 : Vérifier que les tests mordent : sans la règle 3, ils échouent**
+- [x] **Étape 5 : Vérifier que les tests mordent : sans la règle 3, ils échouent**
 
 Le mutant appuie « marche » depuis « éteinte » sans arrêt lu : la propriété et la matrice le voient. Le nombre d'échecs doit être non nul. Rien n'est modifié dans le dépôt.
 
@@ -3389,7 +3389,7 @@ Attendu :
 test_sequences : 1682 verifications, 87 echecs
 ```
 
-- [ ] **Étape 6 : Committer**
+- [x] **Étape 6 : Committer**
 
 ```bash
 git add tools/tests/banc_hotte.h tools/tests/test_sequences.cpp tools/tests/test_hote.sh
@@ -3423,7 +3423,7 @@ git push
   (`ecrite`, `noter`, `echue`, `enAttente`, `valeur`) ; `uint16_t versNvs(const Etat&)` ;
   `bool depuisNvs(uint16_t, Etat*)`.
 
-- [ ] **Étape 1 : Écrire le test (paliers, reflet, priorités de la règle 6, rafales, démarrage, NVS)**
+- [x] **Étape 1 : Écrire le test (paliers, reflet, priorités de la règle 6, rafales, démarrage, NVS)**
 
 ```cpp
 // Tests hote de la correspondance Matter (src/produit/hotte_map.*) : paliers
@@ -3618,7 +3618,7 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Inclure la correspondance dans `test_sequences.cpp`**
+- [x] **Étape 2 : Inclure la correspondance dans `test_sequences.cpp`**
 
 Dans `tools/tests/test_sequences.cpp`, remplacer :
 
@@ -3633,7 +3633,7 @@ par :
 #include "hotte_map.h"
 ```
 
-- [ ] **Étape 3 : Ajouter le test du regroupement et du délai moteur**
+- [x] **Étape 3 : Ajouter le test du regroupement et du délai moteur**
 
 Écritures d'EP1 espacées, par le regroupement, jusqu'à la hotte simulée : au plus un changement du moteur par `delai_moteur_ms`.
 
@@ -3682,7 +3682,7 @@ static void testRegroupementMoteur() {
 int main() {
 ```
 
-- [ ] **Étape 4 : L'appeler depuis `main`**
+- [x] **Étape 4 : L'appeler depuis `main`**
 
 Dans `tools/tests/test_sequences.cpp`, remplacer :
 
@@ -3697,7 +3697,7 @@ par :
   testRegroupementMoteur();
 ```
 
-- [ ] **Étape 5 : Lier `hotte_map.cpp` au test de bout en bout**
+- [x] **Étape 5 : Lier `hotte_map.cpp` au test de bout en bout**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -3711,7 +3711,7 @@ par :
 $CXXP src/produit/hotte_etat.cpp src/produit/hotte_map.cpp src/produit/pilote_simule.cpp tools/tests/test_sequences.cpp -o "$OUT/test_sequences"
 ```
 
-- [ ] **Étape 6 : Brancher le test de la correspondance**
+- [x] **Étape 6 : Brancher le test de la correspondance**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -3727,7 +3727,7 @@ $CXXP src/produit/hotte_etat.cpp src/produit/hotte_map.cpp tools/tests/test_hott
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 7 : Lancer les tests : ils échouent**
+- [x] **Étape 7 : Lancer les tests : ils échouent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -3739,7 +3739,7 @@ Attendu : **échec**, avec :
 clang++: error: no such file or directory: 'src/produit/hotte_map.cpp'
 ```
 
-- [ ] **Étape 8 : Écrire `src/produit/hotte_map.h`**
+- [x] **Étape 8 : Écrire `src/produit/hotte_map.h`**
 
 ```cpp
 #pragma once
@@ -3851,7 +3851,7 @@ bool depuisNvs(uint16_t v, Etat *out);
 }  // namespace hotte
 ```
 
-- [ ] **Étape 9 : Écrire `src/produit/hotte_map.cpp`**
+- [x] **Étape 9 : Écrire `src/produit/hotte_map.cpp`**
 
 ```cpp
 // ===========================================================================
@@ -4021,7 +4021,7 @@ bool depuisNvs(uint16_t v, Etat *out) {
 }  // namespace hotte
 ```
 
-- [ ] **Étape 10 : Lancer les tests : ils passent**
+- [x] **Étape 10 : Lancer les tests : ils passent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -4035,7 +4035,7 @@ test_hotte_map : 327 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 11 : Committer**
+- [x] **Étape 11 : Committer**
 
 ```bash
 git add src/produit/hotte_map.h src/produit/hotte_map.cpp tools/tests/test_hotte_map.cpp tools/tests/test_sequences.cpp tools/tests/test_hote.sh
@@ -4070,7 +4070,7 @@ le pont de mesure n'est pas monté (au banc, GPIO2 et GPIO3 sont en l'air).
   `lecturesRatees`, `hotte`, `module`, `maxPoseLu`, `maxPose`, `maxPoseAEcrire`, `maxPoseEcrit`, `maxPoseRaz`,
   `kAucun`).
 
-- [ ] **Étape 1 : Écrire le test (bornes, seuils et hystérésis, lecture en échec, maximum depuis la pose)**
+- [x] **Étape 1 : Écrire le test (bornes, seuils et hystérésis, lecture en échec, maximum depuis la pose)**
 
 ```cpp
 // Tests hote de la surveillance (src/produit/surveillance.*) : bornes des
@@ -4192,7 +4192,7 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Brancher le test**
+- [x] **Étape 2 : Brancher le test**
 
 Dans `tools/tests/test_hote.sh`, remplacer :
 
@@ -4208,7 +4208,7 @@ $CXXP src/produit/surveillance.cpp tools/tests/test_surveillance.cpp -o "$OUT/te
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 3 : Lancer les tests : ils échouent**
+- [x] **Étape 3 : Lancer les tests : ils échouent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -4220,7 +4220,7 @@ Attendu : **échec**, avec :
 clang++: error: no such file or directory: 'src/produit/surveillance.cpp'
 ```
 
-- [ ] **Étape 4 : Écrire `src/produit/surveillance.h`**
+- [x] **Étape 4 : Écrire `src/produit/surveillance.h`**
 
 ```cpp
 #pragma once
@@ -4331,7 +4331,7 @@ class Surveillance {
 }  // namespace surv
 ```
 
-- [ ] **Étape 5 : Écrire `src/produit/surveillance.cpp`**
+- [x] **Étape 5 : Écrire `src/produit/surveillance.cpp`**
 
 ```cpp
 // ===========================================================================
@@ -4498,7 +4498,7 @@ void Surveillance::maxPoseEcrit(uint32_t nowMs) {
 }  // namespace surv
 ```
 
-- [ ] **Étape 6 : Lancer les tests : ils passent**
+- [x] **Étape 6 : Lancer les tests : ils passent**
 
 ```bash
 sh tools/tests/test_hote.sh
@@ -4511,7 +4511,7 @@ test_surveillance : 70 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 7 : Committer**
+- [x] **Étape 7 : Committer**
 
 ```bash
 git add src/produit/surveillance.h src/produit/surveillance.cpp tools/tests/test_surveillance.cpp tools/tests/test_hote.sh

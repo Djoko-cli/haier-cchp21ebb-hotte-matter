@@ -1,6 +1,6 @@
 # Plan de la sonde, partie 3 : firmware-base
 
-> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](../2026-09-27-reconnaissance-sonde.md). Les tâches s'exécutent dans l'ordre des numéros (7 à 10).
+> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](2026-09-27-reconnaissance-sonde/en-tete.md). Les tâches s'exécutent dans l'ordre des numéros (7 à 10).
 
 ### Tâche 7 : Projet PlatformIO, version, configuration, réglages NVS et bornes de capture
 
@@ -36,7 +36,7 @@
   - `src/main.cpp` : `static ReglagesSonde sReglages;` ; `setup()` commence par `pinMode(kPinInjection, OUTPUT); digitalWrite(kPinInjection, LOW);`, puis `Serial.begin(115200);`, `reglagesCharger(&sReglages)` et la bannière `firmware <FW_VERSION_FULL> (<FW_ENV>)` ; `loop()` finit par `vTaskDelay(1);`.
   - `docs/SPEC-RECONNAISSANCE.md` à jour : le commit de référence `c58a506` (étape 9), puis les décisions prises à la relecture du plan (étape 10). Le banc n'a jamais de liaison avec la hotte, et le boîtier de mesure se détache du câble de sortie par une fiche JST XH 4 broches. Le niveau bas de `D` est jugé fonctionnellement : le FX2 ne mesure pas de tension, l'oscilloscope reste optionnel. S'y ajoutent la formulation de la règle 2, les seuils des étapes 3a et 4, l'ordre de sortie de l'étape 4 et le condensateur de 1 nF aux achats.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Le mini-cadre commun des tests C++, puis les tests des bornes, puis le script qui lance tous les tests hôte.
 
@@ -136,13 +136,13 @@ $CXX src/capture_model.cpp tools/tests/test_capture.cpp -o "$OUT/test_capture"
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
 Attendu : ÉCHEC avec « clang++: error: no such file or directory: 'src/capture_model.cpp' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 `src/config.h` est celui du contrat, avec un en-tête de commentaire. `src/capture_model.h` est celui du contrat, à la lettre. `src/capture_model.cpp` n'implémente que les bornes.
 
@@ -322,7 +322,7 @@ uint8_t borner(Reglages *r) {
 }  // namespace capt
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
@@ -333,13 +333,13 @@ test_capture : 24 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 5 : Constater que le firmware ne compile pas encore**
+- [x] **Étape 5 : Constater que le firmware ne compile pas encore**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde`
 
 Attendu : ÉCHEC avec « NotPlatformIOProjectError: Not a PlatformIO project »
 
-- [ ] **Étape 6 : Poser le projet et reprendre la version de la ScreenBar**
+- [x] **Étape 6 : Poser le projet et reprendre la version de la ScreenBar**
 
 Le projet : un seul env pour l'instant, tout le commun dans `[env]`.
 
@@ -517,7 +517,7 @@ Attendu :
 >     .project_name = "hotte-sonde",
 ```
 
-- [ ] **Étape 7 : Réglages en NVS et `setup()` minimal**
+- [x] **Étape 7 : Réglages en NVS et `setup()` minimal**
 
 Créer `src/reglages.h` :
 
@@ -611,7 +611,7 @@ void loop() {
 }
 ```
 
-- [ ] **Étape 8 : Compiler et vérifier la version**
+- [x] **Étape 8 : Compiler et vérifier la version**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|SUCCESS|FAILED"`
 
@@ -629,7 +629,7 @@ Lancer : `strings .pio/build/sonde/firmware.bin | grep -c hotte-sonde`
 
 Attendu : `1`
 
-- [ ] **Étape 9 : Mettre à jour la spec (commit de référence `c58a506`)**
+- [x] **Étape 9 : Mettre à jour la spec (commit de référence `c58a506`)**
 
 Quatre remplacements exacts dans `docs/SPEC-RECONNAISSANCE.md`.
 
@@ -697,7 +697,7 @@ Lancer : `grep -c "c58a506" docs/SPEC-RECONNAISSANCE.md; grep -c "sera figée au
 
 Attendu : `6` puis `0`
 
-- [ ] **Étape 10 : Mettre à jour la spec (décisions de la relecture du plan)**
+- [x] **Étape 10 : Mettre à jour la spec (décisions de la relecture du plan)**
 
 Décisions prises le 27/09/2026 à la relecture de ce plan : le banc n'a jamais de liaison avec la hotte (§10), et le boîtier de mesure se détache du câble de sortie par une fiche JST XH 4 broches (§7.1). Le niveau bas de `D` est jugé fonctionnellement, parce que le FX2 est numérique et ne mesure pas de tension ; une mesure chiffrée reste optionnelle, à l'oscilloscope (§1, étapes 5b et 7, §7.2, §10 critère 2, §13). S'y ajoutent la règle 2 (différentiel testé juste avant de poser un montage), l'étape 3a (entre 3 et 5 V, on en rediscute), l'étape 4 (polarité de +4,5 à +5,3 V ; couvercle et filtre avant l'étape 2b) et le condensateur de 1 nF du banc aux achats (§12). Treize remplacements exacts dans `docs/SPEC-RECONNAISSANCE.md`.
 
@@ -935,7 +935,7 @@ Lancer : `grep -c "entre +4,5 et +5,3 V\|juste avant de poser chaque nouveau mon
 
 Attendu : `9` puis `0`
 
-- [ ] **Étape 11 : Commit**
+- [x] **Étape 11 : Commit**
 
 ```bash
 git add platformio.ini src/fw_version.h src/app_desc.c src/config.h src/capture_model.h src/capture_model.cpp \
@@ -976,7 +976,7 @@ git commit -m "Poser le projet de la sonde : version, configuration, reglages et
 
 `src/json_out.cpp` range donc ses sections dans cet ordre, et non dans celui de la ScreenBar : `copyCmd` vient avant `maskCmd`, et le cache des réponses en dernier. Le code des fonctions reprises ne change pas, sauf `maskCmd` (mot de passe du Wi-Fi).
 
-- [ ] **Étape 1 : Écrire le test qui échoue (écrivain, `u64`, renumérotation)**
+- [x] **Étape 1 : Écrire le test qui échoue (écrivain, `u64`, renumérotation)**
 
 Les tests de l'écrivain de la ScreenBar, passés sur `verif.h`, plus `u64` et `setN`. Avec un chemin en argument, `test_json` y écrit ses messages réalistes (aucun encore à ce cycle).
 
@@ -1177,13 +1177,13 @@ $CXX src/json_out.cpp tools/tests/test_json.cpp -o "$OUT/test_json"
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
 Attendu : « `test_capture : 24 verifications, 0 echecs` », puis ÉCHEC avec « clang++: error: no such file or directory: 'src/json_out.cpp' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale (en-tête complet, écrivain)**
+- [x] **Étape 3 : Écrire l'implémentation minimale (en-tête complet, écrivain)**
 
 Partir de `git -C ../benq show c58a506:src/json_out.h` et `...:src/json_out.cpp`. L'en-tête ci-dessous est la version scindée complète : tout ce qui touche à `halo1_*` est retiré, le reste est gardé mot pour mot (commentaires ajustés), puis `u64`, `trame`, `injection`, `Item`, `Reply::Suite` et `remoteRefusal` du profil hotte. `src/json_out.cpp` ne reçoit ici que l'écrivain ; les fonctions déclarées et pas encore définies ne servent à aucun test de ce cycle.
 
@@ -1688,7 +1688,7 @@ bool Writer::setN(uint32_t n) {
 }  // namespace jsonp
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
@@ -1700,7 +1700,7 @@ test_json : 16 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 5 : Écrire le test qui échoue (messages et pires cas)**
+- [x] **Étape 5 : Écrire le test qui échoue (messages et pires cas)**
 
 Les événements `trame` et `injection`, la réponse (dont celles de `json cle`), `log`, `hb` et `fin`, écrits dans le fichier des messages réalistes. Puis les pires cas, chacun sous le budget de 896 octets : la trame de 110 durées de 32 767 puis de 65 534 µs, compteurs au maximum, `t_us` = 2⁵³−1, `rep` et `sautes` au maximum ; l'événement `injection` construit à la borne maximale admise (`total_max_us` ≤ 200 000 µs : 15 durées de 10 000 et 49 de 1 000, le plus de chiffres possible ; relues à +500 µs, la borne haute de `tol_us`). Avec une `cmd` de 40 `"` échappés, `relu_us` est coupé ; avec une vraie commande de 40 caractères, les 64 relues restent.
 
@@ -2020,13 +2020,13 @@ int main(int argc, char **argv) {
 }
 ```
 
-- [ ] **Étape 6 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 6 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
 Attendu : ÉCHEC à l'édition des liens de `test_json`, avec « Undefined symbols for architecture arm64 », « "jsonp::trame(jsonp::Writer&, unsigned int, unsigned int, capt::Partie const&, bool, unsigned int, unsigned int)", referenced from: » et « ld: symbol(s) not found for architecture arm64 »
 
-- [ ] **Étape 7 : Écrire l'implémentation minimale (messages)**
+- [x] **Étape 7 : Écrire l'implémentation minimale (messages)**
 
 Dans `src/json_out.cpp`, remplacer :
 
@@ -2115,7 +2115,7 @@ void reply(Writer &w, uint32_t n, uint32_t ms, const Reply &r) {
 }  // namespace jsonp
 ```
 
-- [ ] **Étape 8 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 8 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
@@ -2135,7 +2135,7 @@ Lancer : `grep -c "" "${TMPDIR:-/tmp}/hotte-tests/test_json_lignes.txt"`
 
 Attendu : `16` (lignes réalistes pour `json_check.py`, tâche 11)
 
-- [ ] **Étape 9 : Écrire le test qui échoue (commande affichée et liste blanche)**
+- [x] **Étape 9 : Écrire le test qui échoue (commande affichée et liste blanche)**
 
 `reponse.cmd` est tronquée à 40 caractères et ne montre jamais un secret : ni l'aléa de `json cle nouvelle`, ni le mot de passe de `wifi <ssid> <mdp>`, même tronqué. Puis la liste blanche du profil hotte.
 
@@ -2299,13 +2299,13 @@ int main(int argc, char **argv) {
 }
 ```
 
-- [ ] **Étape 10 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 10 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
 Attendu : ÉCHEC à l'édition des liens de `test_json`, avec « Undefined symbols for architecture arm64 », « "jsonp::remoteRefusal(char const*)", referenced from: », « "jsonp::maskCmd(char*)", referenced from: » et « ld: symbol(s) not found for architecture arm64 »
 
-- [ ] **Étape 11 : Écrire l'implémentation minimale (commande affichée et liste blanche)**
+- [x] **Étape 11 : Écrire l'implémentation minimale (commande affichée et liste blanche)**
 
 `maskCmd` coupe `wifi <ssid> <mdp>` après le ssid : le reste de la ligne, mot de passe compris, ne part jamais.
 
@@ -2407,7 +2407,7 @@ const char *remoteRefusal(const char *cmd) {
 }  // namespace jsonp
 ```
 
-- [ ] **Étape 12 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 12 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
@@ -2421,7 +2421,7 @@ test_json : 179 verifications, 0 echecs
 tests hote : OK
 ```
 
-- [ ] **Étape 13 : Écrire le test qui échoue (mécaniques de la session)**
+- [x] **Étape 13 : Écrire le test qui échoue (mécaniques de la session)**
 
 Préfixe `id=`, assemblage des lignes reçues, plafonds de débit, cadence, file des périodiques, bail et cache des réponses, tels que la ScreenBar les teste.
 
@@ -2710,13 +2710,13 @@ int main(int argc, char **argv) {
 }
 ```
 
-- [ ] **Étape 14 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 14 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
 Attendu : ÉCHEC à l'édition des liens de `test_json`, avec « Undefined symbols for architecture arm64 », entre autres « "jsonp::parseIdPrefix(char*, unsigned int*, char**)", referenced from: », « "jsonp::ReplyCache::put(jsonp::Reply const&)", referenced from: » et « ld: symbol(s) not found for architecture arm64 »
 
-- [ ] **Étape 15 : Écrire l'implémentation minimale (mécaniques de la session)**
+- [x] **Étape 15 : Écrire l'implémentation minimale (mécaniques de la session)**
 
 Dans `src/json_out.cpp`, remplacer :
 
@@ -2918,7 +2918,7 @@ const Reply *ReplyCache::find(uint32_t id) const {
 }  // namespace jsonp
 ```
 
-- [ ] **Étape 16 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 16 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
@@ -2936,13 +2936,13 @@ Lancer : `grep -c "" "${TMPDIR:-/tmp}/hotte-tests/test_json_lignes.txt"`
 
 Attendu : `16` (lignes réalistes pour `json_check.py`, tâche 11)
 
-- [ ] **Étape 17 : Vérifier que le firmware compile toujours**
+- [x] **Étape 17 : Vérifier que le firmware compile toujours**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|SUCCESS|FAILED"`
 
 Attendu : une seule ligne `[SUCCESS]`, aucun `warning`
 
-- [ ] **Étape 18 : Commit**
+- [x] **Étape 18 : Commit**
 
 ```bash
 git add src/json_out.h src/json_out.cpp tools/tests/test_json.cpp tools/tests/test_hote.sh
@@ -2969,7 +2969,7 @@ git commit -m "Scinder json_out de la ScreenBar : u64, evenements trame et injec
   - `bool capt::procheDe(uint32_t a, uint32_t b);` : `|a−b| ≤ 10` ou `|a−b| × 20 ≤ max(a, b)`.
   - `capt::Changements` : comparable = `part == 0 && fin` ; `aEmettre` rend `false` (et `rep` avance) si la partie est comparable, sans `debord`, et proche, durée par durée, de la dernière réception ÉMISE (même `niv0Haut`, même `n`) ; toute partie émise devient la référence si elle est comparable, sinon la référence est oubliée. `prendreRep()` rend puis remet à zéro ; `repEnCours()` ; `reset()` oublie tout.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Les tests des bornes de la tâche 7 sont gardés tels quels ; s'y ajoutent ceux du découpeur et du mode changements.
 
@@ -3255,13 +3255,13 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
 Attendu : ÉCHEC à l'édition des liens avec « "capt::Decoupeur::traiter(capt::Bloc const&, capt::Reglages const&, void (*)(capt::Partie const&, void*), void*)", referenced from » et « ld: symbol(s) not found »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Les bornes de la tâche 7 sont inchangées ; s'y ajoutent le découpeur et le mode changements.
 
@@ -3445,7 +3445,7 @@ uint32_t Changements::prendreRep() {
 }  // namespace capt
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
@@ -3463,7 +3463,7 @@ Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|SUCCES
 
 Attendu : une seule ligne `[SUCCESS]`, aucun `warning`
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add src/capture_model.cpp tools/tests/test_capture.cpp
@@ -3505,7 +3505,7 @@ git commit -m "Ecrire le decoupeur de la capture : parties de 110 durees, horoda
 
 **Texte humain sans attente (§8.7, « la sonde n'attend jamais le client ») :** `HWCDC::write` attend jusqu'à 2 s (20 fois 100 ms) quand le Mac reste branché sans lire, par exemple après la fermeture du moniteur. Pendant ce temps, la boucle ne viderait plus l'anneau de la capture. `afficherTrame` n'écrit donc une ligne que si le tampon d'émission a la place d'une ligne entière (1 024 octets, `Serial.availableForWrite()`) ; sinon la ligne est perdue et comptée avec les lignes sautées du plafond, signalées sur la suivante. Le tampon d'émission passe de 256 octets à 8 Ko dès cette tâche (`Serial.setTxBufferSize(8192)` avant `Serial.begin`) : à 256 octets, aucune ligne de plus de 256 octets n'aurait la place. La tâche 11 garde ce tampon pour les lignes machine.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Le « test » de cette tâche est la compilation du firmware complet. On écrit d'abord `src/main.cpp` tel qu'il doit être : il appelle les modules pas encore écrits.
 
@@ -3616,13 +3616,13 @@ void loop() {
 }
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde`
 
 Attendu : ÉCHEC avec « src/main.cpp:10:10: fatal error: bord.h: No such file or directory »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Capture RMT (en-tête du contrat, à la lettre) :
 
@@ -4211,7 +4211,7 @@ void cliPoll() {
 }
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|RAM:|Flash:|SUCCESS|FAILED"`
 
@@ -4232,7 +4232,7 @@ Lancer : `sh tools/tests/test_hote.sh | tail -1`
 
 Attendu : « `tests hote : OK` » (tests hôte inchangés)
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add src/capture_rmt.h src/capture_rmt.cpp src/bord.h src/bord.cpp src/sonde.h src/cli.h src/cli.cpp src/main.cpp

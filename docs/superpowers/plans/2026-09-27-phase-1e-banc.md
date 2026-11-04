@@ -1,6 +1,6 @@
 # Plan de la sonde, partie 5 : banc
 
-> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](../2026-09-27-reconnaissance-sonde.md). Les tâches s'exécutent dans l'ordre des numéros (13 à 16b).
+> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](2026-09-27-reconnaissance-sonde/en-tete.md). Les tâches s'exécutent dans l'ordre des numéros (13 à 16b).
 
 ### Tâche 13 : Motifs du banc en C++ (`src/motifs.{h,cpp}`), croisés avec `signaux.py`
 
@@ -32,7 +32,7 @@ Aucune divergence entre `signaux.py` et le contrat n'a été trouvée.
   - trois constantes en plus (écart assumé, pour les tampons du générateur) : `constexpr size_t motif::kSegMax = 128;` (segments d'une trame, rafale exceptée ; le pire cas mesuré est 52, pour `wtc`), `constexpr uint32_t motif::kRafaleSegs = 100000;`, `constexpr uint32_t motif::kRafaleUs = 100;` ;
   - un `Id` hors de l'énumération rend `"?"`, `true`, `0`, `0`, `0`.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_motifs.py` :
 
@@ -208,13 +208,13 @@ int main() {
 }
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_motifs.py -v`
 
 Attendu : ÉCHEC avec « ERROR: setUpClass (test_motifs.Motifs) », puis « AssertionError: compilation de dump_motifs.cpp : » et « clang++: error: no such file or directory: '<racine du dépôt>/src/motifs.cpp' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `src/motifs.h` :
 
@@ -431,7 +431,7 @@ size_t trame(Id id, uint32_t index, Seg *out, size_t cap) {
 }  // namespace motif
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_motifs.py -v`
 
@@ -443,7 +443,7 @@ Attendu : « OK » (toute la suite Python) ; « tests hote : OK » (tests hôte 
 
 Vérification facultative que le croisement détecte un écart : remplacer `kPauseOctetKronaUs = 4000` par `4001` dans `src/motifs.cpp`, relancer `test_motifs.py` : « FAIL: test_segments » (`6001` au lieu de `6000`) ; remettre `4000`.
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add src/motifs.h src/motifs.cpp tools/tests/dump_motifs.cpp tools/tests/test_motifs.py
@@ -484,7 +484,7 @@ testé sur l'hôte ; `src/gen_main.cpp` n'est vérifié ici que par la compilati
   - console USB du générateur (115200) : `motif <nom> [n] [pause_ms]` (n : 1 000 par défaut, 1 pour `rafale`, 0 = sans fin ; `pause_ms` 0..60 000, défaut `motif::pauseUs`), `stop` (arrête et relâche la ligne : GPIO7 bas), `etat`, `help`. Lignes produites : `motif <nom> : <n> trames, pause <p> us, repos haut (GPIO7 bas)|bas (GPIO7 haut)` au lancement (`: sans fin` si n = 0), `motif <nom> trame <index>` à chaque trame (index à partir de 0), `motif <nom> fini : <n> trames, ligne au repos ...` à la fin, `stop : ligne relachee (GPIO7 bas)`. Les tâches 16, 21 et 24 s'en servent ;
   - déroulé d'un motif : prise du repos (2 µs au niveau du repos, qui y laissent la ligne), pause, trame 0, pause, trame 1, etc. Chaque trame est une transaction RMT ; la pause est comptée par la tâche `loop` depuis le rappel de fin, avec une attente active sur ses 2 dernières ms (valeur demandée plus quelques dizaines de µs). Après la dernière trame, la ligne reste au repos du motif.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_generateur.cpp` :
 
@@ -630,7 +630,7 @@ build_src_filter = +<*> -<gen_main.cpp>
 build_src_filter = -<*> +<gen_main.cpp> +<motifs.cpp> +<app_desc.c>
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 
@@ -640,7 +640,7 @@ Lancer : `~/.platformio/penv/bin/pio run -e generateur 2>&1 | grep -E "undefined
 
 Attendu : ÉCHEC avec « undefined reference to `setup()' », « undefined reference to `loop()' » et « [FAILED] »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `src/gen_symboles.h` :
 
@@ -1069,7 +1069,7 @@ void loop() {
 }
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh | tail -3`
 
@@ -1099,7 +1099,7 @@ Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|SUCCES
 
 Attendu : « [SUCCESS] », aucun `warning` (la sonde ne compile pas `gen_main.cpp` ; `motifs.cpp`, compilé mais inutilisé, disparaît à l'édition des liens).
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add platformio.ini tools/tests/test_hote.sh src/gen_symboles.h src/gen_main.cpp tools/tests/test_generateur.cpp
@@ -1150,7 +1150,7 @@ par le tableau du §4 et vérifié par `test_reglages_par_motif`.
   - `docs/BANC.md`, sections `## 1. Matériel` à `## 7. Résultats` ; le §2 en quatre parties, reprises par les tâches 16, 16b, 21 et 24 : `### 2.1 Où monter la sonde` (boîtier détaché et ses deux contrôles OL, ou plaque d'essai), `### 2.2 Ligne et générateur`, `### 2.3 Analyseur FX2 (critère 2 à l'analyseur)`, `### 2.4 Courant de la sonde (critère 6)` ; le tableau du §4 (une ligne par motif : nom, `seuils 1 <silence>`, `--duree`, `motif <nom>`, durée d'émission) est lu par `test_banc.py` : garder ce format de ligne ; au §7, les tableaux vides, dont `### Critère 2 à l'analyseur (tâche 16b)` et sa ligne `tol_us` ; les tâches 16, 16b, 21 et 24 remplissent le §7 ;
   - lignes de `docs/BANC.md` prises pour ancres par la tâche 23b (ne pas les retoucher ici) : la fin du §1 (de `- pull-up de ligne` à `## 2. Montage`), les lignes `Console du générateur` et `Enregistrement de la sonde` du §3, les lignes 2 à 6 du tableau du §6 suivies de `## 7. Résultats`, le tableau « Critère 5 » du §7 ; la tâche 21 ajoute son §8 après la dernière ligne, `- Limites constatées :`.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_banc.py` :
 
@@ -1391,13 +1391,13 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_banc.py -v`
 
 Attendu : ÉCHEC avec « ERROR: test_banc (unittest.loader._FailedTest.test_banc) » et « ModuleNotFoundError: No module named 'banc' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/banc.py` :
 
@@ -2099,7 +2099,7 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 - Limites constatées :
 ````
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_banc.py -v`
 
@@ -2119,7 +2119,7 @@ for m in "jamais de liaison avec la hotte" "retirée de l'embase, hotte débranc
 
 Attendu : huit lignes « ok : ... », aucune « ABSENT : ... ».
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/banc.py tools/tests/test_banc.py docs/BANC.md
@@ -2151,7 +2151,7 @@ L'utilisateur câble, mesure au multimètre, tient la console du générateur et
 commandes `motif`. Dans les commandes ci-dessous, `$PORT_SONDE` et `$PORT_GEN`
 sont les ports relevés à l'étape 2.
 
-- [ ] **Étape 1 : Montage, variante 1 (10k), hors tension, sans liaison avec la hotte**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 1 : Montage, variante 1 (10k), hors tension, sans liaison avec la hotte**
 
 Les deux câbles USB débranchés, l'utilisateur choisit où monter la sonde
 (`docs/BANC.md` §2.1) :
@@ -2180,7 +2180,7 @@ USB**, notés au §7 (« Montage et firmwares », ligne `16`) :
 | GPIO7 du générateur vers LIGNE | pas de liaison directe (seulement par Q3) | revoir le câblage |
 | GPIO6 de la sonde | relié seulement au collecteur de l'étage d'écoute (Q1 sur le boîtier) et à son 10k | ne jamais relier GPIO6 à GPIO7 (WIRING §6) |
 
-- [ ] **Étape 2 : Ports et flash (l'agent, avec l'accord de l'utilisateur)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 2 : Ports et flash (l'agent, avec l'accord de l'utilisateur)**
 
 1. Brancher **la sonde seule** sur l'USB du Mac, puis :
 
@@ -2207,7 +2207,7 @@ USB**, notés au §7 (« Montage et firmwares », ligne `16`) :
 
    Attendu : « [SUCCESS] ».
 
-- [ ] **Étape 3 : Contrôle sous tension, générateur à l'arrêt**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 3 : Contrôle sous tension, générateur à l'arrêt**
 
 1. L'utilisateur ouvre la console du générateur dans un terminal à part, et la garde
    ouverte jusqu'à la fin du banc :
@@ -2248,7 +2248,7 @@ USB**, notés au §7 (« Montage et firmwares », ligne `16`) :
    multimètre) ; décodage faux → noter la sortie de `banc.py` et analyser avant
    d'aller plus loin (on ne touche ni aux tolérances ni aux motifs).
 
-- [ ] **Étape 4 : Critères 1 et 2, variante 1 : les 8 motifs à contenu**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 4 : Critères 1 et 2, variante 1 : les 8 motifs à contenu**
 
 Pour chaque ligne du tableau du §4 de `docs/BANC.md`, sauf `rafale`, dans cet
 ordre : `uart500`, `uart500inv`, `uart2400`, `uart2400inv`, `uart9600`,
@@ -2302,7 +2302,7 @@ réceptions incomplètes ; refaire une fois le même motif ; si l'échec revient
 s'arrête et on cherche la cause (capture, câblage, générateur) avant tout autre
 motif.
 
-- [ ] **Étape 5 : Critère 2 sans FX2 : décalage retenu**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 5 : Critère 2 sans FX2 : décalage retenu**
 
 1. Prendre la médiane des 8 « decalage suggere » de l'étape 4, arrondie à
    0,5 µs : c'est `N`, l'asymétrie de toute la chaîne (NPN du générateur, ligne,
@@ -2324,7 +2324,7 @@ motif.
    2 µs après correction, noter lequel et ses écarts par niveau : c'est une limite
    de la capture à analyser, pas un réglage à forcer.
 
-- [ ] **Étape 6 : Critère 3, rafale, variante 1**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 6 : Critère 3, rafale, variante 1**
 
 1. L'agent lance :
 
@@ -2350,7 +2350,7 @@ motif.
    - un écart max de plus de 2 µs sur un seul palier toutes les 50 périodes trahirait un trou de la boucle matérielle du générateur, pas de la sonde : le noter.
 4. Noter la ligne au §7 (« Critère 3 : rafale »).
 
-- [ ] **Étape 7 : Variante 2 (4,7k + 1 nF)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 7 : Variante 2 (4,7k + 1 nF)**
 
 1. Débrancher les deux câbles USB (l'utilisateur ferme d'abord la console du générateur).
 2. L'utilisateur remplace le pull-up de 10k par 4,7k et ajoute 1 nF entre la LIGNE et la
@@ -2363,7 +2363,7 @@ motif.
    suggéré peut changer avec le 1 nF (montée plus lente de la ligne) : on retient
    un `N` par variante.
 
-- [ ] **Étape 8 : Critère 6, consommation de la sonde par l'USB**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 8 : Critère 6, consommation de la sonde par l'USB**
 
 Méthode de `docs/BANC.md` §2.4, la même qu'à la tâche 21 (Wi-Fi actif) :
 - **Testeur USB** (si l'utilisateur en a un) entre le port du Mac et le câble USB de la
@@ -2385,7 +2385,7 @@ Attendu : quelques dizaines de mA, sans Wi-Fi (ordre de grandeur 20 à 50 mA).
 Noter au §7 (« Critère 6 ») avec l'instrument utilisé. La ligne « Wi-Fi actif »
 reste vide : tâche 21.
 
-- [ ] **Étape 9 : Conclusions dans `docs/BANC.md`**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 9 : Conclusions dans `docs/BANC.md`**
 
 Remplir au §7 : « Montage et firmwares » (lignes `16` : dates, où est la sonde,
 contrôles OL s'il s'agit du boîtier, `fw` de chaque carte, lu dans le `hello`
@@ -2405,7 +2405,7 @@ python3 -m unittest discover -s tools/tests -p test_banc.py
 
 Attendu : « OK ».
 
-- [ ] **Étape 10 : Fin de séance**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 10 : Fin de séance**
 
 Débrancher les USB (l'utilisateur ferme d'abord la console du générateur). Si la sonde
 était sur le boîtier de mesure et que le boîtier retourne sur la hotte avant la
@@ -2413,7 +2413,7 @@ prochaine séance du banc : banc démonté, contrôles du boîtier (WIRING §12,
 lignes 11 à 17), puis fiche XH 4 broches remise, hotte débranchée
 (`docs/BANC.md` §2.1). Sinon, le boîtier reste détaché.
 
-- [ ] **Étape 11 : Commit**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 11 : Commit**
 
 ```bash
 git add docs/BANC.md
@@ -2446,7 +2446,7 @@ les commandes du générateur et lit les délais dans PulseView. L'agent lance l
 enregistrements de la sonde et `banc.py`, calcule moyennes, maxima et
 asymétries à partir des valeurs que l'utilisateur lui donne, et remplit `docs/BANC.md`.
 
-- [ ] **Étape 1 : Montage, variante 1, analyseur posé, hors tension**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 1 : Montage, variante 1, analyseur posé, hors tension**
 
 1. Tous les USB débranchés (sonde, générateur, analyseur). Montage de la tâche
    16, étape 1 (`docs/BANC.md` §2.1 et §2.2), variante 1 (10k). Sonde sur le
@@ -2467,7 +2467,7 @@ Contrôles, toujours hors tension, avant tout USB :
 | D2, s'il est posé (visuel) | sur GPIO7 du générateur ; aucune voie sur GPIO7 de la sonde | revoir le câblage |
 | LIGNE vers `GND` (ohmmètre) | plus de 10 kΩ | court-circuit : revoir le câblage avant tout USB |
 
-- [ ] **Étape 2 : Brancher et régler**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 2 : Brancher et régler**
 
 1. Brancher la sonde, le générateur, puis l'analyseur (mêmes prises qu'à la
    tâche 16 : mêmes ports). Pas de flash : les firmwares de la tâche 16.
@@ -2481,7 +2481,7 @@ Contrôles, toujours hors tension, avant tout USB :
    capture passe sans erreur), 20 M échantillons à 12 MHz (40 M à 24 MHz),
    déclenchement sur un front descendant de D0.
 
-- [ ] **Étape 3 : `uart9600`, variante 1**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 3 : `uart9600`, variante 1**
 
 1. L'agent lance l'enregistrement de la sonde :
 
@@ -2516,7 +2516,7 @@ Contrôles, toujours hors tension, avant tout USB :
    variante 1 »). Sinon : noter les deux valeurs, et chercher ce qui charge la
    LIGNE.
 
-- [ ] **Étape 4 : `wtc`, variante 1**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 4 : `wtc`, variante 1**
 
 Comme l'étape 3, avec le scénario `banc-v1-fx2-wtc`, `seuils 1 5000`,
 `--duree 20`, la commande `motif wtc 20` et la session
@@ -2536,7 +2536,7 @@ python3 tools/banc.py "$F" wtc --n 20 --decalage-us N1
 Attendu : « critere 1 : 20 / 20 trames decodees au bit pres (100.0 %) : OK »,
 des délais du même ordre qu'avec `uart9600`.
 
-- [ ] **Étape 5 : Variante 2 (4,7k + 1 nF)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 5 : Variante 2 (4,7k + 1 nF)**
 
 1. L'utilisateur ferme la console du générateur et arrête PulseView ; débrancher tous
    les USB.
@@ -2550,7 +2550,7 @@ des délais du même ordre qu'avec `uart9600`.
    franchit son seuil après l'étage sur une montée lente (`docs/BANC.md` §2.3).
    C'est attendu : l'étage seul se lit en variante 1.
 
-- [ ] **Étape 6 : Verdicts et `tol_us`**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 6 : Verdicts et `tol_us`**
 
 1. **Asymétrie** de l'étage, par variante : inférieure à 5 µs → critère 2
    rempli sur ce point ; sinon, elle est documentée au §7 et compensée par
@@ -2566,7 +2566,7 @@ des délais du même ordre qu'avec `uart9600`.
    l'interruption de la sonde), arrondi au µs supérieur. S'il reste sous
    20 µs, on garde les 20 µs par défaut.
 
-- [ ] **Étape 7 : Noter les résultats**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 7 : Noter les résultats**
 
 1. Dans `docs/BANC.md` §7 :
    - « Montage et firmwares » : les deux lignes `16b` (date, où est la sonde,
@@ -2587,7 +2587,7 @@ des délais du même ordre qu'avec `uart9600`.
 
    Attendu : « OK ».
 
-- [ ] **Étape 8 : Fin de séance**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 8 : Fin de séance**
 
 L'utilisateur ferme la console du générateur et PulseView. Débrancher les USB
 (analyseur, générateur, sonde), puis retirer les pinces de l'analyseur et le
@@ -2595,7 +2595,7 @@ diviseur. Si la sonde était sur le boîtier de mesure et qu'il retourne sur la
 hotte : banc démonté, contrôles du boîtier (WIRING §12, lignes 11 à 17), puis
 fiche XH 4 broches remise, hotte débranchée.
 
-- [ ] **Étape 9 : Commit**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 9 : Commit**
 
 ```bash
 git add docs/BANC.md docs/RECONNAISSANCE.md

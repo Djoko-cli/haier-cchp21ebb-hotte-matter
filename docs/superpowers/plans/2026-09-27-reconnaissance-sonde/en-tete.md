@@ -553,13 +553,13 @@ Ce fichier porte l'en-tête, les contraintes, la carte des fichiers et les inter
 
 | Fichier | Tâches |
 |---|---|
-| [1-terrain.md](2026-09-27-reconnaissance-sonde/1-terrain.md) | 1 : fiches de terrain (sécurité, journal, câblage) — l'utilisateur peut commencer les étapes −1 à 3 |
-| [2-outils-python.md](2026-09-27-reconnaissance-sonde/2-outils-python.md) | 2 à 6 : signaux synthétiques, lecture des captures, décodeurs, `analyse.py` |
-| [3-firmware-base.md](2026-09-27-reconnaissance-sonde/3-firmware-base.md) | 7 à 10 : projet, `json_out`, `capture_model`, capture RMT et console |
-| [4-machine-usb.md](2026-09-27-reconnaissance-sonde/4-machine-usb.md) | 11, 12, 12b : mode machine sur l'USB, `serie_enregistre.py`, `verse_capture.py` |
-| [5-banc.md](2026-09-27-reconnaissance-sonde/5-banc.md) | 13 à 16b : motifs, générateur, `banc.py`, banc par l'USB, critère 2 à l'analyseur |
-| [6-reseau.md](2026-09-27-reconnaissance-sonde/6-reseau.md) | 17 à 21 : Wi-Fi, H1, UDP, `hotte_udp.py`, banc par le Wi-Fi |
-| [7-injection.md](2026-09-27-reconnaissance-sonde/7-injection.md) | 22 à 25 : garde-fous, injection, banc du critère 5, clôture |
+| [1-terrain.md](../../2026-09-27-phase-1a-terrain.md) | 1 : fiches de terrain (sécurité, journal, câblage) — l'utilisateur peut commencer les étapes −1 à 3 |
+| [2-outils-python.md](../../2026-09-27-phase-1b-outils-python.md) | 2 à 6 : signaux synthétiques, lecture des captures, décodeurs, `analyse.py` |
+| [3-firmware-base.md](../../2026-09-27-phase-1c-firmware-base.md) | 7 à 10 : projet, `json_out`, `capture_model`, capture RMT et console |
+| [4-machine-usb.md](../../2026-09-27-phase-1d-machine-usb.md) | 11, 12, 12b : mode machine sur l'USB, `serie_enregistre.py`, `verse_capture.py` |
+| [5-banc.md](../../2026-09-27-phase-1e-banc.md) | 13 à 16b : motifs, générateur, `banc.py`, banc par l'USB, critère 2 à l'analyseur |
+| [6-reseau.md](../../2026-09-27-phase-1f-reseau.md) | 17 à 21 : Wi-Fi, H1, UDP, `hotte_udp.py`, banc par le Wi-Fi |
+| [7-injection.md](../../2026-09-27-phase-1g-injection.md) | 22 à 25 : garde-fous, injection, banc du critère 5, clôture |
 
 Les tâches marquées **[BANC avec l'utilisateur]** (16, 16b, 21, 24) sont exécutées par l'agent principal avec l'utilisateur : flashage, carte, instruments. Toutes les autres se font sans carte.
 

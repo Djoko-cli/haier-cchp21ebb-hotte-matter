@@ -1,6 +1,6 @@
 # Plan de la sonde, partie 6 : reseau
 
-> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](../2026-09-27-reconnaissance-sonde.md). Les tâches s'exécutent dans l'ordre des numéros (17 à 21).
+> En-tête, contraintes globales, carte des fichiers et interfaces : [../2026-09-27-reconnaissance-sonde.md](2026-09-27-reconnaissance-sonde/en-tete.md). Les tâches s'exécutent dans l'ordre des numéros (17 à 21).
 
 ### Tâche 17 : Wi-Fi de la sonde (identifiants en NVS, mDNS, reconnexion), commande `wifi`, `info` enrichi
 
@@ -42,7 +42,7 @@
 - **mDNS** : nom d'hôte seul (`hotte-sonde.local`, `MDNS.begin` après le démarrage de la station), pas de service DNS-SD ; `WiFi.setHostname(kNomMdns)` donne le même nom au DHCP.
 - **Mot de passe** : la commande `wifi` est USB seulement (déjà refusée à distance par `jsonp::remoteRefusal`) ; l'utilisateur la tape lui-même (tâche 21), dans une console ouverte hors du dépôt (`log2file` écrirait l'écho dans un fichier du dépôt).
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_wifi.cpp` :
 
@@ -107,12 +107,12 @@ $CXX tools/tests/test_wifi.cpp -o "$OUT/test_wifi"
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu : ÉCHEC avec « tools/tests/test_wifi.cpp:8:10: fatal error: 'net_wifi.h' file not found »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `src/net_wifi.h` :
 
@@ -451,7 +451,7 @@ Brancher le Wi-Fi dans `src/main.cpp` (quatre remplacements) :
 //  texte), mode machine (bail, lignes periodiques), Wi-Fi, puis la tache IDLE.
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu (fin de la sortie) :
@@ -472,7 +472,7 @@ Flash: [========  ]  80.3% (used 10525xx bytes from 1310720 bytes)
 sonde          SUCCESS   ...
 ```
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add src/net_wifi.h src/net_wifi.cpp src/cli.cpp src/main.cpp tools/tests/test_wifi.cpp tools/tests/test_hote.sh
@@ -495,7 +495,7 @@ git commit -m "Ajouter le Wi-Fi de la sonde et la commande wifi" -m "Co-Authored
 - Copies **telles quelles**, sans rien adapter (les commentaires parlent encore de Thread et de `halo1/cle` : ils décrivent la ScreenBar, la spec §8.6 le veut ainsi ; le sous-projet 3 remettra ces fichiers en commun). Seul `test_h1.cpp` change sa ligne « Lancer : ».
 - CommonCrypto est dans la `libSystem` de macOS : la ligne de compilation de `test_h1` n'a rien à lier de plus, comme dans `benq/tools/test_halo1.sh`. La spec §8.6 prévoyait un `tools/tests/test_h1.sh` à part : le contrat range tous les tests C++ dans `test_hote.sh`.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Copier le test de la ScreenBar, avec sa provenance et la commande de lancement de ce dépôt :
 
@@ -523,12 +523,12 @@ $CXX src/h1_proto.cpp tools/tests/test_h1.cpp -o "$OUT/test_h1"
 echo "tests hote : OK"
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu : ÉCHEC avec « clang++: error: no such file or directory: 'src/h1_proto.cpp' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Copier les trois sources, telles quelles, avec leur ligne de provenance :
 
@@ -536,7 +536,7 @@ Copier les trois sources, telles quelles, avec leur ligne de provenance :
 for f in src/h1_proto.h src/h1_proto.cpp src/h1_crypto.cpp; do { echo "// Copie de benq-screenbar-halo-matter@c58a506 : $f"; git -C ../benq show c58a506:$f; } > $f; done
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `sh tools/tests/test_hote.sh`
 Attendu (fin de la sortie) :
@@ -553,7 +553,7 @@ Attendu : les trois lignes `src/h1_proto.h : identique a c58a506`, `src/h1_proto
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|RAM:|Flash:|SUCCESS|FAILED"`
 Attendu : `SUCCESS`, aucun `warning` ; RAM et flash inchangées (19,0 %, 80,3 % : rien n'appelle encore H1).
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add src/h1_proto.h src/h1_proto.cpp src/h1_crypto.cpp tools/tests/test_h1.cpp tools/tests/test_hote.sh
@@ -602,7 +602,7 @@ Les originaux se lisent par `git -C ../benq show c58a506:src/net_udp.cpp` (et `s
 - **`json cle ...`** : `keyCommand` de la ScreenBar, clé en NVS `hotte/cle` ; sans `id`, `json cle nouvelle` renvoie vers `tools/hotte_udp.py cle <port>` (tâche 20).
 - **`caps`** : `["sonde","injection","trames","log","udp","cle","mdns"]`. `reseau_build` reste `aucun` (pas de réseau Matter).
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Dans `tools/tests/test_json_check.py`, un message `reseau/ip` valide rejoint `VALIDES` (le test `test_messages_valides` exige un message par schéma), puis un test de ses bornes :
 
@@ -657,12 +657,12 @@ Dans `tools/tests/test_json_check.py`, un message `reseau/ip` valide rejoint `VA
     def test_log(self):
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_json_check.py -v`
 Attendu : ÉCHEC (`FAILED (failures=2)`) avec « AssertionError: Items in the first set but not the second: ('reseau', 'ip') » et « ["reseau : bloc 'ip' inconnu (attendu : )"] »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale (vérificateur)**
+- [x] **Étape 3 : Écrire l'implémentation minimale (vérificateur)**
 
 1. Dans `tools/json_check.py`, remplacer :
 
@@ -748,12 +748,12 @@ Attendu : ÉCHEC (`FAILED (failures=2)`) avec « AssertionError: Items in the fi
     elif t == "hello" and obj.get("bloc") == "base":
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_json_check.py -v`
 Attendu : « Ran 17 tests » puis « OK »
 
-- [ ] **Étape 5 : Déclarer l'API du transport (`src/net_udp_wifi.h`)**
+- [x] **Étape 5 : Déclarer l'API du transport (`src/net_udp_wifi.h`)**
 
 On écrit d'abord l'en-tête (l'API du contrat), puis ses appelants en deux
 morceaux, `json_mode` (étape 6), puis `cli` et `main` (étape 8), en compilant
@@ -835,7 +835,7 @@ bool netUdpKid(char kid[9]);  // false : aucune cle
 
 Rien ne l'inclut encore : la compilation vient avec ses appelants.
 
-- [ ] **Étape 6 : Brancher `json_mode` sur le transport (sessions réseau, cache des réponses, clé)**
+- [x] **Étape 6 : Brancher `json_mode` sur le transport (sessions réseau, cache des réponses, clé)**
 
 `src/json_mode.h` (deux remplacements) :
 
@@ -1595,7 +1595,7 @@ static void keyCommand(char *p, const JsonCmd &c) {
   // avancent ensemble).
 ```
 
-- [ ] **Étape 7 : Compiler : seule l'édition de liens échoue**
+- [x] **Étape 7 : Compiler : seule l'édition de liens échoue**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -oE "(warning|error): .*|undefined reference to .[a-zA-Z]+|\[(SUCCESS|FAILED)\]" | LC_ALL=C sort -u`
 Attendu : ÉCHEC, sans aucun `warning` ni erreur de compilation ; l'éditeur de liens ne trouve que les fonctions du transport appelées par `json_mode.cpp` :
@@ -1614,7 +1614,7 @@ undefined reference to `netUdpSend
 
 `netUdpResume` n'y est pas encore : seul `jsonRemoteAdmit` l'appelle, que rien n'appelle avant l'étape 8 (l'éditeur de liens retire les fonctions inutilisées). Toute autre ligne (`warning`, `error:` d'un fichier `.cpp`) : corriger l'étape 6 avant d'aller plus loin.
 
-- [ ] **Étape 8 : Brancher `cli` et `main` sur le transport**
+- [x] **Étape 8 : Brancher `cli` et `main` sur le transport**
 
 Remplacer tout le contenu de `src/cli.h` par :
 
@@ -1800,7 +1800,7 @@ static jsonp::LineAssembler sLine;  // 127 caracteres au plus, prefixe id= compr
 //  recues, datagrammes emis), puis la tache IDLE.
 ```
 
-- [ ] **Étape 9 : Compiler : l'édition de liens échoue encore, sur les seules fonctions du transport**
+- [x] **Étape 9 : Compiler : l'édition de liens échoue encore, sur les seules fonctions du transport**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -oE "(warning|error): .*|undefined reference to .[a-zA-Z]+|\[(SUCCESS|FAILED)\]" | LC_ALL=C sort -u`
 Attendu : ÉCHEC, toujours sans `warning` ni erreur de compilation ; les dix fonctions de `net_udp_wifi.h` manquent (`main.cpp` appelle `netUdpBegin` et `netUdpPoll`, `cli.cpp` `netUdpKid`, et `jsonRemoteAdmit`, appelée par `runLine`, `netUdpResume`) :
@@ -1820,7 +1820,7 @@ undefined reference to `netUdpResume
 undefined reference to `netUdpSend
 ```
 
-- [ ] **Étape 10 : Écrire `src/net_udp_wifi.cpp`**
+- [x] **Étape 10 : Écrire `src/net_udp_wifi.cpp`**
 
 Créer `src/net_udp_wifi.cpp` :
 
@@ -2276,7 +2276,7 @@ void netUdpJson(jsonp::Writer &w, uint32_t /*now*/) {
 }
 ```
 
-- [ ] **Étape 11 : Compiler et relancer tous les tests**
+- [x] **Étape 11 : Compiler et relancer tous les tests**
 
 Lancer : `~/.platformio/penv/bin/pio run -e sonde 2>&1 | grep -E "warning|error|RAM:|Flash:|SUCCESS|FAILED"`
 Attendu (aucun `warning`) :
@@ -2297,7 +2297,7 @@ Attendu : « tests hote : OK »
 Lancer : `python3 -m unittest discover -s tools/tests 2>&1 | tail -3`
 Attendu : « Ran 141 tests » puis « OK »
 
-- [ ] **Étape 12 : Documenter le profil réseau (exemples vérifiés)**
+- [x] **Étape 12 : Documenter le profil réseau (exemples vérifiés)**
 
 `docs/PROTOCOLE-JSON.md` (dix remplacements ; l'exemple 8.1 gagne la ligne `reseau` que le firmware émet désormais, et les `caps` du transport) :
 
@@ -2631,7 +2631,7 @@ id=900417 json cle nouvelle 5A0C...(64 hexa)
 ```
 ````
 
-- [ ] **Étape 13 : Relancer les vérifications**
+- [x] **Étape 13 : Relancer les vérifications**
 
 Lancer : `python3 tools/json_check.py --strict -q --exemples docs/PROTOCOLE-JSON.md`
 Attendu :
@@ -2645,7 +2645,7 @@ par type : compteurs/sonde 1, config 2, etat/bus 1, etat/capture 1, etat/sys 1, 
 Lancer : `sh tools/tests/test_hote.sh | tail -1` puis `python3 -m unittest discover -s tools/tests 2>&1 | tail -3`
 Attendu : « tests hote : OK », puis « Ran 141 tests » et « OK »
 
-- [ ] **Étape 14 : Commit**
+- [x] **Étape 14 : Commit**
 
 ```bash
 git add src/net_udp_wifi.h src/net_udp_wifi.cpp src/json_mode.h src/json_mode.cpp src/cli.h src/cli.cpp src/main.cpp tools/json_check.py tools/tests/test_json_check.py docs/PROTOCOLE-JSON.md
@@ -2698,7 +2698,7 @@ git commit -m "Ajouter le transport UDP sur le Wi-Fi et le profil reseau du prot
 - **`enregistre`** accepte des commandes, comme `serie_enregistre.py` (la spec ne montrait que `--duree`) : `"capture tout" "seuils 1 19000"` pour le critère 4. Le `.jsonl` suit le contrat, avec `"de"` = l'adresse de la sonde ; seules les lignes au MAC juste et au JSON valide y entrent. Le résumé de `logs/live.log` commence par `udp <adresse> <scenario>`.
 - Tests : une vraie session UDP contre une sonde simulée sur 127.0.0.1 (poignée de main, réponses, un datagramme au MAC faux, `json 0`), environ 6 s. L'entrée standard est simulée (`Entree`, `mock.patch.object(sys, "stdin", ...)`) : terminal ou non, quel que soit le lanceur des tests.
 
-- [ ] **Étape 1 : Écrire le test qui échoue**
+- [x] **Étape 1 : Écrire le test qui échoue**
 
 Créer `tools/tests/test_hotte_udp.py` :
 
@@ -3056,12 +3056,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Étape 2 : Lancer le test et vérifier qu'il échoue**
+- [x] **Étape 2 : Lancer le test et vérifier qu'il échoue**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_hotte_udp.py -v`
 Attendu : ÉCHEC avec « ModuleNotFoundError: No module named 'hotte_udp' »
 
-- [ ] **Étape 3 : Écrire l'implémentation minimale**
+- [x] **Étape 3 : Écrire l'implémentation minimale**
 
 Créer `tools/hotte_udp.py` :
 
@@ -3634,7 +3634,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
+- [x] **Étape 4 : Lancer les tests et vérifier qu'ils passent**
 
 Lancer : `python3 -m unittest discover -s tools/tests -p test_hotte_udp.py -v`
 Attendu : « Ran 12 tests » (environ 6 s : trois sessions UDP réelles de 2 s) puis « OK »
@@ -3648,7 +3648,7 @@ Attendu : « /dev/cu.inexistant : No such file or directory (port tenu par 'pio 
 Lancer (sans terminal, comme un agent ; la clé de test ne sert qu'à passer la lecture du fichier) : `K=$(mktemp -d)/cle && python3 -c "print('00' * 32)" > $K && HOTTE_CLE=$K python3 tools/hotte_udp.py session 127.0.0.1 "injection on" --duree 1 < /dev/null; echo "code $?"`
 Attendu : « injection on non confirmee (phrase 'je suis devant la hotte' tapee par l'utilisateur, dans un terminal : regle 11) : rien n'est envoye » puis « code 1 » (entrée standard qui n'est pas un terminal : refus sans question, aucun datagramme ; la phrase par un tube l'est aussi, `test_confirmation`)
 
-- [ ] **Étape 5 : Commit**
+- [x] **Étape 5 : Commit**
 
 ```bash
 git add tools/hotte_udp.py tools/tests/test_hotte_udp.py
@@ -3681,7 +3681,7 @@ hotte.
 - **Ordre** : la batterie avant le critère 4, qui se joue sur elle ; la consommation entre les deux.
 - Le tableau du §6 et le tableau « Critère 5 » du §7 ne changent pas : la tâche 23b les remplace à partir de leur texte de la tâche 15 ; elle ajoute aussi la ligne `24` de « Montage et firmwares », après la ligne `21` posée ici.
 
-- [ ] **Étape 1 : Vérifier que la procédure manque (le contrôle qui échoue)**
+- [x] **Étape 1 : Vérifier que la procédure manque (le contrôle qui échoue)**
 
 Lancer :
 
@@ -3691,7 +3691,7 @@ for m in "## 8. Par le Wi-Fi, sur la batterie (critères 4 et 6)" "### 8.2 Trent
 
 Attendu : huit lignes « ABSENT : ... ».
 
-- [ ] **Étape 2 : Écrire la procédure**
+- [x] **Étape 2 : Écrire la procédure**
 
 `docs/BANC.md` (quatre remplacements, puis le §8 en fin de fichier) :
 
@@ -3881,7 +3881,7 @@ point d'accès et recommencer ; sinon, reprendre le risque « Wi-Fi trop
 faible » du §13 de la spec (enregistrement local, relu par l'USB).
 ```
 
-- [ ] **Étape 3 : Relancer le contrôle, le verdict de la batterie et les tests**
+- [x] **Étape 3 : Relancer le contrôle, le verdict de la batterie et les tests**
 
 Lancer la boucle de l'étape 1.
 Attendu : huit lignes « ok : ... », aucune « ABSENT : ... ».
@@ -3903,7 +3903,7 @@ boots 2 ; up_s 2 a 880 (RECUL) ; plus grand trou de rx_ms 32.0 s
 Lancer : `python3 -m unittest discover -s tools/tests 2>&1 | tail -3`
 Attendu : « Ran 153 tests » puis « OK » (aucun test ne change ; `test_banc.py` relit le tableau du §4, inchangé).
 
-- [ ] **Étape 4 : Commit**
+- [x] **Étape 4 : Commit**
 
 ```bash
 git add docs/BANC.md
@@ -3928,12 +3928,12 @@ Exécutée par l'agent principal avec l'utilisateur, jamais par un sous-agent. M
 - Aucun code ni document à écrire : seulement des résultats, dans les tableaux prévus par la tâche 20b.
 - La batterie se juge sur un seul fichier, l'enregistrement de 1 860 s de l'étape 7 ; le critère 4 aussi, l'enregistrement de 660 s de l'étape 9.
 
-- [ ] **Étape 1 : Vérifier le logiciel avant le banc (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 1 : Vérifier le logiciel avant le banc (l'agent)**
 
 Lancer : `sh tools/tests/test_hote.sh | tail -1`, `python3 -m unittest discover -s tools/tests 2>&1 | tail -1`, `~/.platformio/penv/bin/pio run -e sonde 2>&1 | tail -3`, `grep -c '^### 8\.' docs/BANC.md`
 Attendu : « tests hote : OK », « OK », « sonde          SUCCESS », `4` (les §8.1 à §8.4 de la tâche 20b). Si l'un échoue : on s'arrête, pas de banc.
 
-- [ ] **Étape 2 : Montage, hors tension, sans liaison avec la hotte (l'utilisateur)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 2 : Montage, hors tension, sans liaison avec la hotte (l'utilisateur)**
 
 Tous les câbles USB débranchés, batterie à part. Le montage de la tâche 16, variante 1 (`docs/BANC.md` §2.1 et §2.2), sans étage d'injection. Contrôles au multimètre, hors tension, **avant de brancher le moindre USB** (batterie comprise), notés au §7 (« Montage et firmwares », ligne `21`) :
 
@@ -3945,13 +3945,13 @@ Tous les câbles USB débranchés, batterie à part. Le montage de la tâche 16,
 | LIGNE vers `GND` (ohmmètre) | plus de 10 kΩ | court-circuit : revoir le câblage avant tout USB |
 | GPIO6 de la sonde | relié seulement au collecteur de l'étage d'écoute et à son 10k | revoir le câblage |
 
-- [ ] **Étape 3 : Flasher la sonde (l'agent, avec l'accord de l'utilisateur)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 3 : Flasher la sonde (l'agent, avec l'accord de l'utilisateur)**
 
 Montage de l'étape 2 en place, sonde sur l'USB du Mac, générateur branché, sa console ouverte (`docs/BANC.md` §3).
 Lancer : `~/.platformio/penv/bin/pio run -e sonde -t upload --upload-port $PORT_SONDE`
 Attendu : `SUCCESS` ; la sonde redémarre (le `fw` affiché par `info` porte le commit de la tâche 20b).
 
-- [ ] **Étape 4 : Identifiants Wi-Fi (l'utilisateur, au clavier)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 4 : Identifiants Wi-Fi (l'utilisateur, au clavier)**
 
 L'utilisateur ouvre une console hors du dépôt (pour que `log2file` n'écrive pas l'écho du mot de passe dans le dépôt) :
 `cd ~ && ~/.platformio/penv/bin/pio device monitor -p $PORT_SONDE -b 115200`
@@ -3962,12 +3962,12 @@ Il tape `info`. Attendu, entre autres :
 Il ferme la console (Ctrl-C) : le port doit être libre pour l'étape suivante.
 En cas de `wifi : refuse (...)` : SSID avec espace, ou mot de passe de moins de 8 caractères ; `deconnecte (nouvel essai toutes les 10 s)` qui dure : mauvais mot de passe, ou réseau en 5 GHz seulement (le C6 est en 2,4 GHz).
 
-- [ ] **Étape 5 : Clé H1 (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 5 : Clé H1 (l'agent)**
 
 Lancer : `python3 tools/hotte_udp.py cle $PORT_SONDE`
 Attendu : « cle rangee dans /Users/<nom>/.config/hotte-sonde/cle (empreinte XXXXXXXX) » et « (nouvelle cle : les sessions reseau tombent) ». Noter l'empreinte (8 hexa, pas secrète) pour la comparer à `udp.empreinte`.
 
-- [ ] **Étape 6 : Chemin réseau (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 6 : Chemin réseau (l'agent)**
 
 Lancer : `ping -c 3 hotte-sonde.local`
 Attendu : trois réponses de l'adresse vue à l'étape 4.
@@ -3975,7 +3975,7 @@ Lancer : `python3 tools/hotte_udp.py session hotte-sonde.local --duree 15`
 Attendu : `sonde <a.b.c.d> port 5480, cle XXXXXXXX`, `session XXXXXXXX ouverte`, `n=0 hello/base fw 0.1.0-... rev 4 session {'transport': 'udp', 'periode_ms': 2000, 'compteurs_ms': 5000, 'reseau_ms': 30000, ...}`, `reponse id=1 fin ok « json 1 »`, un `etat` toutes les 2 s, une ligne `reseau/ip wifi <a.b.c.d> <-xx> dBm pertes 0 | udp sessions 1 ...`, et à la fin `... ligne(s) recue(s), 0 rejetee(s), 0 renvoi(s), 1 session(s)`.
 En cas de « aucun DEFI en 6 s » : relancer l'étape 5 (clé d'une autre sonde ?), vérifier que le Mac est sur le même réseau.
 
-- [ ] **Étape 7 : Trente minutes sur la batterie (l'utilisateur et l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 7 : Trente minutes sur la batterie (l'utilisateur et l'agent)**
 
 `docs/BANC.md` §8.2.
 1. L'utilisateur pose le banc à l'emplacement de test (là où la sonde sera posée à l'étape 5), toujours sans liaison avec la hotte, débranche la sonde du Mac et la branche sur la **batterie USB** de l'étape 5 (le générateur reste sur le Mac, console ouverte ; fil de masse en place). Après 10 s, l'agent lance `python3 tools/hotte_udp.py session hotte-sonde.local --duree 10` : la session doit s'ouvrir.
@@ -3985,7 +3985,7 @@ En cas de « aucun DEFI en 6 s » : relancer l'étape 5 (clé d'une autre sonde 
    Attendu : `boots 1 ; up_s <début> a <fin> (croissant) ; plus grand trou de rx_ms <g> s`, avec `<fin>` d'au moins 1800 et `<g>` d'au plus 10.
    **Batterie retenue** si les trois conditions tiennent (un seul boot, `up_s` croissant jusqu'à 1 800 au moins, aucun trou de `rx_ms` de plus de 10 s). Sinon : noter le modèle refusé, prendre une autre batterie et recommencer l'étape 7.
 
-- [ ] **Étape 8 : Consommation, Wi-Fi actif (l'utilisateur, critère 6)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 8 : Consommation, Wi-Fi actif (l'utilisateur, critère 6)**
 
 `docs/BANC.md` §8.3, sonde sur la batterie retenue. L'utilisateur choisit l'instrument :
 - **testeur USB**, s'il y en a un, entre la batterie et le câble USB de la sonde ;
@@ -3993,7 +3993,7 @@ En cas de « aucun DEFI en 6 s » : relancer l'étape 5 (clé d'une autre sonde 
 
 L'agent lance `python3 tools/hotte_udp.py session hotte-sonde.local --duree 60`, l'utilisateur tape `motif krona 400` dans la console du générateur, lit le courant moyen (attendu : de l'ordre de 100 mA, spec §8.7) et le dit à l'agent avec l'instrument. Avec le multimètre, l'utilisateur débranche ensuite la batterie, retire le multimètre et le câble ouvert, puis rebranche la batterie sur l'USB-C de la sonde.
 
-- [ ] **Étape 9 : Dix minutes de `krona` (l'utilisateur et l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 9 : Dix minutes de `krona` (l'utilisateur et l'agent)**
 
 `docs/BANC.md` §8.4.
 1. Sonde sur la batterie, à l'emplacement de test (générateur sur le Mac, console ouverte ; fil de masse en place). 10 s après le dernier branchement de la batterie, l'agent relance `python3 tools/hotte_udp.py session hotte-sonde.local --duree 10` : la session doit s'ouvrir.
@@ -4002,7 +4002,7 @@ L'agent lance `python3 tools/hotte_udp.py session hotte-sonde.local --duree 60`,
 4. Pendant ce temps, `live.log` affiche toutes les 5 s une ligne `... udp <a.b.c.d> banc-wifi-krona en cours <s> s : <n> lignes (...) ; n : 0 trou(s), 0 perdue(s), 0 recul(s) ; ... ; sonde : receptions ..., debord 0, lignes_perdues 0, sautes 0, rep 0, json_perdus 0 ; H1 : 0 rejetee(s), ...`. Si `lignes_perdues` ou `debord` monte, l'agent le note avec l'heure.
 5. L'enregistrement s'arrête seul à 660 s et affiche le chemin de `logs/AAAA-MM-JJ-hhmm-banc-wifi-krona.jsonl`.
 
-- [ ] **Étape 10 : Verdicts du critère 4 (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 10 : Verdicts du critère 4 (l'agent)**
 
 Lancer : `python3 tools/json_check.py --jsonl logs/<fichier>.jsonl | tail -3`
 Attendu : « ... ligne(s) machine, 0 erreur(s) ... n : T trou(s) (P ligne(s) perdue(s), X %) » avec **X < 0.100**.
@@ -4012,7 +4012,7 @@ Lancer : `python3 -c "import json,sys; r=[json.loads(l)['l']['wifi']['rssi_dbm']
 Attendu : `RSSI <min> a <max> dBm sur <k> releves`, k d'environ 22 (un `reseau` toutes les 30 s, plus celui de `json 1`).
 **Critère 4 rempli** si : hausses de `debord`, `lignes_perdues`, `sautes` toutes à 0, **et** trous de `n` sous 0,1 %. Sinon : `docs/BANC.md` §8.4, dernier paragraphe (rapprocher du point d'accès, recommencer ; noter RSSI et `wifi.pertes`).
 
-- [ ] **Étape 11 : Noter les résultats (l'agent)**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 11 : Noter les résultats (l'agent)**
 
 Dans `docs/BANC.md` §7, remplir :
 - « Montage et firmwares », ligne `21` : date, où est la sonde (`boîtier` ou `plaque`), les deux **OL** (boîtier), `fw` de la sonde et du générateur, ports ;
@@ -4025,7 +4025,7 @@ Dans `docs/RECONNAISSANCE.md`, « Installation et instruments », ligne « Batte
 
 Ni SSID, ni adresse, ni clé. Relire le diff avant le commit : `git diff docs/BANC.md docs/RECONNAISSANCE.md`.
 
-- [ ] **Étape 12 : Commit**
+- [-] (reportée en phase 4 (bancs de la sonde)) **Étape 12 : Commit**
 
 ```bash
 git add docs/BANC.md docs/RECONNAISSANCE.md

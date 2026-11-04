@@ -1,6 +1,6 @@
 # Partie 4 : banc Matter avec l'utilisateur
 
-Plan : [2026-09-29-produit-matter.md](../2026-09-29-produit-matter.md) (contraintes globales, écarts à la spec).
+Plan : [2026-09-29-produit-matter.md](2026-09-29-produit-matter/en-tete.md) (contraintes globales, écarts à la spec).
 
 **Toutes ces tâches sont [BANC avec l'utilisateur]** : exécutées par l'agent
 principal, l'utilisateur présent, jamais par un sous-agent. Aucune liaison avec la
