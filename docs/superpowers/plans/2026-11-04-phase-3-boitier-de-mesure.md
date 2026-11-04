@@ -24,7 +24,7 @@ toujours les repères imprimés de la plaque, en disant de quelle face ils vienn
 - [x] Groupe 3 : écoute et broche 7
 - [x] Pattes coupées ; contrôles a) et d)
 - [x] `R_be` 100k enfichée ; contrôle e) : `TP_Dp` / `TP−` à 199,6 kΩ, les autres paires à OL (04/11)
-- [ ] Flux nettoyé à l'alcool isopropylique
+- [x] Flux nettoyé à l'alcool isopropylique (04/11)
 
 ### Tâche 4 : Fils isolés (FABRICATION §6.4)
 
@@ -42,6 +42,8 @@ toujours les repères imprimés de la plaque, en disant de quelle face ils vienn
 
 ### Tâche 6 : Fixation
 
-- [ ] Plateau en PETG dessiné (OpenSCAD) et imprimé
+- [x] Plateau dessiné : `cao/plateau-boitier.scad`, conception `docs/superpowers/specs/2026-11-04-plateau-boitier-design.md` (04/11)
+- [ ] Pièce d'essai imprimée en PETG : téton, jeu et clip réglés sur la carte
+- [ ] Plateau imprimé en PETG
 - [ ] Kapton sur la coque USB-C (contrôle 16)
 - [ ] Boîtier fixé sur son plateau

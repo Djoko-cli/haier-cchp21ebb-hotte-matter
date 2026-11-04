@@ -12,3 +12,6 @@ src/produit/codes_appairage.h
 
 # Pages Archify (schemas locaux)
 .archify/
+
+# Exports du plateau (STL, 3MF), regenerables depuis cao/*.scad
+cao/sortie/
