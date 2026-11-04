@@ -45,5 +45,5 @@ toujours les repères imprimés de la plaque, en disant de quelle face ils vienn
 - [x] Plateau dessiné : `cao/plateau-boitier.scad`, conception `docs/superpowers/specs/2026-11-04-plateau-boitier-design.md` (04/11)
 - [x] Pièce d'essai imprimée en PETG : téton, jeu et clip conformes sur la carte, sans retouche (04/11)
 - [ ] Plateau imprimé en PETG
-- [ ] Coque USB-C isolée, bouche libre (contrôle 16) : Kapton, ou ruban d'électricien PVC
+- [x] Coque USB-C isolée au ruban d'électricien PVC, en U, bouche libre (contrôle 16, 04/11)
 - [ ] Boîtier fixé sur son plateau
