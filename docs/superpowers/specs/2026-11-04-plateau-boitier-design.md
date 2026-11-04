@@ -70,6 +70,9 @@ boîtier définitif du produit (ASA imposé, SPEC-PRODUIT §6).
 
 ## Risques
 
+Le 04/11, la pièce d'essai a fonctionné sur la carte sans retouche : téton,
+jeu, épaisseur et clip sont **constatés** conformes aux valeurs du fichier.
+
 | Risque | Statut | Parade |
 |---|---|---|
 | téton trop serré ou cassant à Ø 1,7 | supposé | pièce d'essai ; paramètre dans le fichier |

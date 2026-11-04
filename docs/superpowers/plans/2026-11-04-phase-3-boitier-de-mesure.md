@@ -43,7 +43,7 @@ toujours les repères imprimés de la plaque, en disant de quelle face ils vienn
 ### Tâche 6 : Fixation
 
 - [x] Plateau dessiné : `cao/plateau-boitier.scad`, conception `docs/superpowers/specs/2026-11-04-plateau-boitier-design.md` (04/11)
-- [ ] Pièce d'essai imprimée en PETG : téton, jeu et clip réglés sur la carte
+- [x] Pièce d'essai imprimée en PETG : téton, jeu et clip conformes sur la carte, sans retouche (04/11)
 - [ ] Plateau imprimé en PETG
 - [ ] Kapton sur la coque USB-C (contrôle 16)
 - [ ] Boîtier fixé sur son plateau
