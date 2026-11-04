@@ -32,7 +32,7 @@ toujours les repères imprimés de la plaque, en disant de quelle face ils vienn
 - [x] Marron (GPIO6), contrôlé
 - [x] Gris (3V3), contrôlé
 - [x] Noir (GND), contrôlé
-- [ ] Rouge du 5V, côté composants, manchon sur C11 côté composants, contrôlé
+- [x] Rouge du 5V, côté composants, gaine sur C11, ponts U08-U07 et A11-A10 côté soudures, contrôlé (04/11)
 
 ### Tâche 5 : Contrôles complets et marquages (FABRICATION §6.5 et §9.2)
 
