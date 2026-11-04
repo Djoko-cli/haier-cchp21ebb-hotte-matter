@@ -36,8 +36,8 @@ toujours les repères imprimés de la plaque, en disant de quelle face ils vienn
 
 ### Tâche 5 : Contrôles complets et marquages (FABRICATION §6.5 et §9.2)
 
-- [ ] Lignes 7, 11, 12, 13 et 14 de WIRING §12
-- [ ] Contrôles a), b), c), e) et f)
+- [x] Lignes 7, 11, 12, 13 et 14 de WIRING §12 (04/11)
+- [x] Contrôles a), b), c), e) et f) (04/11)
 - [ ] Marquages au feutre ; cavalier de `J2` rangé hors de la plaque
 
 ### Tâche 6 : Fixation
