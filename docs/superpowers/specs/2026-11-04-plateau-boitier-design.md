@@ -31,11 +31,12 @@ boîtier définitif du produit (ASA imposé, SPEC-PRODUIT §6).
 
 | Cote | Valeur | Source |
 |---|---|---|
-| carte | 69,5 × 49,5 mm | constaté : entraxes + 2 × 1,85 (mesures du 04/11) |
-| trous de coin | Ø 2,0 mm, centre à 1,85 mm des deux bords | constaté, pied à coulisse |
+| carte | 70,0 × 50,0 mm | constaté, bord à bord au pied à coulisse (04/11). La première version prenait 69,5 × 49,5, **calculé** depuis les entraxes : bac trop étroit, carte forcée et courbée, une languette cassée |
+| trous de coin | Ø 2,0 mm | constaté |
+| centre des trous | 2,1 mm des bords | supposé : (carte − entraxe) / 2, trous supposés centrés |
 | entraxes | 65,8 × 45,8 mm | constaté |
 | relief côté soudures | 2,1 mm au plus | constaté |
-| épaisseur | 1,6 mm | **supposé** (épaisseur courante) : la pièce d'essai le vérifie |
+| épaisseur | 1,63 mm | constaté (04/11) |
 
 ## Ce qui est fixé
 
@@ -44,7 +45,7 @@ boîtier définitif du produit (ASA imposé, SPEC-PRODUIT §6).
 - **Quatre plots** de Ø 3,6 mm sous les trous de coin, en plastique ; aucun métal
   aux coins. **Tétons** de Ø 1,7 mm et 1,2 mm de haut, moins que l'épaisseur de la
   carte : ils centrent, ils ne tiennent pas.
-- **Rebord** de 2 mm d'épaisseur, 0,3 mm de jeu autour de la carte, son sommet
+- **Rebord** de 2 mm d'épaisseur, 0,4 mm de jeu autour de la carte (0,3 mm dans la première version), son sommet
   0,8 mm au-dessus de la face composants. Assez bas pour que la fiche XH
   (verticale) et le câble USB-C du module passent par-dessus : pas de découpe.
 - **Deux clips**, au milieu des deux grands côtés : une languette de 12 mm
@@ -69,6 +70,12 @@ boîtier définitif du produit (ASA imposé, SPEC-PRODUIT §6).
   et la force du clip sur la vraie carte.
 
 ## Risques
+
+Le 04/11 au soir, le premier bac imprimé était trop étroit : la carte réelle fait
+70,0 × 50,0 mm, pas 69,5 × 49,5. La pièce d'essai ne contenait ni la longueur
+totale ni la portée entre deux plots : elle ne pouvait pas le voir. D'où le
+**cadre de contrôle** (`piece="cadre"`) : le contour intérieur pleine taille,
+2 mm de haut, à imprimer avant chaque nouveau bac.
 
 Le 04/11, la pièce d'essai a fonctionné sur la carte sans retouche : téton,
 jeu, épaisseur et clip sont **constatés** conformes aux valeurs du fichier.

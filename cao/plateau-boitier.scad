@@ -8,18 +8,21 @@
 //   openscad -D 'piece="plateau"' -o cao/sortie/plateau-boitier.stl cao/plateau-boitier.scad
 //   openscad -D 'piece="essai"'   -o cao/sortie/plateau-essai.stl   cao/plateau-boitier.scad
 
-piece = "plateau";      // "plateau" ou "essai"
+piece = "plateau";      // "plateau", "essai" ou "cadre" (contour pleine taille, pour verifier la carte)
 
-// --- carte (mesuree le 04/11, sauf l'epaisseur) ---
-W = 69.5;               // largeur
-H = 49.5;               // hauteur
-e_carte = 1.6;          // epaisseur : SUPPOSEE, a verifier avec la piece d'essai
+// --- carte (mesuree au pied a coulisse le 04/11) ---
+W = 70.0;               // largeur, bord a bord
+H = 50.0;               // hauteur, bord a bord
+e_carte = 1.63;         // epaisseur
 trou_d = 2.0;           // diametre des trous de coin
-trou_m = 1.85;          // centre des trous a trou_m des deux bords
+entraxe_x = 65.8;       // entre centres des trous de coin
+entraxe_y = 45.8;
+trou_mx = (W - entraxe_x) / 2;   // centre des trous depuis les bords (2,1 : calcule, trous supposes centres)
+trou_my = (H - entraxe_y) / 2;
 relief = 2.1;           // plus haut relief cote soudures
 
 // --- plateau ---
-jeu = 0.3;              // jeu entre la carte et le rebord
+jeu = 0.4;              // jeu entre la carte et le rebord (le PETG rentre d'environ 0,1 mm a l'interieur)
 paroi = 2.0;            // epaisseur du rebord
 fond = 2.0;             // epaisseur du fond
 vide = 4.5;             // hauteur libre sous la carte (relief + jeu)
@@ -33,7 +36,7 @@ clip_l = 12;            // largeur de la languette
 clip_ep = 1.2;          // epaisseur de la languette (plus fine que le rebord : elle plie)
 fente = 0.8;            // fentes de part et d'autre
 levre = 0.6;            // recouvrement du bord de la carte (0,6 : la languette plie de 0,9 mm, environ 3 % en PETG)
-levre_jeu = 0.1;        // jeu vertical sous la levre
+levre_jeu = 0.15;       // jeu vertical sous la levre
 
 // --- pattes a collier de serrage ---
 patte_l = 12;           // longueur le long du rebord
@@ -57,7 +60,7 @@ h_rebord = vide + e_carte + depasse;    // au-dessus du fond
 z_haut = fond + h_rebord;
 x0 = -jeu; y0 = -jeu; x1 = W + jeu; y1 = H + jeu;   // interieur du bac
 
-trous = [[trou_m, trou_m], [W - trou_m, trou_m], [trou_m, H - trou_m], [W - trou_m, H - trou_m]];
+trous = [[trou_mx, trou_my], [W - trou_mx, trou_my], [trou_mx, H - trou_my], [W - trou_mx, H - trou_my]];
 
 module bac() {
     difference() {
@@ -148,4 +151,14 @@ module essai() {
     }
 }
 
-if (piece == "essai") essai(); else plateau();
+// cadre de controle : le contour interieur du bac, pleine taille, 2 mm de haut sur 0,6 mm de fond ajoure.
+// La carte doit y tomber sans forcer, avec un jeu visible tout autour.
+module cadre() {
+    difference() {
+        translate([x0 - paroi, y0 - paroi, 0]) cube([x1 - x0 + 2 * paroi, y1 - y0 + 2 * paroi, 2]);
+        translate([x0, y0, 0.6]) cube([x1 - x0, y1 - y0, 2]);
+        translate([x0 + 6, y0 + 6, -eps]) cube([x1 - x0 - 12, y1 - y0 - 12, 1]);
+    }
+}
+
+if (piece == "essai") essai(); else if (piece == "cadre") cadre(); else plateau();
