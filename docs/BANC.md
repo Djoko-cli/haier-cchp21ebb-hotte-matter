@@ -201,20 +201,21 @@ palier **hors repos** d'une trame (18 ms pour l'octet 0x00 à 500 bauds), et res
 sous le repos qui suit la trame (bit de stop et pause). Pour `krona`, les octets
 0xFF et 0xFE suivis de la pause de 4 ms font 20 à 22 ms de repos **dans** la
 trame : la sonde coupe alors la trame entre deux octets, sans rien perdre, et
-`banc.py` la recolle. `--duree` couvre l'émission des trames, plus 20 s pour
-lancer le motif.
+`banc.py` la recolle. `--duree` couvre l'émission des trames, plus 60 s pour
+lancer le motif : 20 s ne suffisent pas entre le « vas-y » de l'agent et la
+frappe de la commande (05/11 : `uart500` coupé à 964 trames).
 
 | Motif | Seuils de la sonde | `--duree` (s) | Générateur | Émission (s) |
 |---|---|---|---|---|
-| `uart500` | `seuils 1 19000` | 170 | `motif uart500` | 140,0 |
-| `uart500inv` | `seuils 1 19000` | 170 | `motif uart500inv` | 140,0 |
-| `uart2400` | `seuils 1 5000` | 70 | `motif uart2400` | 45,0 |
-| `uart2400inv` | `seuils 1 5000` | 70 | `motif uart2400inv` | 45,0 |
-| `uart9600` | `seuils 1 5000` | 50 | `motif uart9600` | 26,3 |
-| `uart9600inv` | `seuils 1 5000` | 50 | `motif uart9600inv` | 26,3 |
-| `wtc` | `seuils 1 5000` | 80 | `motif wtc` | 56,9 |
-| `krona` | `seuils 1 19000` | 160 | `motif krona` | 134,0 |
-| `rafale` | `seuils 1 5000` | 40 | `motif rafale` | 11,0 |
+| `uart500` | `seuils 1 19000` | 200 | `motif uart500` | 140,0 |
+| `uart500inv` | `seuils 1 19000` | 200 | `motif uart500inv` | 140,0 |
+| `uart2400` | `seuils 1 5000` | 105 | `motif uart2400` | 45,0 |
+| `uart2400inv` | `seuils 1 5000` | 105 | `motif uart2400inv` | 45,0 |
+| `uart9600` | `seuils 1 5000` | 90 | `motif uart9600` | 26,3 |
+| `uart9600inv` | `seuils 1 5000` | 90 | `motif uart9600inv` | 26,3 |
+| `wtc` | `seuils 1 5000` | 120 | `motif wtc` | 56,9 |
+| `krona` | `seuils 1 19000` | 200 | `motif krona` | 134,0 |
+| `rafale` | `seuils 1 5000` | 75 | `motif rafale` | 11,0 |
 
 Contenus (identiques dans `src/motifs.cpp` et `tools/signaux.py`) :
 - `uartNNN` : 8N1 à NNN bauds, repos haut (`inv` : repos bas, niveaux inversés),
@@ -320,7 +321,7 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 
 | Date | Tâche | Variante (R_pu) | Sonde sur | `TP−` → terre / vis (boîtier) | `fw` de la sonde | `fw` du générateur | `PORT_SONDE` | `PORT_GEN` | LIGNE au repos (V) |
 |---|---|---|---|---|---|---|---|---|---|
-| | 16 | 1 (10k) | | | | | | | |
+| 05/11/2026 | 16 | 1 (10k) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | non mesurée |
 | | 16 | 2 (4,7k + 1 nF) | | | | | | | |
 | | 16b | 1 (10k) | | | | | | | |
 | | 16b | 2 (4,7k + 1 nF) | | | | | | | |
@@ -331,14 +332,18 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 
 | Motif | Fichier `logs/` | Trames reconnues / 1000 | Décodeur de `auto` | Écart moyen hauts / bas (µs) | Écart max (µs) | Décalage suggéré (µs) | Verdict |
 |---|---|---|---|---|---|---|---|
-| `uart500` | | | | | | | |
-| `uart500inv` | | | | | | | |
-| `uart2400` | | | | | | | |
-| `uart2400inv` | | | | | | | |
-| `uart9600` | | | | | | | |
-| `uart9600inv` | | | | | | | |
-| `wtc` | | | | | | | |
-| `krona` | | | | | | | |
+| `uart500` | `2026-11-05-0049-banc-v1-uart500.jsonl` | 1000 | uart 500 bauds | +0,76 / −0,79 | 1 | +0,8 | OK |
+| `uart500inv` | `2026-11-05-0053-banc-v1-uart500inv.jsonl` | 1000 | uart 500 bauds inverse | +0,76 / −0,79 | 1 | +0,8 | OK |
+| `uart2400` | `2026-11-05-0117-banc-v1-uart2400.jsonl` | 1000 | uart 2400 bauds | +0,77 / −0,78 | 1 | +0,8 | OK |
+| `uart2400inv` | `2026-11-05-0119-banc-v1-uart2400inv.jsonl` | 1000 | uart 2400 bauds inverse | +0,78 / −0,78 | 1 | +0,8 | OK |
+| `uart9600` | `2026-11-05-0121-banc-v1-uart9600.jsonl` | 1000 | uart 9600 bauds | +0,78 / −0,78 | 1 | +0,8 | OK |
+| `uart9600inv` | `2026-11-05-0122-banc-v1-uart9600inv.jsonl` | 1000 | uart 9600 bauds inverse | +0,78 / −0,78 | 1 | +0,8 | OK |
+| `wtc` | `2026-11-05-0124-banc-v1-wtc.jsonl` | 1000 | distance d'impulsion, T = 751 µs | +0,78 / −0,78 | 1 | +0,8 | OK |
+| `krona` | `2026-11-05-0126-banc-v1-krona.jsonl` | 1000 (1 250 réceptions recollées) | uart 500 bauds inverse | +0,77 / −0,79 | 1 | +0,8 | OK |
+
+Premier essai `uart500` (`2026-11-05-0046-…`) : 964 trames parfaites, les 36
+dernières perdues parce que l'enregistrement s'est arrêté 5 s avant la fin du
+motif (marge de 20 s). Refait avec 60 s de marge (§4).
 
 ### Critères 1 et 2, variante 2 (4,7k + 1 nF)
 
@@ -357,7 +362,7 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 
 | Variante | Décalage retenu (`--decalage-us`) | Écart max après correction (µs) | Remarque |
 |---|---|---|---|
-| 1 (10k) | | | |
+| 1 (10k) | 0 (aucun nécessaire) | 1 | décalage suggéré +0,8 µs, sous la résolution de 1 µs de la capture ; écart max 1 µs sans correction |
 | 2 (4,7k + 1 nF) | | | |
 
 ### Critère 2 à l'analyseur (tâche 16b)
@@ -389,7 +394,7 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 
 | Variante | Fichier `logs/` | Rafales complètes | Parties avec `debord` | Réceptions incomplètes | `debord` / `lignes_perdues` / `sautes` (hausse) | Débit tenu | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1 (10k) | | | | | | | |
+| 1 (10k) | `2026-11-05-0130-banc-v1-rafale.jsonl` | 1 / 1 (99 999 durées) | 0 | 0 | +0 / +0 / +0 | 10 000 fronts/s | OK |
 | 2 (4,7k + 1 nF) | | | | | | | |
 
 ### Critère 4 : Wi-Fi (tâche 21)
