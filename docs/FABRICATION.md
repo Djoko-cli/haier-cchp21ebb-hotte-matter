@@ -772,6 +772,22 @@ puis compte les colonnes depuis la gauche, comme sur la figure.
 Nœuds : colonne 13 (F à J) = LIGNE ; colonne 14 (F à J) = base de `Q3` ;
 colonne 15 (A à J) = GND ; colonne 13 (A à E) = 5V du générateur.
 
+**Variante : générateur sur une nanoESP32-C6 (MUSE LAB)**, en attendant une
+SuperMini (04/11). La carte reste à côté de la breadboard, barrettes mâles
+soudées, et trois fils Dupont femelle-mâle remplacent les deux premières lignes
+du tableau et la broche 7 en H10. Rangée de gauche, vue de dessus, prises USB en
+bas : GND, 3V3, RST, 4, 5, 6, 7, 0, 1, 8, 10, 11, 12, 13, 5V (sérigraphie).
+
+| Fil | De la nanoESP32-C6 | Vers |
+|---|---|---|
+| rouge | 5V (rangée gauche, 15ᵉ broche, en bas) | colonne 13, A à E (par exemple A13) |
+| noir | GND (rangée gauche, 1ʳᵉ broche, en haut) | colonne 15, A à E (par exemple B15) |
+| autre couleur | 7 (rangée gauche, 7ᵉ broche) | colonne 10, F à J (par exemple H10), avec le 4,7k en J10 |
+
+Colonnes 1 à 10 de la breadboard vides, sauf la colonne 10 (F à J). Le
+firmware se charge par la prise USB-C « ESP32C6 » (USB natif), jamais par
+« CH343 ».
+
 **Côté boîtier** : `J2` ouvert, `TP+` libre, `TP_Dc` libre, `R_be` 100k
 enfichée, `R3` et `R5` absentes, fiche XH 4 broches retirée.
 
