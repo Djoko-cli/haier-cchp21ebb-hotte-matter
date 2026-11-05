@@ -324,7 +324,7 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 |---|---|---|---|---|---|---|---|---|---|
 | 05/11/2026 | 16 | 1 (10k) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | non mesurée |
 | 05/11/2026 | 16 | 2 (4,7k + 1 nF) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | non mesurée |
-| | 16b | 1 (10k) | | | | | | | |
+| 05/11/2026 | 16b | 1 (10k) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | 4,4 |
 | | 16b | 2 (4,7k + 1 nF) | | | | | | | |
 | | 21 | 1 (10k) | | | | | | | |
 | | 24 | 1 (10k) | | | | | | | |
@@ -372,8 +372,18 @@ de 60 s). Refait avec 180 s de marge (§4).
 
 ### Critère 2 à l'analyseur (tâche 16b)
 
-Analyseur et fréquence d'échantillonnage : ____. Instrument des niveaux de la
-LIGNE : ☐ aucun (le FX2 ne donne que des instants) ☐ oscilloscope : ____.
+Analyseur et fréquence d'échantillonnage : FX2 « 24MHz8CH » (pilote `fx2lafw`,
+vu comme « Saleae Logic »), 24 MHz, 50 M échantillons, déclenchement sur un
+front descendant de D0, par `sigrok-cli` 0.7.2 (PulseView 0.4.2, Intel sous
+Rosetta, s'est figé au lancement). Délais calculés sur tous les fronts de la
+capture (fichier `.sr` converti en VCD), pas seulement 20. Instrument des
+niveaux de la LIGNE : ☒ aucun (le FX2 ne donne que des instants) ☐ oscilloscope : ____.
+
+Diviseur de l'option 5b (FABRICATION §6.6), avant le premier USB : `R6` posée
+à 47 Ω au lieu de 47 kΩ, passée inaperçue aux contrôles e) et g), vue au
+contrôle « LIGNE vers GND » (0 Ω, FX2 branché éteint) ; remplacée. Puis
+`TP_Dp` → `V2` : 40 kΩ ; `V2` → GND : 50 kΩ ; `TP_Dp` → `TP−` : 72 kΩ (FX2
+débranché), 47 à 55 kΩ (FX2 branché éteint). Multimètre à calibre automatique.
 
 Délais sur 20 fronts de chaque sens, moyenne / max, en µs (§2.3) : étage =
 LIGNE (D0) vers GPIO6 (D1) ; Q3 = GPIO7 du générateur (D2) vers la LIGNE,
@@ -381,8 +391,8 @@ facultatif. Asymétrie = descendant − montant (fronts de la LIGNE).
 
 | Variante | Motif | Fichiers `logs/` (`.sr`, `.jsonl`) | Étage : descendant | Étage : montant | Asymétrie de l'étage | Q3 (D2) : asymétrie | N retenu (tâche 16) | `banc.py`, même capture : trames, décalage suggéré | Remarque |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 (10k) | `uart9600` | | | | | | | | |
-| 1 (10k) | `wtc` | | | | | | | | |
+| 1 (10k) | `uart9600` | `2026-11-05-banc-v1-fx2-uart9600.sr`, `2026-11-05-2223-banc-v1-fx2-uart9600.jsonl` | 1,01 / 1,04 (289 fronts) | −0,23 / −0,25 (290 fronts) | 1,24 | non posé | 0 | 20 / 20, +0,6 µs | montant négatif : l'étage bascule (LIGNE vers 1,2 V) avant le seuil de D0 (LIGNE vers 2,5 V) |
+| 1 (10k) | `wtc` | `2026-11-05-banc-v1-fx2-wtc.sr`, `2026-11-05-2227-banc-v1-fx2-wtc.jsonl` | 1,01 / 1,04 (519 fronts) | −0,23 / −0,25 (520 fronts) | 1,24 | non posé | 0 | 20 / 20, +0,7 µs | idem |
 | 2 (4,7k + 1 nF) | `uart9600` | | | | | | | | |
 | 2 (4,7k + 1 nF) | `wtc` | | | | | | | | |
 
