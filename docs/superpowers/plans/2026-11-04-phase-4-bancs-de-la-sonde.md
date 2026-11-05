@@ -15,8 +15,8 @@ elle est marquée « reportée en phase 4 ») ; les résultats vont dans
 Détail : [2026-09-27-phase-1e-banc.md](2026-09-27-phase-1e-banc.md), tâche 16.
 
 - [x] Critères 1 et 2, variante 1 (10k) : 8 motifs à 1000/1000, écart max 1 µs ; rafale aussi conforme (05/11)
-- [ ] Critères 1 et 2, variante 2 (4,7k + 1 nF) ; décalage retenu
-- [ ] Critère 3 : rafale
+- [x] Critères 1 et 2, variante 2 (4,7k + 1 nF) : 8 motifs à 1000/1000, écart max 2 µs ; décalage retenu 0 dans les deux variantes (05/11)
+- [x] Critère 3 : rafale, 10 000 fronts/s sans perte dans les deux variantes (05/11)
 - [ ] Critère 6 : consommation de la sonde
 - [ ] Conclusions dans BANC.md
 
