@@ -17,8 +17,8 @@ Détail : [2026-09-27-phase-1e-banc.md](2026-09-27-phase-1e-banc.md), tâche 16.
 - [x] Critères 1 et 2, variante 1 (10k) : 8 motifs à 1000/1000, écart max 1 µs ; rafale aussi conforme (05/11)
 - [x] Critères 1 et 2, variante 2 (4,7k + 1 nF) : 8 motifs à 1000/1000, écart max 2 µs ; décalage retenu 0 dans les deux variantes (05/11)
 - [x] Critère 3 : rafale, 10 000 fronts/s sans perte dans les deux variantes (05/11)
-- [ ] Critère 6 : consommation de la sonde
-- [ ] Conclusions dans BANC.md
+- [x] Critère 6 : consommation de la sonde par l'USB, 25,7 mA au repos comme pendant `krona` (05/11)
+- [x] Conclusions dans BANC.md ; la ligne de la tâche 16b reste à remplir par la tâche 3 (05/11)
 
 ### Tâche 3 : Banc 16b : critère 2 à l'analyseur
 

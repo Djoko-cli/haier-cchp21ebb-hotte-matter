@@ -424,8 +424,8 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 
 | Date | Alimentation, instrument (§2.4) | Situation | Courant (mA) |
 |---|---|---|---|
-| | USB, sans Wi-Fi ; testeur USB ou multimètre : ____ | capture active, bus au repos | |
-| | USB, sans Wi-Fi ; testeur USB ou multimètre : ____ | capture active, motif `krona` | |
+| 05/11/2026 | USB du Mac, sans Wi-Fi ; testeur USB FNIRSI FNAC-28, 5,15 V | capture active, bus au repos | 25,7 |
+| 05/11/2026 | USB du Mac, sans Wi-Fi ; testeur USB FNIRSI FNAC-28, 5,15 V | capture active, motif `krona` (`2026-11-05-1342-banc-v2-courant.jsonl` : 1000 / 1000, verdict OK) | 25,7 à 25,8 |
 | | batterie, Wi-Fi actif (tâche 21) ; testeur USB ou multimètre : ____ (§8.3) | session UDP, motif `krona` | |
 
 ### Batterie USB : 30 min en Wi-Fi (tâche 21)
@@ -436,10 +436,22 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 
 ### Conclusions
 
-- Débit maximal de la capture :
-- Décalage et asymétrie retenus :
+- Débit maximal de la capture : 10 000 fronts/s tenus sans perte dans les deux
+  variantes (rafale de 99 999 durées, compteurs `debord`, `lignes_perdues` et
+  `sautes` inchangés). Au-delà, non testé. Les huit motifs passent à 1000 / 1000
+  dans les deux variantes, et `analyse.py auto` reconnaît chaque codage sans le
+  connaître d'avance (tâche 16, 05/11).
+- Décalage et asymétrie retenus : aucun (`--decalage-us 0`). Décalage suggéré
+  +0,8 µs en variante 1, −1,2 µs en variante 2 : le signe dépend du pull-up et
+  de la capacité de la ligne (le 1 nF ralentit la remontée). Écart max sans
+  correction : 1 µs en variante 1, 2 µs en variante 2. Sur la hotte,
+  l'asymétrie se relit sur la vraie ligne (phase 5).
 - Délai de l'étage à l'analyseur, et `tol_us` proposé (tâche 16b) :
-- Limites constatées :
+- Limites constatées : des bits de moins de 100 µs (plus de 10 000 fronts/s)
+  restent à vérifier, par l'analyseur (tâche 16b) puis sur la vraie ligne ;
+  consommation de la sonde, 25,7 mA par l'USB, sans Wi-Fi, que le bus soit au
+  repos ou chargé (Wi-Fi actif : tâche 21) ; lancer un motif à la main demande
+  jusqu'à 3 min de marge d'enregistrement (§4).
 
 ## 8. Par le Wi-Fi, sur la batterie (critères 4 et 6)
 
