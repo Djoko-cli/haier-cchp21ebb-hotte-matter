@@ -163,12 +163,29 @@ def ouvrir_message(ks, sens, sid, d, fenetre):
 # ---------------------------------------------------------------------------
 
 
+def preparer(lire, ecrire, horloge=time.time, delai_s=1.0):
+    """Ctrl-U (efface un reste de ligne), puis lecture jusqu'a une frontiere de
+    ligne sure ; rend le decoupage, cale. Mode humain : l'invite revient apres un
+    LF. Mode machine (json 1 laisse par un enregistrement interrompu) : rien ne
+    revient, mais la sonde n'ecrit que des lignes entieres, donc 0,2 s de silence
+    suffit. Sans cela, le decoupage se calait sur le premier LF apres la commande
+    et jetait la reponse de 'json cle nouvelle', seule et immediate (05/11)."""
+    decoupe = serie_enregistre.Decoupe()
+    ecrire(b"\x15\n")
+    limite = horloge() + delai_s
+    while not decoupe.synchro and horloge() < limite:
+        octets = lire(0.2)
+        if octets:
+            decoupe.feed(octets)
+        else:
+            decoupe.synchro = True
+    return decoupe
+
+
 def demander_cle(lire, ecrire, alea, ident, delai_s=5.0, horloge=time.time):
     """'id=<ident> json cle nouvelle <alea>' sur un port deja ouvert ; rend
     (cle en 64 hexa, empreinte, msg). SystemExit si refusee ou sans reponse."""
-    decoupe = serie_enregistre.Decoupe()
-    ecrire(b"\x15\n")  # Ctrl-U : efface un reste de ligne
-    decoupe.feed(lire(0.2))
+    decoupe = preparer(lire, ecrire, horloge)
     ecrire(f"id={ident} json cle nouvelle {alea}\n".encode("ascii"))
     limite = horloge() + delai_s
     while horloge() < limite:
@@ -191,9 +208,7 @@ def demander_cle(lire, ecrire, alea, ident, delai_s=5.0, horloge=time.time):
 def lire_build(lire, ecrire, ident, delai_s=3.0, horloge=time.time):
     """'id=<ident> json hello' sur un port deja ouvert ; rend hello.base.build
     ('sonde', 'produit'), ou None sans reponse (firmware ancien, port muet)."""
-    decoupe = serie_enregistre.Decoupe()
-    ecrire(b"\x15\n")  # Ctrl-U : efface un reste de ligne
-    decoupe.feed(lire(0.2))
+    decoupe = preparer(lire, ecrire, horloge)
     ecrire(f"id={ident} json hello\n".encode("ascii"))
     build = None
     limite = horloge() + delai_s
@@ -239,7 +254,7 @@ def lire_cle(chemin):
     return key
 
 
-def cmd_cle(port, chemin=None, appareil=None):
+def cmd_cle(port, chemin=None, appareil=None, horloge=time.time):
     """Nouvelle cle par l'USB ; chemin nul : celui de l'appareil (--appareil,
     ou hello.base.build lu sur le port)."""
     alea = os.urandom(32).hex().upper()
@@ -252,11 +267,11 @@ def cmd_cle(port, chemin=None, appareil=None):
         lire, ecrire = serie_enregistre.lecteur(fd), serie_enregistre.ecrivain(fd)
         if chemin is None:
             if appareil is None:
-                appareil = lire_build(lire, ecrire, ident + 1)
+                appareil = lire_build(lire, ecrire, ident + 1, horloge=horloge)
                 if appareil is None:
                     raise SystemExit("appareil inconnu (aucun hello.base.build) : preciser --appareil sonde|produit")
             chemin = chemin_cle(appareil)
-        cle, empreinte, msg = demander_cle(lire, ecrire, alea, ident)
+        cle, empreinte, msg = demander_cle(lire, ecrire, alea, ident, horloge=horloge)
     except serie_enregistre.PortFerme as e:
         raise SystemExit(f"port ferme ({e}) : la sonde a-t-elle redemarre ?")
     finally:

@@ -416,5 +416,122 @@ class Produit(unittest.TestCase):
         self.assertEqual(hotte_udp.resume({"v": 1, "t": "fin", "n": 9, "ms": 1, "cause": "bail"}), "n=9 fin cause bail")
 
 
+class SondeUsb:
+    """Sonde sur l'USB, au plus pres du firmware (cli.cpp, json_mode.cpp), horloge simulee.
+
+    Mode humain : echo de chaque ligne, puis CRLF, puis l'invite '> '.
+    Mode machine (json 1 bail 0 laisse par un enregistrement interrompu) : ni echo
+    ni invite ; Ctrl-U et ligne vide ne renvoient rien ; etat toutes les
+    periode_s (battement seul toutes les 2 s apres 'json periode 0').
+    'json hello' passe par la file (hello.base, hello.identite, config, reponse),
+    derriere les lignes deja en attente ; 'json cle nouvelle' repond tout de suite
+    (replyEmit), seule ligne. A l'ouverture, le reste d'une ligne d'avant."""
+
+    def __init__(self, cle, machine, periode_s=1.0):
+        self.cle, self.machine, self.periode_s = cle, machine, periode_s
+        self.t, self.n = 0.0, 0
+        self.prochain = periode_s - 0.3  # prochain etat (mode machine)
+        self.sortie = b'mpteurs","n":4321,"ms":98765}\n' if machine else b"ligne d'avant\r\n> "
+        self.file = []
+        self.demandes = 0
+
+    def horloge(self):
+        return self.t
+
+    def ligne(self, obj):
+        self.n += 1
+        return RS + compact({"v": 1, "t": obj.pop("t"), "n": self.n, "ms": int(self.t * 1000), **obj}) + b"\n"
+
+    def etat(self):
+        return b"".join(self.ligne({"t": "etat", "bloc": b}) for b in ("bus", "capture", "injection", "sys"))
+
+    def ecrire(self, octets):
+        for brut in octets.split(b"\n")[:-1]:
+            texte = brut.split(b"\x15")[-1]  # Ctrl-U vide la ligne en cours
+            if not self.machine:
+                self.sortie += texte + b"\r\n"
+            if texte:
+                self.commande(texte.decode("ascii"))
+            if not self.machine:
+                self.sortie += b"> "
+
+    def commande(self, texte):
+        tete, _, cmd = texte.partition(" ")
+        ident = int(tete[3:])
+        if cmd == "json hello":
+            if self.machine:
+                self.file.append(self.etat())  # lignes periodiques deja en file
+            self.file += [self.ligne({"t": "hello", "bloc": "base", "build": "sonde"}),
+                          self.ligne({"t": "hello", "bloc": "identite"}),
+                          self.ligne({"t": "config"}),
+                          self.ligne({"t": "reponse", "id": ident, "etape": "fin", "cmd": cmd, "ok": True, "code": "ok",
+                                      "duree_ms": 3})]
+        elif cmd.startswith("json cle nouvelle "):
+            self.demandes += 1
+            self.sortie += self.ligne({"t": "reponse", "id": ident, "etape": "fin", "cmd": "json cle nouvelle", "ok": True,
+                                       "code": "ok", "msg": "nouvelle cle : les sessions reseau tombent", "duree_ms": 2,
+                                       "cle": self.cle, "empreinte": hotte_udp.kid_of(bytes.fromhex(self.cle))})
+
+    def lire(self, delai):
+        if self.file:
+            self.sortie += self.file.pop(0)
+        if self.machine and self.prochain <= self.t + delai and not self.sortie:
+            self.t = self.prochain
+            self.prochain += self.periode_s
+            self.sortie = self.etat()
+        if self.sortie:
+            octets, self.sortie = self.sortie[:64], self.sortie[64:]  # paquets USB de 64 octets
+            return octets
+        self.t += delai
+        return b""
+
+
+class CleParUsb(unittest.TestCase):
+    """'hotte_udp.py cle <port>' sans --appareil : lire_build puis demander_cle sur le meme port."""
+
+    CLE = "5C" * 32
+
+    def lancer(self, machine, periode_s=1.0):
+        sonde = SondeUsb(self.CLE, machine, periode_s)
+        dossier = tempfile.TemporaryDirectory()
+        self.addCleanup(dossier.cleanup)
+        chemin = os.path.join(dossier.name, "cle")
+        sortie = io.StringIO()
+        fd = os.open(os.devnull, os.O_RDONLY)
+        with mock.patch.object(hotte_udp.serie_enregistre, "ouvrir_port", return_value=fd), \
+                mock.patch.object(hotte_udp.serie_enregistre, "lecteur", return_value=sonde.lire), \
+                mock.patch.object(hotte_udp.serie_enregistre, "ecrivain", return_value=sonde.ecrire), \
+                mock.patch.object(hotte_udp, "chemin_cle", return_value=chemin), \
+                contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(sortie):
+            try:
+                hotte_udp.cmd_cle("/dev/cu.simule", horloge=sonde.horloge)
+                erreur = ""
+            except SystemExit as e:
+                erreur = str(e)
+        texte = sortie.getvalue() + erreur
+        # Jamais la cle dans la sortie, ni dans le message d'un echec de ce test.
+        self.assertFalse(self.CLE in texte or self.CLE.lower() in texte, "la cle apparait dans la sortie de 'cle'")
+        return sonde, chemin, texte, erreur
+
+    def verifier(self, machine, periode_s=1.0):
+        sonde, chemin, texte, erreur = self.lancer(machine, periode_s)
+        self.assertEqual(erreur, "")
+        self.assertEqual(sonde.demandes, 1)
+        self.assertTrue(os.path.exists(chemin))
+        self.assertTrue(hotte_udp.lire_cle(chemin) == bytes.fromhex(self.CLE), "cle rangee differente de la reponse")
+        self.assertIn(f"(empreinte {hotte_udp.kid_of(bytes.fromhex(self.CLE))})", texte)
+
+    def test_mode_humain(self):
+        self.verifier(machine=False)
+
+    def test_mode_machine_laisse_par_un_enregistrement(self):
+        # Le 05/11 : 'aucune reponse en 5 s', et la cle de la sonde changeait quand meme.
+        self.verifier(machine=True)
+
+    def test_mode_machine_sans_etat_periodique(self):
+        # 'json periode 0' : un battement toutes les 2 s, rien pour caler le decoupage pendant l'attente.
+        self.verifier(machine=True, periode_s=2.0)
+
+
 if __name__ == "__main__":
     unittest.main()
