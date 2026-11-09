@@ -97,6 +97,18 @@ bool netWifiUp() { return sRadio && WiFi.status() == WL_CONNECTED; }
 
 int8_t netWifiRssi() { return netWifiUp() ? WiFi.RSSI() : 0; }
 
+uint8_t netWifiCanal() { return netWifiUp() ? (uint8_t)WiFi.channel() : 0; }
+
+void netWifiEmpreintePa(char out[5]) {
+  out[0] = '\0';
+  if (!netWifiUp()) return;
+  const uint8_t *b = WiFi.BSSID();
+  if (!b) return;
+  uint32_t h = 2166136261u;
+  for (int i = 0; i < 6; i++) h = (h ^ b[i]) * 16777619u;
+  snprintf(out, 5, "%04x", (unsigned)((h >> 16) ^ (h & 0xFFFF)));
+}
+
 void netWifiIp(char out[16]) {
   if (!netWifiUp()) {
     strcpy(out, "0.0.0.0");

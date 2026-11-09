@@ -225,9 +225,10 @@ l'empreinte de la clé avant d'ouvrir une session réseau.
 | `mdns.nom` | `hotte-sonde.local` |
 | `wifi.connecte` | station connectée, avec une adresse |
 | `wifi.rssi_dbm`, `wifi.ip` | force du signal du point d'accès et adresse IPv4 ; null hors connexion |
+| `wifi.canal`, `wifi.pa` | canal du point d'accès (1 à 14) et son empreinte : 4 chiffres hexadécimaux en minuscules, tirés de son BSSID (FNV-1a 32 bits replié sur 16 bits). Deux points d'accès du même réseau se distinguent sans que leur adresse MAC sorte de la sonde ; null hors connexion. Ajout du 09/11/2026 : absents des captures antérieures |
 | `wifi.pertes` | connexions perdues depuis le démarrage |
 
-Pire cas : environ 560 octets.
+Pire cas : environ 585 octets.
 
 ## 5. Commandes de l'app
 
@@ -406,7 +407,7 @@ Sonde → app :
 <RS>{"v":1,"t":"etat","n":5,"ms":12036,"bloc":"injection","boot":"3FA2C901","up_s":12,"montee":false,"armee":false,"arme_reste_s":0,"derniere":null}
 <RS>{"v":1,"t":"etat","n":6,"ms":12037,"bloc":"sys","boot":"3FA2C901","up_s":12,"sys":{"heap":247812,"heap_min":241600,"heap_bloc":110580,"pile_boucle":5316,"boucle_max_ms":2,"json_perdus":0,"json_trop_longs":0,"rejets":0}}
 <RS>{"v":1,"t":"compteurs","n":7,"ms":12038,"bloc":"sonde","receptions":118,"parties":118,"blocs":118,"symboles":1947,"debord":0,"rep":0,"lignes_perdues":0,"sautes":0,"rejets":0}
-<RS>{"v":1,"t":"reseau","n":8,"ms":12039,"bloc":"ip","frais_ms":0,"srp":null,"adresses":[{"adr":"192.0.2.42","type":"autre","pref":true}],"udp":{"port":5480,"ouvert":true,"empreinte":"630DCD29","sessions":0,"provisoire":false,"rx":0,"rejets":0,"rx_perdus":0,"defis":0,"tx":0,"tx_perdus":0,"tx_erreurs":0,"tampons_libres":null,"tampons_min":null},"mdns":{"nom":"hotte-sonde.local"},"wifi":{"connecte":true,"rssi_dbm":-58,"ip":"192.0.2.42","pertes":0}}
+<RS>{"v":1,"t":"reseau","n":8,"ms":12039,"bloc":"ip","frais_ms":0,"srp":null,"adresses":[{"adr":"192.0.2.42","type":"autre","pref":true}],"udp":{"port":5480,"ouvert":true,"empreinte":"630DCD29","sessions":0,"provisoire":false,"rx":0,"rejets":0,"rx_perdus":0,"defis":0,"tx":0,"tx_perdus":0,"tx_erreurs":0,"tampons_libres":null,"tampons_min":null},"mdns":{"nom":"hotte-sonde.local"},"wifi":{"connecte":true,"rssi_dbm":-58,"ip":"192.0.2.42","canal":6,"pa":"3f2a","pertes":0}}
 <RS>{"v":1,"t":"reponse","n":9,"ms":12040,"id":1,"etape":"fin","cmd":"json 1","ok":true,"code":"ok","duree_ms":9,"bail_s":30,"up_s":12}
 ```
 

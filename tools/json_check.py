@@ -332,6 +332,10 @@ SCHEMAS = {
                     "connecte": BOOL,
                     "rssi_dbm": Null(Int(-128, 0)),
                     "ip": Null(Str(15, r"^[0-9]{1,3}(\.[0-9]{1,3}){3}$")),
+                    # Ajout du 09/11 (absent des captures anterieures) : canal et empreinte
+                    # du point d'acces (4 chiffres hexadecimaux, jamais le BSSID).
+                    "canal": Opt(Null(Int(1, 14))),
+                    "pa": Opt(Null(Str(4, r"^[0-9a-f]{4}$"))),
                     "pertes": U32,
                 }
             ),
@@ -697,9 +701,11 @@ def coherence(t, obj, errs, warns, profil="sonde"):
     elif t == "reseau" and obj.get("bloc") == "ip":
         w = obj.get("wifi")
         if isinstance(w, dict) and isinstance(w.get("connecte"), bool):
-            vus = [k for k in ("rssi_dbm", "ip") if w.get(k) is not None]
-            if w["connecte"] and len(vus) != 2:
-                errs.append("reseau/ip : wifi connecte sans rssi_dbm ou sans ip")
+            vus = [k for k in ("rssi_dbm", "ip", "canal", "pa") if w.get(k) is not None]
+            if ("canal" in w) != ("pa" in w):
+                errs.append("reseau/ip : wifi avec canal sans pa, ou l'inverse")
+            if w["connecte"] and len(vus) != (4 if "canal" in w else 2):
+                errs.append("reseau/ip : wifi connecte sans rssi_dbm, ip, canal ou pa")
             if not w["connecte"] and vus:
                 errs.append(f"reseau/ip : wifi deconnecte avec {', '.join(vus)}")
     elif t == "hello" and obj.get("bloc") == "base":

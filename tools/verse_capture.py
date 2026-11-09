@@ -8,7 +8,7 @@ hotte_udp.py enregistre) telle quelle vers captures/<nom>.jsonl, et ajoute sa
 provenance au tableau de captures/README.md. Refuse (code 1), sans rien
 ecrire :
   - une ligne qui contient un champ 'cle', 'ssid' ou 'mdp' ; un champ 'wifi'
-    autre que le bloc wifi de 'reseau' 'ip' (connecte, rssi_dbm, ip, pertes :
+    autre que le bloc wifi de 'reseau' 'ip' (connecte, rssi_dbm, ip, canal, pa, pertes :
     sans SSID) ; la reponse a 'wifi <ssid> <mdp>' (son cmd porte le SSID) ;
   - une ligne qui contient une chaine de 64 caracteres hexadecimaux (cle H1,
     alea de 'json cle nouvelle', cle Wi-Fi de 64 hexa) ;
@@ -37,7 +37,7 @@ CAPTURES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 NOM = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 HEXA64 = re.compile(r"[0-9A-Fa-f]{64}")
 INTERDITS = ("cle", "ssid", "mdp")
-WIFI_RESEAU = {"connecte", "rssi_dbm", "ip", "pertes"}  # reseau.ip.wifi (docs/PROTOCOLE-JSON.md)
+WIFI_RESEAU = {"connecte", "rssi_dbm", "ip", "canal", "pa", "pertes"}  # reseau.ip.wifi (docs/PROTOCOLE-JSON.md)
 
 
 class _Paires(list):

@@ -224,6 +224,18 @@ class Schemas(unittest.TestCase):
         self.assertTrue(self.modifie(cle, wifi=dict(coupe, connecte=True))[0])          # connecte sans IP
         self.assertTrue(self.modifie(cle, wifi=dict(ip["wifi"], rssi_dbm=5))[0])        # RSSI positif
         self.assertTrue(self.modifie(cle, wifi=dict(ip["wifi"], ip="192.0.2"))[0])    # IPv4 incomplete
+        # Canal et empreinte du point d'acces (ajout du 09/11) : facultatifs (captures anterieures),
+        # presents ensemble, nuls hors connexion ; l'empreinte n'est jamais un BSSID.
+        avec_pa = dict(ip["wifi"], canal=6, pa="3f2a")
+        self.assertEqual(self.modifie(cle, wifi=avec_pa), ([], []))
+        self.assertEqual(self.modifie(cle, adresses=[], wifi=dict(coupe, canal=None, pa=None), udp=sans_cle), ([], []))
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, canal=None))[0])          # connecte sans canal
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, pa=None))[0])             # connecte sans empreinte
+        self.assertTrue(self.modifie(cle, wifi=dict(coupe, canal=6, pa="3f2a"))[0])    # deconnecte avec un canal
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, canal=15))[0])            # canal 2,4 GHz : 1 a 14
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, pa="3F2A"))[0])           # minuscules
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, pa="0a1b2c3d4e5f"))[0])   # un BSSID entier, refuse
+        self.assertTrue(self.modifie(cle, wifi=dict(ip["wifi"], canal=6))[0])          # canal sans empreinte
         self.assertTrue(self.modifie(cle, udp=dict(ip["udp"], sessions=3))[0])          # 2 sessions H1 au plus
         self.assertTrue(self.modifie(cle, udp=dict(ip["udp"], empreinte="630dcd29"))[0])
         self.assertTrue(self.modifie(cle, sans_mdns=None)[0])

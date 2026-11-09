@@ -444,6 +444,11 @@ void netUdpJson(jsonp::Writer &w, uint32_t /*now*/) {
   if (up) w.i32("rssi_dbm", netWifiRssi());
   else w.null("rssi_dbm");
   w.str("ip", up ? ip : nullptr);
+  if (up) w.u32("canal", netWifiCanal());
+  else w.null("canal");
+  char pa[5];
+  netWifiEmpreintePa(pa);
+  w.str("pa", (up && pa[0]) ? pa : nullptr);
   w.u32("pertes", netWifiPertes());
   w.end();
 }

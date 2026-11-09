@@ -21,6 +21,11 @@ void netWifiBegin();                              // NVS -> STA, WiFi.setSleep(f
 void netWifiPoll();                               // reconnexion toutes les 10 s si perdu
 bool netWifiUp();
 int8_t netWifiRssi();                             // 0 si deconnecte
+uint8_t netWifiCanal();                           // canal du point d'acces ; 0 si deconnecte
+// Empreinte du point d'acces : 4 chiffres hexadecimaux tires de son BSSID
+// (FNV-1a 32 bits replie sur 16). Distingue deux points d'acces sans jamais
+// sortir leur adresse MAC. "" si deconnecte.
+void netWifiEmpreintePa(char out[5]);
 void netWifiIp(char out[16]);                     // "0.0.0.0" si deconnecte
 bool netWifiSet(const char *ssid, const char *mdp);  // NVS puis reconnexion
 // Ajouts (info, reseau.ip) : SSID en vigueur ("" : aucun identifiant),

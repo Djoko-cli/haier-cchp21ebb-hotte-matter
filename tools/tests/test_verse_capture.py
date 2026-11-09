@@ -85,6 +85,12 @@ class Refus(unittest.TestCase):
         wifi = dict(RESEAU_IP["wifi"], nom="MonReseau")
         self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), ["champ 'wifi'"])
         self.assertEqual(verse_capture.refus(enr(avec(HB, wifi=RESEAU_IP["wifi"]))), ["champ 'wifi'"])
+        # Canal et empreinte du point d'acces (4 chiffres hexadecimaux, pas l'adresse) : admis ;
+        # un BSSID, sous quelque nom que ce soit, reste refuse.
+        wifi = dict(RESEAU_IP["wifi"], canal=6, pa="3f2a")
+        self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), [])
+        wifi = dict(RESEAU_IP["wifi"], bssid="02:00:00:00:00:01")
+        self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), ["champ 'wifi'"])
 
     def test_reponse_a_la_commande_wifi(self):
         # maskCmd coupe le mot de passe, pas le SSID.
