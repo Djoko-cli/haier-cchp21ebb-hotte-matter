@@ -325,7 +325,7 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 | 05/11/2026 | 16 | 1 (10k) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | non mesurée |
 | 05/11/2026 | 16 | 2 (4,7k + 1 nF) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | non mesurée |
 | 05/11/2026 | 16b | 1 (10k) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | 4,4 |
-| | 16b | 2 (4,7k + 1 nF) | | | | | | | |
+| 09/11/2026 | 16b | 2 (4,7k + 1 nF) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | 4,74 |
 | | 21 | 1 (10k) | | | | | | | |
 | | 24 | 1 (10k) | | | | | | | |
 
@@ -393,14 +393,14 @@ facultatif. Asymétrie = descendant − montant (fronts de la LIGNE).
 |---|---|---|---|---|---|---|---|---|---|
 | 1 (10k) | `uart9600` | `2026-11-05-banc-v1-fx2-uart9600.sr`, `2026-11-05-2223-banc-v1-fx2-uart9600.jsonl` | 1,01 / 1,04 (289 fronts) | −0,23 / −0,25 (290 fronts) | 1,24 | non posé | 0 | 20 / 20, +0,6 µs | montant négatif : l'étage bascule (LIGNE vers 1,2 V) avant le seuil de D0 (LIGNE vers 2,5 V) |
 | 1 (10k) | `wtc` | `2026-11-05-banc-v1-fx2-wtc.sr`, `2026-11-05-2227-banc-v1-fx2-wtc.jsonl` | 1,01 / 1,04 (519 fronts) | −0,23 / −0,25 (520 fronts) | 1,24 | non posé | 0 | 20 / 20, +0,7 µs | idem |
-| 2 (4,7k + 1 nF) | `uart9600` | | | | | | | | |
-| 2 (4,7k + 1 nF) | `wtc` | | | | | | | | |
+| 2 (4,7k + 1 nF) | `uart9600` | `2026-11-09-banc-v2-fx2-uart9600-2.sr`, `2026-11-09-1302-banc-v2-fx2-uart9600.jsonl` | 1,06 / 1,08 (289 fronts) | −0,95 / −1,00 (290 fronts) | 2,01 | non posé | 0 | 20 / 20, −1,2 µs | une capture de 12 h 45 (`…-uart9600.sr`, sans enregistrement de la sonde, USB de la sonde déconnecté juste avant) donnait 2,14 / −1,42 / 3,55 |
+| 2 (4,7k + 1 nF) | `wtc` | `2026-11-09-banc-v2-fx2-wtc.sr`, `2026-11-09-1306-banc-v2-fx2-wtc.jsonl` | 1,43 / 1,46 (519 fronts) | −1,18 / −1,25 (520 fronts) | 2,61 | non posé | 0 | 20 / 20, −0,6 µs | |
 
-Asymétrie de l'étage sous 5 µs : ☐ oui ☐ non (elle est alors documentée ici
+Asymétrie de l'étage sous 5 µs : ☒ oui ☐ non (elle est alors documentée ici
 et compensée par `--decalage-us`).
 
 **Pour l'injection (`tol_us`)** : plus grand délai mesuré (étage, plus Q3 si
-D2 est posé) + 10 µs de marge = ____ µs ; on garde 20 µs, la valeur par
+D2 est posé) + 10 µs de marge = 2,17 + 10 = 12,2 µs (Q3 non mesuré) ; on garde 20 µs, la valeur par
 défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 (`RECONNAISSANCE.md`) et réglée avant les essais d'injection du banc
 (`injection regle tol_us <valeur>`).
@@ -456,7 +456,20 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
   de la capacité de la ligne (le 1 nF ralentit la remontée). Écart max sans
   correction : 1 µs en variante 1, 2 µs en variante 2. Sur la hotte,
   l'asymétrie se relit sur la vraie ligne (phase 5).
-- Délai de l'étage à l'analyseur, et `tol_us` proposé (tâche 16b) :
+- Délai de l'étage à l'analyseur, et `tol_us` proposé (tâche 16b, 05 et
+  09/11) : en variante 1, l'étage bascule 1,01 µs après le front descendant de
+  la LIGNE et avant le seuil de D0 sur le front montant (−0,23 µs : l'étage
+  bascule vers 1,2 V de LIGNE, D0 vers 2,5 V) ; asymétrie 1,24 µs, identique
+  sur `uart9600` et `wtc`, à 0,05 µs près sur 1 600 fronts. En variante 2,
+  les fronts lents du 1 nF agrandissent ces écarts de seuil : asymétrie de 2,0
+  à 2,6 µs selon la capture (3,55 sur une capture faite après une
+  déconnexion de l'USB de la sonde), stable à 0,05 µs près dans chaque
+  capture ; le décalage suggéré par la sonde suit (−1,2 et −0,6 µs). Cause de
+  la variation entre captures non établie (supposé : le 1 nF, ou l'état de la
+  LIGNE après une manipulation). Toutes les asymétries restent sous 5 µs.
+  `tol_us` : plus grand délai mesuré 2,17 µs + 10 = 12,2 µs, donc on garde
+  20 µs, la valeur par défaut. Le diviseur 47k / 68k ne gêne pas la capture :
+  4 motifs à 20 / 20, décalages suggérés comme au banc 16.
 - Limites constatées : des bits de moins de 100 µs (plus de 10 000 fronts/s)
   restent à vérifier, par l'analyseur (tâche 16b) puis sur la vraie ligne ;
   consommation de la sonde, 25,7 mA par l'USB, sans Wi-Fi, que le bus soit au

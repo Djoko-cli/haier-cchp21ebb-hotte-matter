@@ -24,7 +24,7 @@ Détail : [2026-09-27-phase-1e-banc.md](2026-09-27-phase-1e-banc.md), tâche 16.
 
 Détail : [2026-09-27-phase-1e-banc.md](2026-09-27-phase-1e-banc.md), tâche 16b.
 
-- [ ] Critère 2 à l'analyseur FX2, consigné dans BANC.md
+- [x] Critère 2 à l'analyseur FX2, consigné dans BANC.md : asymétrie de l'étage 1,24 µs (v1), 2,0 à 2,6 µs (v2) ; `tol_us` = 20 µs par défaut (05 et 09/11)
 
 ### Tâche 4 : Banc 21 : par le Wi-Fi et sur la batterie
 
