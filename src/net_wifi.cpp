@@ -48,6 +48,11 @@ static void connecter() {
     WiFi.setHostname(kNomMdns);   // nom DHCP, avant le demarrage de la station
     WiFi.setSleep(false);         // spec 8.7 : applique au demarrage de la station
     WiFi.setAutoReconnect(true);  // le coeur relance seul apres une perte ordinaire
+    // Par defaut, balayage rapide : la station rejoint le premier point d'acces
+    // qui repond, meme lointain (banc 21 : -92 dBm au lieu de -68 dBm, des
+    // lignes perdues). Tous les canaux, puis le signal le plus fort.
+    WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+    WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
     if (!WiFi.mode(WIFI_STA)) return;
     sRadio = true;
   } else {
