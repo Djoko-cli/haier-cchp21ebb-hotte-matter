@@ -236,6 +236,25 @@ class Schemas(unittest.TestCase):
         self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, pa="3F2A"))[0])           # minuscules
         self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, pa="0a1b2c3d4e5f"))[0])   # un BSSID entier, refuse
         self.assertTrue(self.modifie(cle, wifi=dict(ip["wifi"], canal=6))[0])          # canal sans empreinte
+        # Balayage du demarrage (ajout du 10/11) : facultatif, null sans balayage, admis
+        # hors connexion ; 4 points d'acces du reseau au plus, du plus fort au plus faible.
+        p1 = {"canal": 6, "pa": "4aa6", "rssi_dbm": -63}
+        p2 = {"canal": 1, "pa": "5430", "rssi_dbm": -90}
+        bal = {"vus": 7, "points": [p1, p2]}
+        self.assertEqual(self.modifie(cle, wifi=dict(avec_pa, balayage=bal)), ([], []))
+        self.assertEqual(self.modifie(cle, wifi=dict(avec_pa, balayage=None)), ([], []))
+        self.assertEqual(self.modifie(cle, wifi=dict(avec_pa, balayage={"vus": 0, "points": []})), ([], []))
+        self.assertEqual(self.modifie(cle, adresses=[], wifi=dict(coupe, balayage=bal), udp=sans_cle), ([], []))
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage=dict(bal, points=[p1] * 5)))[0])  # 4 au plus
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage=dict(bal, vus=1)))[0])     # plus de points que vus
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage=dict(bal, points=[p2, p1])))[0])  # ordre
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage=dict(bal, points=[dict(p1, pa="4AA6")])))[0])
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage=dict(bal, points=[dict(p1, canal=0)])))[0])
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage=dict(bal, points=[dict(p1, rssi_dbm=3)])))[0])
+        # Un champ de plus n'est qu'un avertissement ici (v1) ; verse_capture.py le refuse.
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage=dict(
+            bal, points=[dict(p1, bssid="02:00:00:00:00:01")])))[1])
+        self.assertTrue(self.modifie(cle, wifi=dict(avec_pa, balayage={"points": [p1]}))[0])   # vus manquant
         self.assertTrue(self.modifie(cle, udp=dict(ip["udp"], sessions=3))[0])          # 2 sessions H1 au plus
         self.assertTrue(self.modifie(cle, udp=dict(ip["udp"], empreinte="630dcd29"))[0])
         self.assertTrue(self.modifie(cle, sans_mdns=None)[0])

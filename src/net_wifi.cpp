@@ -20,6 +20,43 @@ static bool sRadio = false;  // station demarree (identifiants presents)
 static bool sMdns = false;   // repondeur mDNS demarre
 static bool sUp = false;     // connecte avec une adresse, au dernier netWifiPoll()
 static uint32_t sEssaiAt = 0, sPertes = 0;
+static NetWifiPoint sPoints[kWifiPointsMax];
+static uint8_t sNbPoints = 0;
+static int16_t sVus = -1;  // -1 : pas de balayage
+
+// Empreinte d'un BSSID (net_wifi.h) : FNV-1a 32 bits replie sur 16.
+static void empreinte(const uint8_t *b, char out[5]) {
+  out[0] = '\0';
+  if (!b) return;
+  uint32_t h = 2166136261u;
+  for (int i = 0; i < 6; i++) h = (h ^ b[i]) * 16777619u;
+  snprintf(out, 5, "%04x", (unsigned)((h >> 16) ^ (h & 0xFFFF)));
+}
+
+// Balayage du demarrage (net_wifi.h). Bloquant, environ 2 s, une seule fois.
+static void balayer() {
+  const int16_t n = WiFi.scanNetworks(false, false, false, 120);
+  if (n < 0) return;  // echec : sVus reste a -1
+  sVus = n > 255 ? 255 : n;
+  sNbPoints = 0;
+  for (int16_t i = 0; i < n && i < 255; i++) {  // resultats indexes sur 8 bits
+    if (strcmp(WiFi.SSID(i).c_str(), sSsid) != 0) continue;
+    NetWifiPoint p;
+    p.canal = (uint8_t)WiFi.channel(i);
+    p.rssi = (int8_t)WiFi.RSSI(i);
+    empreinte(WiFi.BSSID(i), p.pa);
+    // Insertion triee, du plus fort au plus faible ; le plus faible tombe si plein.
+    uint8_t j = sNbPoints < kWifiPointsMax ? sNbPoints++ : kWifiPointsMax;
+    if (j == kWifiPointsMax && p.rssi <= sPoints[kWifiPointsMax - 1].rssi) continue;
+    if (j == kWifiPointsMax) j = kWifiPointsMax - 1;
+    while (j > 0 && sPoints[j - 1].rssi < p.rssi) {
+      sPoints[j] = sPoints[j - 1];
+      j--;
+    }
+    sPoints[j] = p;
+  }
+  WiFi.scanDelete();
+}
 
 // Annonce : log 'reseau' en mode 'json log 1', sinon texte sur l'USB.
 static void annonce(const char *txt) {
@@ -55,6 +92,7 @@ static void connecter() {
     WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
     if (!WiFi.mode(WIFI_STA)) return;
     sRadio = true;
+    balayer();  // ce que la station voit avant de choisir (banc 21)
   } else {
     WiFi.disconnect(false, false, 0);  // arrete un essai en cours (sinon la configuration est refusee)
   }
@@ -102,11 +140,13 @@ uint8_t netWifiCanal() { return netWifiUp() ? (uint8_t)WiFi.channel() : 0; }
 void netWifiEmpreintePa(char out[5]) {
   out[0] = '\0';
   if (!netWifiUp()) return;
-  const uint8_t *b = WiFi.BSSID();
-  if (!b) return;
-  uint32_t h = 2166136261u;
-  for (int i = 0; i < 6; i++) h = (h ^ b[i]) * 16777619u;
-  snprintf(out, 5, "%04x", (unsigned)((h >> 16) ^ (h & 0xFFFF)));
+  empreinte(WiFi.BSSID(), out);
+}
+
+int16_t netWifiBalayage(const NetWifiPoint **points, uint8_t *n) {
+  *points = sPoints;
+  *n = sVus < 0 ? 0 : sNbPoints;
+  return sVus;
 }
 
 void netWifiIp(char out[16]) {

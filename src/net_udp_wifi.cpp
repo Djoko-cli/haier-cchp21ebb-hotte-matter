@@ -450,5 +450,24 @@ void netUdpJson(jsonp::Writer &w, uint32_t /*now*/) {
   netWifiEmpreintePa(pa);
   w.str("pa", (up && pa[0]) ? pa : nullptr);
   w.u32("pertes", netWifiPertes());
+  const NetWifiPoint *pts;
+  uint8_t nb;
+  const int16_t vus = netWifiBalayage(&pts, &nb);
+  if (vus < 0) {
+    w.null("balayage");
+  } else {
+    w.obj("balayage");
+    w.u32("vus", (uint32_t)vus);
+    w.arr("points");
+    for (uint8_t i = 0; i < nb; i++) {
+      w.obj(nullptr);
+      w.u32("canal", pts[i].canal);
+      w.str("pa", pts[i].pa);
+      w.i32("rssi_dbm", pts[i].rssi);
+      w.end();
+    }
+    w.end();
+    w.end();
+  }
   w.end();
 }

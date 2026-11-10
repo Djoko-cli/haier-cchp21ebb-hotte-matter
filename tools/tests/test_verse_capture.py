@@ -91,6 +91,18 @@ class Refus(unittest.TestCase):
         self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), [])
         wifi = dict(RESEAU_IP["wifi"], bssid="02:00:00:00:00:01")
         self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), ["champ 'wifi'"])
+        # Balayage du demarrage (canal, empreinte, signal de chaque point d'acces) : admis ;
+        # un champ de plus, a l'interieur, est refuse comme au premier niveau.
+        point = {"canal": 6, "pa": "4aa6", "rssi_dbm": -63}
+        wifi = dict(RESEAU_IP["wifi"], canal=6, pa="4aa6", balayage={"vus": 3, "points": [point]})
+        self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), [])
+        wifi = dict(RESEAU_IP["wifi"], balayage=None)
+        self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), [])
+        for bal in ({"vus": 3, "points": [dict(point, bssid="02:00:00:00:00:01")]},
+                    {"vus": 3, "points": [point], "nom": "MonReseau"},
+                    {"vus": 3, "points": ["MonReseau"]}):
+            wifi = dict(RESEAU_IP["wifi"], balayage=bal)
+            self.assertEqual(verse_capture.refus(enr(avec(RESEAU_IP, wifi=wifi))), ["champ 'wifi'"], bal)
 
     def test_reponse_a_la_commande_wifi(self):
         # maskCmd coupe le mot de passe, pas le SSID.

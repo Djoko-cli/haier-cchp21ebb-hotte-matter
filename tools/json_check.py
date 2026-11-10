@@ -337,6 +337,28 @@ SCHEMAS = {
                     "canal": Opt(Null(Int(1, 14))),
                     "pa": Opt(Null(Str(4, r"^[0-9a-f]{4}$"))),
                     "pertes": U32,
+                    # Ajout du 10/11 : balayage fait au demarrage, avant la connexion.
+                    # vus : points d'acces captes, tous reseaux confondus ; points : ceux
+                    # du reseau de la sonde, 4 au plus, du plus fort au plus faible.
+                    "balayage": Opt(
+                        Null(
+                            Obj(
+                                {
+                                    "vus": U8,
+                                    "points": Arr(
+                                        Obj(
+                                            {
+                                                "canal": Int(1, 14),
+                                                "pa": Str(4, r"^[0-9a-f]{4}$"),
+                                                "rssi_dbm": Int(-128, 0),
+                                            }
+                                        ),
+                                        4,
+                                    ),
+                                }
+                            )
+                        )
+                    ),
                 }
             ),
         }
@@ -708,6 +730,13 @@ def coherence(t, obj, errs, warns, profil="sonde"):
                 errs.append("reseau/ip : wifi connecte sans rssi_dbm, ip, canal ou pa")
             if not w["connecte"] and vus:
                 errs.append(f"reseau/ip : wifi deconnecte avec {', '.join(vus)}")
+            b = w.get("balayage")
+            if isinstance(b, dict) and isinstance(b.get("points"), list) and isinstance(b.get("vus"), int):
+                pts = [x for x in b["points"] if isinstance(x, dict) and isinstance(x.get("rssi_dbm"), int)]
+                if len(b["points"]) > b["vus"]:
+                    errs.append("reseau/ip : wifi.balayage avec plus de points que de points d'acces vus")
+                if any(a["rssi_dbm"] < c["rssi_dbm"] for a, c in zip(pts, pts[1:])):
+                    errs.append("reseau/ip : wifi.balayage.points pas du plus fort au plus faible")
     elif t == "hello" and obj.get("bloc") == "base":
         if obj.get("fw") != obj.get("fw_desc"):
             warns.append(f"hello : fw {obj.get('fw')!r} different de fw_desc {obj.get('fw_desc')!r}")

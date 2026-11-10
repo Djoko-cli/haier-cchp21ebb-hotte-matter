@@ -8,8 +8,8 @@ hotte_udp.py enregistre) telle quelle vers captures/<nom>.jsonl, et ajoute sa
 provenance au tableau de captures/README.md. Refuse (code 1), sans rien
 ecrire :
   - une ligne qui contient un champ 'cle', 'ssid' ou 'mdp' ; un champ 'wifi'
-    autre que le bloc wifi de 'reseau' 'ip' (connecte, rssi_dbm, ip, canal, pa, pertes :
-    sans SSID) ; la reponse a 'wifi <ssid> <mdp>' (son cmd porte le SSID) ;
+    autre que le bloc wifi de 'reseau' 'ip' (connecte, rssi_dbm, ip, canal, pa, pertes,
+    balayage avec vus et points de canal, pa, rssi_dbm : sans SSID ni adresse) ; la reponse a 'wifi <ssid> <mdp>' (son cmd porte le SSID) ;
   - une ligne qui contient une chaine de 64 caracteres hexadecimaux (cle H1,
     alea de 'json cle nouvelle', cle Wi-Fi de 64 hexa) ;
   - une capture vide, ou que 'json_check.py --jsonl' refuse ;
@@ -37,7 +37,25 @@ CAPTURES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 NOM = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 HEXA64 = re.compile(r"[0-9A-Fa-f]{64}")
 INTERDITS = ("cle", "ssid", "mdp")
-WIFI_RESEAU = {"connecte", "rssi_dbm", "ip", "canal", "pa", "pertes"}  # reseau.ip.wifi (docs/PROTOCOLE-JSON.md)
+WIFI_RESEAU = {"connecte", "rssi_dbm", "ip", "canal", "pa", "pertes", "balayage"}  # reseau.ip.wifi
+WIFI_BALAYAGE = {"vus", "points"}  # reseau.ip.wifi.balayage (docs/PROTOCOLE-JSON.md)
+WIFI_POINT = {"canal", "pa", "rssi_dbm"}  # chaque element de balayage.points
+
+
+def _cles_admises(v, cles):
+    return isinstance(v, _Paires) and {c for c, _ in v} <= cles
+
+
+def _wifi_admis(v):
+    """Bloc wifi de reseau/ip : cles connues a chaque niveau, jamais un SSID ni une adresse."""
+    if not _cles_admises(v, WIFI_RESEAU):
+        return False
+    b = dict(v).get("balayage")
+    if b is None:
+        return True
+    pts = dict(b).get("points") if isinstance(b, _Paires) else None
+    return (_cles_admises(b, WIFI_BALAYAGE) and isinstance(pts, list)
+            and all(_cles_admises(x, WIFI_POINT) for x in pts))
 
 
 class _Paires(list):
@@ -52,7 +70,7 @@ def _raisons(v, out):
         for k, x in v:
             if k in INTERDITS:
                 r = f"champ '{k}'"
-            elif k == "wifi" and not (ip and isinstance(x, _Paires) and {c for c, _ in x} <= WIFI_RESEAU):
+            elif k == "wifi" and not (ip and _wifi_admis(x)):
                 r = "champ 'wifi'"
             elif k == "cmd" and isinstance(x, str) and x.split()[:1] == ["wifi"]:
                 r = "reponse a 'wifi' (SSID dans cmd)"

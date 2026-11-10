@@ -26,6 +26,20 @@ uint8_t netWifiCanal();                           // canal du point d'acces ; 0 
 // (FNV-1a 32 bits replie sur 16). Distingue deux points d'acces sans jamais
 // sortir leur adresse MAC. "" si deconnecte.
 void netWifiEmpreintePa(char out[5]);
+// Balayage fait une fois au demarrage, avant la premiere connexion (actif, tous
+// les canaux, 120 ms par canal : environ 2 s). Garde, pour le reseau en
+// vigueur, les kWifiPointsMax points d'acces les plus forts (canal, empreinte,
+// signal), du plus fort au plus faible ; renvoie le nombre de points d'acces
+// captes, tous reseaux confondus (255 au plus), ou -1 sans balayage
+// (identifiants absents, echec). Banc 21 : sur batterie, la sonde rejoignait
+// parfois un point d'acces lointain ; ce releve dit ce qu'elle voyait alors.
+constexpr uint8_t kWifiPointsMax = 4;
+struct NetWifiPoint {
+  uint8_t canal;
+  int8_t rssi;
+  char pa[5];
+};
+int16_t netWifiBalayage(const NetWifiPoint **points, uint8_t *n);
 void netWifiIp(char out[16]);                     // "0.0.0.0" si deconnecte
 bool netWifiSet(const char *ssid, const char *mdp);  // NVS puis reconnexion
 // Ajouts (info, reseau.ip) : SSID en vigueur ("" : aucun identifiant),
