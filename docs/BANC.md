@@ -327,7 +327,7 @@ carcasse : boîtier seulement, avant tout USB, une ligne par séance.
 | 05/11/2026 | 16b | 1 (10k) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | 4,4 |
 | 09/11/2026 | 16b | 2 (4,7k + 1 nF) | boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-5d01e4a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | 4,74 |
 | | 21 | 1 (10k) | | | | | | | |
-| | 24 | 1 (10k) | | | | | | | |
+| 10/11/2026 | 24 | 1 (10k) | boîtier ; étage d'injection sur la plaque d'essai, R3 dans les contacts M01-Q01 du boîtier | sans objet : `X1` vide, aucun câble vers la hotte | 0.1.0-8edfb6a | nanoESP32-C6 (MUSE LAB), flashé le 04/11 | `usbmodem144301` | `usbmodem144401` | 4,36 (diviseur de l'analyseur en place) |
 
 ### Critères 1 et 2, variante 1 (10k)
 
@@ -451,13 +451,24 @@ Diagnostic (09 et 10/11) :
 
 | Date | Essai (§9) | Résultat de `injection` | Émission arrêtée ? | Remarque |
 |---|---|---|---|---|
-| | 9.1 refus : sans montage, sans armement | `non montee`, `non armee` | — | |
-| | 9.2 injection simple × 10 | `ok` : __ / 10 ; écart max relu − émis : __ µs | — | trame capturée identique (±2 µs après décalage) : __ / 10 ; `delai minimal` vu : oui / non |
-| | 9.3 collision × 10 | `collision` : __ / 10 | bas le plus long sous 2 000 µs : __ / 10 | |
-| | 9.4 bus jamais silencieux | `delai`, attente __ µs | `relu_us` vide : oui / non | |
-| | 9.5 désarmement seul (30 s) | annonce reçue : oui / non ; puis `non armee` : oui / non | — | |
-| | 9.6 fin | GPIO7 au repos : __ V | — | `injection monte 0` envoyé : oui / non |
-| | 9.6 démontage, USB débranchés | étage d'injection démonté : oui / non | — | `TP_Dp` → broche 7, deux sens : __ / __ kΩ (plus de 100 kΩ) |
+| 10/11/2026 | 9.1 refus : sans montage, sans armement | `non montee`, `non armee` | — | GPIO7 0,03 V, LIGNE 4,36 V ; `tol_us` laissé à 20 |
+| 10/11/2026 | 9.2 injection simple × 10 | `ok` : 10 / 10 ; écart max relu − émis : 4 µs | — | trame capturée identique (±2 µs après décalage) : 10 / 10 (±1 µs) ; `delai minimal` vu : oui (10 / 10) |
+| 10/11/2026 | 9.3 collision × 10 | `collision` : 10 / 10 | bas le plus long sous 2 000 µs : 10 / 10 | 2 à 4 durées relues ; bas le plus long 500 µs à chaque essai |
+| 10/11/2026 | 9.4 bus jamais silencieux | `delai`, attente 1 000 855 µs | `relu_us` vide : oui | |
+| 10/11/2026 | 9.5 désarmement seul (30 s) | annonce reçue : oui ; puis `non armee` : oui | — | `arme_max_s` remis à 600 |
+| 10/11/2026 | 9.6 fin | GPIO7 au repos : non remesuré (0,03 V au §9.1 ; la sonde voit ensuite la LIGNE au repos haut) | — | `injection monte 0` envoyé : oui ; `seuils 1 5000` ; par l'UDP, `injection regle` et `injection monte` : `interdite` |
+| 10/11/2026 | 9.6 démontage, USB débranchés | étage d'injection démonté : oui | — | `TP_Dp` → broche 7, deux sens : OL / 4 110 kΩ (plus de 100 kΩ), mesuré depuis la LIGNE (J13), reliée à `TP_Dp` par le fil blanc |
+
+Montage du 10/11 : étage d'injection sur la plaque d'essai (§9 le permet ;
+les contacts de l'étage soudé n'étaient pas encore reçus), Q2 en G18-G20, 10k
+base-émetteur I19-I20, 470 Ω de H13 (LIGNE) à H18, émetteur à la masse par un
+fil F20-D15 ; R3 (4,7k) dans les contacts M01-Q01 du boîtier, reliée à la base
+de Q2 par un grippe-fil. Pièces mesurées : R_pu 9,96 kΩ, base-émetteur
+9,99 kΩ, 470 Ω à 471,4 Ω, R3 4,722 kΩ. Contrôles hors tension avant tout USB :
+émetteur de Q2 à la masse, LIGNE vers masse au-dessus de 10 kΩ dans les deux
+sens, base de Q2 vers GPIO7 d'environ 4,7 kΩ (conformes, valeurs non notées) ;
+GPIO7 vers GPIO6 : 478 / 200 kΩ (aucun pont). L'étage soudé (FABRICATION §6.7)
+reste à poser avant l'étape 7.
 
 ### Critère 6 : consommation de la sonde
 

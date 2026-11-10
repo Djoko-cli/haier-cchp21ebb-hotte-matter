@@ -38,6 +38,6 @@ Détail : [2026-09-27-phase-1f-reseau.md](2026-09-27-phase-1f-reseau.md), tâche
 
 Détail : [2026-09-27-phase-1g-injection.md](2026-09-27-phase-1g-injection.md), tâche 24.
 
-- [ ] Étage d'injection posé sur le boîtier (FABRICATION §6.7)
-- [ ] Injection simple, relue par la voie 1
-- [ ] Collision provoquée, et arrêt de l'injection
+- [-] Étage d'injection posé sur le boîtier (FABRICATION §6.7) (reporté le 10/11 : contacts pas encore reçus ; banc fait avec l'étage sur la plaque d'essai et R3 sur le boîtier, comme le §9 le permet ; pose soudée avant l'étape 7)
+- [x] Injection simple, relue par la voie 1 : 10 / 10 `ok`, écart max 4 µs (10/11)
+- [x] Collision provoquée, et arrêt de l'injection : 10 / 10 `collision`, bas le plus long 500 µs (10/11)
