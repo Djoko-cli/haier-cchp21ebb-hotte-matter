@@ -25,10 +25,10 @@ valeurs : [WIRING.md](WIRING.md).
 | Hotte | Haier CCHP21EBB, fabrication 06/2024 |
 | Prise et différentiel 30 mA (repère au tableau électrique) | |
 | Multimètre : modèle ; calibre ohmmètre le plus élevé ; fréquence et rapport cyclique ? | |
-| Batterie USB : modèle ; essai de 30 min, sonde en Wi-Fi, sans coupure (date, résultat) | |
+| Batterie USB : modèle ; essai de 30 min, sonde en Wi-Fi, sans coupure (date, résultat) | Anker Prime Power Bank 250 W (99,54 Wh) ; 09/11/2026, 30 min avec le motif `krona`, un seul boot, aucun trou de plus de 0,3 s : OK ([BANC.md §7](BANC.md)) |
 | Analyseur FX2 : reçu le ; version de PulseView | clone « Saleae » 24 MHz 8 voies (FX2, AliExpress), commandé le 27/09/2026 ; reçu le ____ ; PulseView ____ (pilote `fx2lafw` ; **pas** le logiciel Saleae Logic 2, qui refuse les clones) |
 | Oscilloscope, optionnel (niveaux bas chiffrés aux étapes 5b et 7) : modèle, ou « aucun » | aucun : niveau bas jugé fonctionnellement (choix de l'utilisateur, 27/09) |
-| Firmware de la sonde (`fw` de `hello`) | |
+| Firmware de la sonde (`fw` de `hello`) | `0.1.0-8edfb6a` (banc 21, 10/11/2026) ; à relever de nouveau à l'étape 5 |
 | Couleurs du câble de sortie : fil 1 `−`, fil 2 `+`, fil 3 `D_panneau`, fil 4 `D_carte` | prévu (UL1007 22 AWG commandé le 27/09) : noir `−`, rouge `+`, blanc `D_panneau`, marron `D_carte`, comme le câble d'origine du panneau (noir `−`, blanc `D`, rouge `+`) |
 | `R_be` de l'étage d'écoute (100k par défaut ; changements notés à l'étape 5b) | |
 | Carte de la sonde : modèle (le produit prévoit la SuperMini violette, antenne céramique) | |

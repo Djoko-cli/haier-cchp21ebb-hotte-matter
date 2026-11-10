@@ -416,7 +416,36 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 
 | Date | Emplacement | RSSI (dBm) | Durée | `lignes_perdues` / `debord` / `sautes` | Trous de `n` (Mac) | Verdict |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| 09/11/2026 | table du banc, sonde sur la batterie, à 2,5 m du point d'accès proche ; sonde `cccd987` rattachée au point d'accès lointain (canal 1, un étage plus bas) | −97 à −90 (22 relevés) | 660 s (`2026-11-09-1612-banc-wifi-krona.jsonl`) | +0 / +0 / +0 | 91 trous, 189 lignes perdues sur 6 663 (2,758 %) ; critère 1 : 4105 / 4500 (91,2 %) | ÉCHEC : mauvais point d'accès |
+| 10/11/2026 | même place ; sonde `8edfb6a` (balayage du démarrage), sur le point d'accès proche (canal 6) tout l'essai, `wifi.pertes` 0 | −74 à −65 (23 relevés) | 660 s (`2026-11-10-1356-banc-wifi-krona-bal.jsonl`) | +0 / +0 / +0 | 43 trous, 115 lignes perdues sur 7 050 (1,605 %) ; critère 1 : 4397 / 4500 (97,7 %) | ÉCHEC : coupures Wi-Fi périodiques, hors de la sonde |
+
+Diagnostic (09 et 10/11) :
+
+- **Choix du point d'accès (corrigé).** Sur la batterie, après un démarrage à
+  froid, la sonde rejoignait parfois le point d'accès lointain (−95 dBm, canal
+  1) au lieu du proche (−64 à −78 dBm, canal 6), même après `01d7741`
+  (balayage de tous les canaux, tri par signal) : 5 démarrages sur 8. Le
+  champ `wifi.balayage` de `8edfb6a` montre ce que la sonde voit avant de
+  choisir ; avec lui, 5 démarrages à froid sur 5 sur le point d'accès proche.
+  Cause exacte non établie (supposé : le premier balayage d'un démarrage à
+  froid rate le point d'accès proche ; le balayage ajouté occupe la radio 2 s
+  avant la connexion). Sur l'USB du Mac : 6 sur 6 avant comme après.
+- **Pertes restantes (hors de la sonde).** Les trous du 10/11 tombent par
+  salves d'environ 0,5 s (côté sonde), toutes les 17 s pendant le motif.
+  Ping de 2 min à 0,1 s depuis le Mac, sans motif : la sonde perd 0,7 à
+  2,3 % en salves toutes les 20 à 21 s, avec le firmware actuel comme avec
+  `5d01e4a`, sur la batterie comme sur l'USB du Mac, canal du point d'accès
+  en automatique comme fixé ; en même temps, 0 % vers le point d'accès
+  lui-même (joint par le CPL seul) et vers la box (Ethernet). La coupure est
+  donc sur le lien Wi-Fi entre le point d'accès et la sonde. Elle n'existait
+  pas le 09/11 vers 13 h – 14 h 20 (aucun trou sur 30 min, ni sur les
+  captures de 107 s du banc 16b). Cause non établie : point d'accès, ou
+  brouilleur 2,4 GHz ; reste à pinguer un deuxième client 2,4 GHz du même
+  point d'accès en même temps que la sonde.
+- **Suite.** Le §8.4 se refait quand le lien est propre : 2 min de ping à
+  0,1 s (`ping -i 0.1 -c 1200 hotte-sonde.local`) sans salve avant les 10 min.
+  Le produit passe par Thread, pas par le Wi-Fi : ce défaut ne touche que le
+  banc de la sonde.
 
 ### Critère 5 : collision (tâche 24)
 
@@ -436,13 +465,14 @@ défaut, si le calcul donne moins. Valeur reportée dans l'avenant de l'étape 6
 |---|---|---|---|
 | 05/11/2026 | USB du Mac, sans Wi-Fi ; testeur USB FNIRSI FNAC-28, 5,15 V | capture active, bus au repos | 25,7 |
 | 05/11/2026 | USB du Mac, sans Wi-Fi ; testeur USB FNIRSI FNAC-28, 5,15 V | capture active, motif `krona` (`2026-11-05-1342-banc-v2-courant.jsonl` : 1000 / 1000, verdict OK) | 25,7 à 25,8 |
-| | batterie, Wi-Fi actif (tâche 21) ; testeur USB ou multimètre : ____ (§8.3) | session UDP, motif `krona` | |
+| 09/11/2026 | batterie Anker Prime 250 W, Wi-Fi actif ; testeur USB FNIRSI FNAC-28 (§8.3) ; sonde au point d'accès lointain, −92 dBm | session UDP, bus au repos (`2026-11-09-1555-banc-conso-wifi.jsonl`) | 91 |
+| 09/11/2026 | même montage | session UDP, motif `krona 400` | 95 à 141 en lecture courante ; pointes jusqu'à 223 |
 
 ### Batterie USB : 30 min en Wi-Fi (tâche 21)
 
 | Date | Modèle de la batterie | Fichier `logs/` | Boots | `up_s` (début → fin) | Plus grand trou de `rx_ms` (s) | Verdict |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| 09/11/2026 | Anker Prime Power Bank 250 W (99,54 Wh) | `2026-11-09-1347-batterie-30min.jsonl` | 1 | 51 → 1 911 (croissant) | 0,256 | OK |
 
 ### Conclusions
 

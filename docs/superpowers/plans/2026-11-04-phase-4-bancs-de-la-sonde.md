@@ -30,9 +30,9 @@ Détail : [2026-09-27-phase-1e-banc.md](2026-09-27-phase-1e-banc.md), tâche 16b
 
 Détail : [2026-09-27-phase-1f-reseau.md](2026-09-27-phase-1f-reseau.md), tâche 21.
 
-- [ ] Critère 4 : dix minutes de `krona` par le Wi-Fi
-- [ ] Trente minutes sur la batterie
-- [ ] Consommation, Wi-Fi actif
+- [-] Critère 4 : dix minutes de `krona` par le Wi-Fi (reporté le 10/11 : coupures Wi-Fi périodiques entre le point d'accès et la sonde, hors de la sonde ; à refaire quand 2 min de ping sont propres, BANC.md §7)
+- [x] Trente minutes sur la batterie
+- [x] Consommation, Wi-Fi actif
 
 ### Tâche 5 : Banc 24 : injection et collision
 
