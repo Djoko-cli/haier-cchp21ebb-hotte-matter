@@ -30,7 +30,7 @@ Détail : [2026-09-27-phase-1e-banc.md](2026-09-27-phase-1e-banc.md), tâche 16b
 
 Détail : [2026-09-27-phase-1f-reseau.md](2026-09-27-phase-1f-reseau.md), tâche 21.
 
-- [-] Critère 4 : dix minutes de `krona` par le Wi-Fi (reporté le 10/11 : coupures Wi-Fi périodiques entre le point d'accès et la sonde, hors de la sonde ; à refaire quand 2 min de ping sont propres, BANC.md §7)
+- [-] Critère 4 : dix minutes de `krona` par le Wi-Fi (reporté le 10/11 : coupures Wi-Fi périodiques entre le point d'accès et la sonde, hors de la sonde ; déplacé le 11/11 dans le plan de la phase 5, tâche 8, préalable de l'étape 5)
 - [x] Trente minutes sur la batterie
 - [x] Consommation, Wi-Fi actif
 
@@ -38,6 +38,6 @@ Détail : [2026-09-27-phase-1f-reseau.md](2026-09-27-phase-1f-reseau.md), tâche
 
 Détail : [2026-09-27-phase-1g-injection.md](2026-09-27-phase-1g-injection.md), tâche 24.
 
-- [-] Étage d'injection posé sur le boîtier (FABRICATION §6.7) (reporté le 10/11 : contacts pas encore reçus ; banc fait avec l'étage sur la plaque d'essai et R3 sur le boîtier, comme le §9 le permet ; pose soudée avant l'étape 7)
+- [-] Étage d'injection posé sur le boîtier (FABRICATION §6.7) (reporté le 10/11 : contacts pas encore reçus ; banc fait avec l'étage sur la plaque d'essai et R3 sur le boîtier, comme le §9 le permet ; déplacé le 11/11 dans le plan de la phase 5, tâche 11, préalable de l'étape 7)
 - [x] Injection simple, relue par la voie 1 : 10 / 10 `ok`, écart max 4 µs (10/11)
 - [x] Collision provoquée, et arrêt de l'injection : 10 / 10 `collision`, bas le plus long 500 µs (10/11)

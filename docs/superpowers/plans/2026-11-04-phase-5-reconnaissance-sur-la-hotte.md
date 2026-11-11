@@ -46,6 +46,10 @@ tension : hotte débranchée, et 5 minutes d'attente avant d'ouvrir.
 
 ### Tâche 8 : Étape 5 : capture en place
 
+- [ ] Préalable : critère 4 du banc 21 refait, dix minutes de `krona` par le Wi-Fi
+  ([BANC.md §8.4](../../BANC.md#84-dix-minutes-de-krona-critère-4)), quand 2 min de
+  ping vers la sonde sont propres (venu de la phase 4, tâche 4 ; premier essai et
+  coupures au §7 de BANC.md, « Critère 4 : Wi-Fi (tâche 21) »)
 - [ ] Scénarios capturés, dont la marche prolongée et le repos sans appui
 
 ### Tâche 9 : Étape 5b : validation croisée à l'analyseur
@@ -60,6 +64,10 @@ tension : hotte débranchée, et 5 minutes d'attente avant d'ouvrir.
 
 ### Tâche 11 : Étape 7 : premier essai d'injection
 
+- [ ] Préalable : étage d'injection soudé sur le boîtier
+  ([FABRICATION.md §6.7](../../FABRICATION.md#67-plus-tard--étage-dinjection-étape-7-ou-banc-critère-5)), quand les contacts seront arrivés
+  (venu de la phase 4, tâche 5 ; banc 24 fait le 10/11 avec l'étage sur la plaque
+  d'essai, BANC.md §7, « Montage du 10/11 »)
 - [ ] Injection 20 sur 20, voyants qui suivent
 
 ### Tâche 12 : Mesure M1 pour le produit : radio comparative, hotte débranchée
